@@ -12,7 +12,12 @@ find_package(glfw3 3.3 REQUIRED)
 find_package(OpenGL REQUIRED)
 
 # Add your executable
-add_executable(render-car src/main.cpp)
+add_executable(render-car
+    src/main.cpp
+    src/glad.c
+)
+
+target_include_directories(render-car PRIVATE include)
 
 # Link GLFW and OpenGL
 target_link_libraries(render-car PRIVATE glfw OpenGL::GL)

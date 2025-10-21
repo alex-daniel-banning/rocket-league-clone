@@ -1,3 +1,4 @@
+#include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
 
@@ -7,6 +8,12 @@ int main() {
         std::cerr << "Failed to initialize GLFW\n";
         return -1;
     }
+
+    // Tell GLFW what kind of context to create
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
 
     GLFWmonitor* primary = glfwGetPrimaryMonitor();
     const GLFWvidmode* mode = glfwGetVideoMode(primary);
@@ -28,6 +35,12 @@ int main() {
 
     // Make the window's context current
     glfwMakeContextCurrent(window);
+
+    // Initialize glad
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+        std::cerr << "Failed to initialize GLAD\n";
+        return -1;
+    }
 
     // Main loop
     while (!glfwWindowShouldClose(window)) {
