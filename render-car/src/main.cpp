@@ -8,8 +8,18 @@ int main() {
         return -1;
     }
 
+    GLFWmonitor* primary = glfwGetPrimaryMonitor();
+    const GLFWvidmode* mode = glfwGetVideoMode(primary);
+
     // Create a windowed mode window
-    GLFWwindow* window = glfwCreateWindow(800, 600, "Hello Triangle", nullptr, nullptr);
+    GLFWwindow* window = glfwCreateWindow(
+            mode->width,
+            mode->height,
+            "Fullscreen example",
+            primary,
+            nullptr
+    );
+
     if (!window) {
         std::cerr << "Failed to create GLFW window\n";
         glfwTerminate();
