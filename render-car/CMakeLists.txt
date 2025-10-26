@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(HelloTriangle)
+project(render-car)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -15,9 +15,14 @@ find_package(OpenGL REQUIRED)
 add_executable(render-car
     src/main.cpp
     src/glad.c
+    include/Shader.hpp
 )
 
 target_include_directories(render-car PRIVATE include)
 
 # Link GLFW and OpenGL
 target_link_libraries(render-car PRIVATE glfw OpenGL::GL)
+
+# Copy the entire resources folder (recursively) into the build folder
+file(COPY "${PROJECT_SOURCE_DIR}/resources"
+     DESTINATION "${CMAKE_BINARY_DIR}")
