@@ -1,0 +1,9 @@
+# Minimal clang-format for C++/OpenGL projects
+
+BasedOnStyle: LLVM   # Lightweight, widely used
+IndentWidth: 4       # 4 spaces per indent
+ColumnLimit: 100     # Line length limit
+UseTab: Never        # Spaces, no tabs
+BreakBeforeBraces: Allman  # Popular in graphics code
+AlignConsecutiveAssignments: true
+SortIncludes: true
