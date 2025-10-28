@@ -1,7 +1,17 @@
+#define GLM_ENABLE_EXPERIMENTAL
+
 #include "Shader.hpp"
 #include <GLFW/glfw3.h>
 #include <cmath>
 #include <glad/glad.h>
+
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/dual_quaternion.hpp>
+#include <glm/gtx/quaternion.hpp>
+#include <glm/gtx/string_cast.hpp>
+
 #include <iostream>
 
 float vertices[] = {
@@ -71,6 +81,12 @@ int main()
     glBindVertexArray(0);
 
     Shader ourShader("resources/shaders/shader.vert", "resources/shaders/shader.frag");
+
+    glm::mat4 trans = glm::mat4(1.0f);
+    trans           = glm::rotate(trans, glm::radians(45.0f), glm::vec3(0.0, 0.0, 1.0));
+    trans           = glm::scale(trans, glm::vec3(0.5, 0.5, 0.5));
+    ourShader.use();
+    ourShader.setMat4("transform", trans);
 
     // Main loop
     while (!glfwWindowShouldClose(window))
