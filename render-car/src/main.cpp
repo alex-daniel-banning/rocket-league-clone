@@ -82,12 +82,6 @@ int main()
 
     Shader ourShader("resources/shaders/shader.vert", "resources/shaders/shader.frag");
 
-    glm::mat4 trans = glm::mat4(1.0f);
-    trans           = glm::rotate(trans, glm::radians(45.0f), glm::vec3(0.0, 0.0, 1.0));
-    trans           = glm::scale(trans, glm::vec3(0.5, 0.5, 0.5));
-    ourShader.use();
-    ourShader.setMat4("transform", trans);
-
     // Main loop
     while (!glfwWindowShouldClose(window))
     {
@@ -96,6 +90,10 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT);
 
         ourShader.use();
+        glm::mat4 trans = glm::mat4(1.0f);
+        trans           = glm::translate(trans, glm::vec3(0.5f, -0.5f, 0.0f));
+        trans           = glm::rotate(trans, (float)glfwGetTime(), glm::vec3(0.0f, 0.0f, 1.0f));
+        ourShader.setMat4("transform", trans);
 
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
