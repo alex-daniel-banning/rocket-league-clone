@@ -98,12 +98,14 @@ int main()
 
     Shader ourShader("resources/shaders/shader.vert", "resources/shaders/shader.frag");
 
+    glEnable(GL_DEPTH_TEST);
+
     // Main loop
     while (!glfwWindowShouldClose(window))
     {
         // Clear the screen
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         ourShader.use();
         glm::mat4 model = glm::mat4(1.0f);
