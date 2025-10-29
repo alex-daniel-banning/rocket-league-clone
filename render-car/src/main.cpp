@@ -15,13 +15,29 @@
 #include <iostream>
 
 float vertices[] = {
-    // positions         // colors
-    0.5f,  -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, // bottom right
-    -0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, // bottom left
-    0.0f,  0.5f,  0.0f, 0.0f, 0.0f, 1.0f  // top
+    // Positions          // Colors
+    -0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f, // 0: back-bottom-left (red)
+    0.5f,  -0.5f, -0.5f, 0.0f, 1.0f, 0.0f, // 1: back-bottom-right (green)
+    0.5f,  0.5f,  -0.5f, 0.0f, 0.0f, 1.0f, // 2: back-top-right (blue)
+    -0.5f, 0.5f,  -0.5f, 1.0f, 1.0f, 0.0f, // 3: back-top-left (yellow)
+    -0.5f, -0.5f, 0.5f,  1.0f, 0.0f, 1.0f, // 4: front-bottom-left (magenta)
+    0.5f,  -0.5f, 0.5f,  0.0f, 1.0f, 1.0f, // 5: front-bottom-right (cyan)
+    0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 1.0f, // 6: front-top-right (white)
+    -0.5f, 0.5f,  0.5f,  0.5f, 0.5f, 0.5f  // 7: front-top-left (gray)
 };
-unsigned int indices[] = { // note that we start from 0!
-    0, 1, 2};
+unsigned int indices[] = {
+    // Back face
+    0, 1, 2, 2, 3, 0,
+    // Front face
+    4, 5, 6, 6, 7, 4,
+    // Left face
+    0, 3, 7, 7, 4, 0,
+    // Right face
+    1, 5, 6, 6, 2, 1,
+    // Bottom face
+    0, 1, 5, 5, 4, 0,
+    // Top face
+    3, 2, 6, 6, 7, 3};
 
 int main()
 {
@@ -91,7 +107,8 @@ int main()
 
         ourShader.use();
         glm::mat4 model = glm::mat4(1.0f);
-        model           = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+        model           = glm::rotate(model, (float)glfwGetTime() * glm::radians(50.0f),
+                                      glm::vec3(0.5f, 1.0f, 0.0f));
         glm::mat4 view  = glm::mat4(1.0f);
         view            = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
         glm::mat4 projection;
@@ -101,7 +118,7 @@ int main()
         ourShader.setMat4("projection", projection);
 
         glBindVertexArray(VAO);
-        glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 
         // Swap front and back buffers
         glfwSwapBuffers(window);
