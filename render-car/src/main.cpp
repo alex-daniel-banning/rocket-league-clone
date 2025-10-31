@@ -1,6 +1,8 @@
 #define GLM_ENABLE_EXPERIMENTAL
 
+#include "Camera.hpp"
 #include "Shader.hpp"
+
 #include <GLFW/glfw3.h>
 #include <cmath>
 #include <glad/glad.h>
@@ -39,14 +41,7 @@ unsigned int indices[] = {
     // Top face
     3, 2, 6, 6, 7, 3};
 
-glm::vec3 cameraPos   = glm::vec3(0.0f, 0.0f, 3.0f);
-glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f, 0.0f);
-
-float yaw = -90.0f; // yaw is initialized to -90.0 degrees since a yaw of 0.0 results in a direction
-                    // vector pointing to the right so we initially rotate a bit to the left.
-float pitch       = 0.0f;
-float sensitivity = 1.0f;
+Camera camera = Camera();
 
 float deltaTime = 0.0f; // Time between current frame and last frame
 float lastFrame = 0.0f; // Time of last frame
@@ -114,6 +109,8 @@ int main()
 
     glEnable(GL_DEPTH_TEST);
 
+    camera.Position.z = 3.0f;
+
     // Main loop
     while (!glfwWindowShouldClose(window))
     {
@@ -130,7 +127,7 @@ int main()
         ourShader.use();
         glm::mat4 model = glm::mat4(1.0f);
         glm::mat4 view;
-        view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+        view = glm::lookAt(camera.Position, camera.Position + camera.Front, camera.Up);
         glm::mat4 projection;
         projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
         ourShader.setMat4("model", model);
@@ -159,37 +156,37 @@ void processInput(GLFWwindow *window)
         glfwSetWindowShouldClose(window, true);
 
     const float cameraSpeed = 2.00f * deltaTime;
-    glm::vec3 forward       = glm::normalize(glm::vec3(cameraFront.x, 0.0f, cameraFront.z));
+    glm::vec3 forward       = glm::normalize(glm::vec3(camera.Front.x, 0.0f, camera.Front.z));
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        cameraPos += cameraSpeed * forward;
+        camera.Position += cameraSpeed * forward;
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        cameraPos -= cameraSpeed * forward;
+        camera.Position -= cameraSpeed * forward;
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+        camera.Position -= glm::normalize(glm::cross(camera.Front, camera.Up)) * cameraSpeed;
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+        camera.Position += glm::normalize(glm::cross(camera.Front, camera.Up)) * cameraSpeed;
     if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
-        cameraPos += glm::vec3(0.0f, 1.0f, 0.0f) * cameraSpeed;
+        camera.Position += glm::vec3(0.0f, 1.0f, 0.0f) * cameraSpeed;
     if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
-        cameraPos -= glm::vec3(0.0f, 1.0f, 0.0f) * cameraSpeed;
+        camera.Position -= glm::vec3(0.0f, 1.0f, 0.0f) * cameraSpeed;
     if (glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS)
-        pitch += sensitivity;
+        camera.Pitch += camera.Sensitivity;
     if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS)
-        pitch -= sensitivity;
+        camera.Pitch -= camera.Sensitivity;
     if (glfwGetKey(window, GLFW_KEY_SEMICOLON) == GLFW_PRESS)
-        yaw += sensitivity;
+        camera.Yaw += camera.Sensitivity;
     if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS)
-        yaw -= sensitivity;
+        camera.Yaw -= camera.Sensitivity;
 
-    // make sure that when pitch is out of bounds, screen doesn't get flipped
-    if (pitch > 89.0f)
-        pitch = 89.0f;
-    if (pitch < -89.0f)
-        pitch = -89.0f;
+    // make sure that when camera.Pitch is out of bounds, screen doesn't get flipped
+    if (camera.Pitch > 89.0f)
+        camera.Pitch = 89.0f;
+    if (camera.Pitch < -89.0f)
+        camera.Pitch = -89.0f;
 
     glm::vec3 front;
-    front.x     = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-    front.y     = sin(glm::radians(pitch));
-    front.z     = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-    cameraFront = glm::normalize(front);
+    front.x      = cos(glm::radians(camera.Yaw)) * cos(glm::radians(camera.Pitch));
+    front.y      = sin(glm::radians(camera.Pitch));
+    front.z      = sin(glm::radians(camera.Yaw)) * cos(glm::radians(camera.Pitch));
+    camera.Front = glm::normalize(front);
 }
