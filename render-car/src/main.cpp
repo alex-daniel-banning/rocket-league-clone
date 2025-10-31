@@ -159,17 +159,19 @@ void processInput(GLFWwindow *window)
         glfwSetWindowShouldClose(window, true);
 
     const float cameraSpeed = 2.00f * deltaTime;
+    glm::vec3 forward       = glm::normalize(glm::vec3(cameraFront.x, 0.0f, cameraFront.z));
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-    {
-        std::cout << "cameraPos -> " << glm::to_string(cameraPos) << "\n";
-        cameraPos += cameraSpeed * cameraFront;
-    }
+        cameraPos += cameraSpeed * forward;
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        cameraPos -= cameraSpeed * cameraFront;
+        cameraPos -= cameraSpeed * forward;
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
         cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+        cameraPos += glm::vec3(0.0f, 1.0f, 0.0f) * cameraSpeed;
+    if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+        cameraPos -= glm::vec3(0.0f, 1.0f, 0.0f) * cameraSpeed;
     if (glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS)
         pitch += sensitivity;
     if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS)
