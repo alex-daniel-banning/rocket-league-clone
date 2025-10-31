@@ -15,6 +15,7 @@ find_package(OpenGL REQUIRED)
 add_executable(render-car
     src/main.cpp
     src/glad.c
+    src/Camera.cpp
     include/Shader.hpp
 )
 
