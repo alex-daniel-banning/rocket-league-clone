@@ -18,15 +18,9 @@
 #include "Shader.hpp"
 
 float vertices[] = {
-    // Positions          // Colors
-    -0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f, // 0: back-bottom-left (red)
-    0.5f,  -0.5f, -0.5f, 0.0f, 1.0f, 0.0f, // 1: back-bottom-right (green)
-    0.5f,  0.5f,  -0.5f, 0.0f, 0.0f, 1.0f, // 2: back-top-right (blue)
-    -0.5f, 0.5f,  -0.5f, 1.0f, 1.0f, 0.0f, // 3: back-top-left (yellow)
-    -0.5f, -0.5f, 0.5f,  1.0f, 0.0f, 1.0f, // 4: front-bottom-left (magenta)
-    0.5f,  -0.5f, 0.5f,  0.0f, 1.0f, 1.0f, // 5: front-bottom-right (cyan)
-    0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 1.0f, // 6: front-top-right (white)
-    -0.5f, 0.5f,  0.5f,  0.5f, 0.5f, 0.5f  // 7: front-top-left (gray)
+    // Positions
+    -0.5f, -0.5f, -0.5f, 0.5f, -0.5f, -0.5f, 0.5f, 0.5f, -0.5f, -0.5f, 0.5f, -0.5f,
+    -0.5f, -0.5f, 0.5f,  0.5f, -0.5f, 0.5f,  0.5f, 0.5f, 0.5f,  -0.5f, 0.5f, 0.5f,
 };
 unsigned int indices[] = {
     // Back face
@@ -98,19 +92,27 @@ int main()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 
-    Shader ourShader("resources/shaders/shader.vert", "resources/shaders/shader.frag");
+    Shader lightingShader("resources/shaders/shader.vert", "resources/shaders/shader.frag");
+    Shader lightSourceShader("resources/shaders/shader.vert",
+                             "resources/shaders/light_source.frag");
 
     glEnable(GL_DEPTH_TEST);
 
     camera.Position.z = 3.0f;
+
+    unsigned int lightVAO;
+    glGenVertexArrays(1, &lightVAO);
+    glBindVertexArray(lightVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
+
+    glm::vec3 lightPos(1.2f, 1.0f, -2.0f);
 
     // Main loop
     while (!glfwWindowShouldClose(window))
@@ -125,16 +127,31 @@ int main()
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        ourShader.use();
+        lightingShader.use();
+        lightingShader.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
+        lightingShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
+
         glm::mat4 model = glm::mat4(1.0f);
         glm::mat4 view;
         view = glm::lookAt(camera.Position, camera.Position + camera.Front, camera.Up);
         glm::mat4 projection;
         projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
-        ourShader.setMat4("model", model);
-        ourShader.setMat4("view", view);
-        ourShader.setMat4("projection", projection);
+        lightingShader.setMat4("model", model);
+        lightingShader.setMat4("view", view);
+        lightingShader.setMat4("projection", projection);
 
+        glBindVertexArray(VAO);
+        glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+
+        lightSourceShader.use();
+        model      = glm::mat4(1.0f);
+        model      = glm::translate(model, lightPos);
+        model      = glm::scale(model, glm::vec3(0.2f));
+        view       = glm::lookAt(camera.Position, camera.Position + camera.Front, camera.Up);
+        projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
+        lightSourceShader.setMat4("model", model);
+        lightSourceShader.setMat4("view", view);
+        lightSourceShader.setMat4("projection", projection);
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 
@@ -170,13 +187,13 @@ void processInput(GLFWwindow *window)
         camera.Position += glm::vec3(0.0f, 1.0f, 0.0f) * cameraSpeed;
     if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
         camera.Position -= glm::vec3(0.0f, 1.0f, 0.0f) * cameraSpeed;
-    if (glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
         camera.Pitch += camera.Sensitivity;
-    if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
         camera.Pitch -= camera.Sensitivity;
-    if (glfwGetKey(window, GLFW_KEY_SEMICOLON) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
         camera.Yaw += camera.Sensitivity;
-    if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
         camera.Yaw -= camera.Sensitivity;
 
     // make sure that when camera.Pitch is out of bounds, screen doesn't get flipped
