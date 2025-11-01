@@ -1,11 +1,11 @@
 #define GLM_ENABLE_EXPERIMENTAL
-
-#include "Camera.hpp"
-#include "Shader.hpp"
+#include <glad/glad.h>
 
 #include <GLFW/glfw3.h>
+
 #include <cmath>
-#include <glad/glad.h>
+
+#include <iostream>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -14,7 +14,8 @@
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtx/string_cast.hpp>
 
-#include <iostream>
+#include "Camera.hpp"
+#include "Shader.hpp"
 
 float vertices[] = {
     // Positions          // Colors
