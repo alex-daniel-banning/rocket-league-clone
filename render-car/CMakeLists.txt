@@ -10,6 +10,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Find packages
 find_package(glfw3 3.3 REQUIRED)
 find_package(OpenGL REQUIRED)
+find_package(assimp REQUIRED)
 
 # Add your executable
 add_executable(render-car
@@ -17,12 +18,16 @@ add_executable(render-car
     src/glad.c
     src/Camera.cpp
     src/Shader.cpp
+    src/Mesh.cpp
+    src/Model.cpp
+    src/stb_image.cpp
 )
 
 target_include_directories(render-car PRIVATE include)
 
 # Link GLFW and OpenGL
 target_link_libraries(render-car PRIVATE glfw OpenGL::GL)
+target_link_libraries(render-car PRIVATE assimp::assimp)
 
 # Copy the entire resources folder (recursively) into the build folder
 file(COPY "${PROJECT_SOURCE_DIR}/resources"
