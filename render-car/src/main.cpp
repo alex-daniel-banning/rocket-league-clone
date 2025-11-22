@@ -1,3 +1,4 @@
+#include "Model.hpp"
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glad/glad.h>
 
@@ -15,6 +16,7 @@
 #include <glm/gtx/string_cast.hpp>
 
 #include "Camera.hpp"
+#include "Model.hpp"
 #include "Shader.hpp"
 
 float vertices[] = {
@@ -132,6 +134,11 @@ int main()
 
     glm::vec3 lightPos(1.2f, 2.0f, 2.0f);
 
+    Model backpack(
+        "/home/alex/source/rocket-league-clone/render-car/resources/backpack/backpack.obj");
+    Shader modelShader("resources/shaders/model_loading.vert",
+                       "resources/shaders/model_loading.frag");
+
     // Main loop
     while (!glfwWindowShouldClose(window))
     {
@@ -145,32 +152,22 @@ int main()
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        lightingShader.use();
-        lightingShader.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
-        lightingShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
-        lightingShader.setVec3("lightPos", lightPos.x, lightPos.y, lightPos.z);
-        lightingShader.setVec3("viewPos", camera.Position.x, camera.Position.y, camera.Position.z);
+        modelShader.use();
         glm::mat4 model = glm::mat4(1.0f);
         glm::mat4 view;
         view = camera.GetViewMatrix();
-        // view = glm::lookAt(camera.Position, camera.Position + camera.Front, camera.Up);
         glm::mat4 projection;
         projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
-        lightingShader.setMat4("model", model);
-        lightingShader.setMat4("view", view);
-        lightingShader.setMat4("projection", projection);
-        glBindVertexArray(cubeVAO);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+        modelShader.setMat4("model", model);
+        modelShader.setMat4("view", view);
+        modelShader.setMat4("projection", projection);
+        backpack.Draw(modelShader);
 
-        lightSourceShader.use();
-        model = glm::mat4(1.0f);
-        model = glm::translate(model, lightPos);
-        model = glm::scale(model, glm::vec3(0.2f));
-        lightSourceShader.setMat4("model", model);
-        lightSourceShader.setMat4("view", view);
-        lightSourceShader.setMat4("projection", projection);
-        glBindVertexArray(lightVAO);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+        GLenum err;
+        while ((err = glGetError()) != GL_NO_ERROR)
+        {
+            std::cout << "GL ERROR: " << err << "\n";
+        }
 
         // Swap front and back buffers
         glfwSwapBuffers(window);
