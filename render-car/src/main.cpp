@@ -161,6 +161,8 @@ int main()
         modelShader.setMat4("model", model);
         modelShader.setMat4("view", view);
         modelShader.setMat4("projection", projection);
+        modelShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
+        modelShader.setVec3("lightPos", 5.0f, 5.0f, 5.0f);
         backpack.Draw(modelShader);
 
         GLenum err;
