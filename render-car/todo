@@ -1,0 +1,9 @@
+- Figure out how to render multi-colored cube (is it importing the model correctly?)
+    - Is the Model class loading in the colors from the mat file
+- Set up debugger keybinds
+    toggle breakpoint
+    list breakpoints
+    start debugger
+- Customize debugger layout (probably easier to read if in panel on bottom)
+- Script to build in debug mode
+- Maybe remove the useTexture uniform

@@ -7,6 +7,8 @@ in vec3 FragPos;
 
 uniform sampler2D texture_diffuse1;
 uniform bool useTexture;
+uniform vec3 diffuseColor;
+
 uniform vec3 lightColor;
 uniform vec3 lightPos;
 
@@ -22,7 +24,7 @@ void main()
         baseColor = textureColor.rgb;
         alpha = textureColor.a;
     } else {
-        baseColor = vec3(0.2, 0.4, 0.8);
+        baseColor = diffuseColor;
         alpha = 1.0;
     }
 

@@ -24,7 +24,11 @@ void Model::loadModel(std::string path)
         std::cout << "ERROR::ASSIMP::" << import.GetErrorString() << std::endl;
         return;
     }
+
     directory = path.substr(0, path.find_last_of('/'));
+
+    // logging
+    std::cout << "Loading model with directory -> " << directory << std::endl;
 
     processNode(scene->mRootNode, scene);
 }
@@ -65,6 +69,9 @@ Mesh Model::processMesh(aiMesh *mesh, const aiScene *scene)
         vertex.Normal = norm;
         if (mesh->mTextureCoords[0])
         {
+            // logging
+            // std::cout << "Processing mesh with textures.\n";
+
             glm::vec2 tex;
             tex.x            = mesh->mTextureCoords[0][i].x;
             tex.y            = mesh->mTextureCoords[0][i].y;
@@ -72,6 +79,9 @@ Mesh Model::processMesh(aiMesh *mesh, const aiScene *scene)
         }
         else
         {
+            // logging
+            // std::cout << "Processing mesh with no textures.\n";
+
             vertex.TexCoords = glm::vec2(0.0f, 0.0f);
         }
         vertices.push_back(vertex);
@@ -86,9 +96,13 @@ Mesh Model::processMesh(aiMesh *mesh, const aiScene *scene)
         }
     }
     // process material
+
+    aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
     if (mesh->mMaterialIndex >= 0)
     {
-        aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
+        // logging
+        // std::cout << "Processing mesh with material.\n";
+
         std::vector<Texture> diffuseMaps =
             loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
         textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
@@ -96,8 +110,32 @@ Mesh Model::processMesh(aiMesh *mesh, const aiScene *scene)
             loadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular");
         textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
     }
+    else
+    {
+        // logging
+        // std::cout << "Processing mesh with no material.\n";
+    }
 
-    return Mesh(vertices, indices, textures);
+    if (textures.size() == 0)
+    {
+        aiColor4D diffuse;
+        glm::vec3 color;
+        if (material->Get(AI_MATKEY_COLOR_DIFFUSE, diffuse) == AI_SUCCESS)
+        {
+            color = glm::vec3(diffuse.r, diffuse.g, diffuse.b);
+            std::cout << "Successfully extracted color from material -> " << color.r << ", "
+                      << color.g << ", " << color.b << std::endl;
+        }
+        else
+        {
+            std::cout << "Unsuccessfully extracted color from material.";
+        }
+        return Mesh(vertices, indices, color);
+    }
+    else
+    {
+        return Mesh(vertices, indices, textures);
+    }
 }
 
 std::vector<Texture> Model::loadMaterialTextures(aiMaterial *mat, aiTextureType type,
@@ -126,6 +164,9 @@ std::vector<Texture> Model::loadMaterialTextures(aiMaterial *mat, aiTextureType 
             texture.path = str.C_Str();
             textures.push_back(texture);
             textures_loaded.push_back(texture);
+
+            // logging
+            std::cout << "Processing texture with path -> " << texture.path << std::endl;
         }
     }
     return textures;
@@ -143,6 +184,9 @@ unsigned int TextureFromFile(const char *path, const std::string &directory, boo
     unsigned char *data = stbi_load(filename.c_str(), &width, &height, &nrComponents, 0);
     if (data)
     {
+        // logging
+        std::cout << "Texture successfully loaded from filename -> " << filename << std::endl;
+
         GLenum format;
         if (nrComponents == 1)
         {

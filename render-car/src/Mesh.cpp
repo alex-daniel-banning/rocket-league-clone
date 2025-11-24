@@ -1,5 +1,7 @@
 #include <glad/glad.h>
 #include <Mesh.hpp>
+#include <cstddef>
+#include <iostream>
 
 Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices,
            std::vector<Texture> textures)
@@ -7,6 +9,17 @@ Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices,
     this->vertices = vertices;
     this->indices  = indices;
     this->textures = textures;
+
+    setupMesh();
+}
+
+Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, glm::vec3 color)
+{
+    this->vertices = vertices;
+    this->indices  = indices;
+    std::cout << "Setting mesh color -> " << color.r << ", " << color.g << ", " << color.b
+              << std::endl;
+    this->color = color;
 
     setupMesh();
 }
@@ -61,6 +74,10 @@ void Mesh::Draw(Shader &shader)
 
         shader.setInt(("material." + name + number).c_str(), i);
         glBindTexture(GL_TEXTURE_2D, textures[i].id);
+    }
+    if (textures.size() == 0)
+    {
+        shader.setVec3("diffuseColor", color.r, color.g, color.b);
     }
     glActiveTexture(GL_TEXTURE0);
 

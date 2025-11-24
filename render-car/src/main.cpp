@@ -66,6 +66,8 @@ void processInput(GLFWwindow *window);
 
 int main()
 {
+    std::string debugTest = "pee pee poo poo";
+
     // Initialize GLFW
     if (!glfwInit())
     {
@@ -134,8 +136,7 @@ int main()
 
     glm::vec3 lightPos(1.2f, 2.0f, 2.0f);
 
-    Model backpack(
-        "/home/alex/source/rocket-league-clone/render-car/resources/backpack/backpack.obj");
+    Model myModel("/home/alex/source/rocket-league-clone/render-car/resources/cube/cube.obj");
     Shader modelShader("resources/shaders/model_loading.vert",
                        "resources/shaders/model_loading.frag");
 
@@ -164,7 +165,7 @@ int main()
         modelShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
         modelShader.setVec3("lightPos", 5.0f, 5.0f, 5.0f);
         modelShader.setBool("useTexture", false);
-        backpack.Draw(modelShader);
+        myModel.Draw(modelShader);
 
         GLenum err;
         while ((err = glGetError()) != GL_NO_ERROR)
