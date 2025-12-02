@@ -1,5 +1,28 @@
 Setup next mini project (Cmake files, move shared code, etc.)
+
+
 Next mini project options:
+    Collisions/Physics
+        Rigid-body basis:
+            Position
+            Velocity
+            Acceleration
+            Forces
+        Gravity
+        Friction:
+            Basic static + dynamic
+        Collisions:
+            AABB
+            Sphere
+        Mass?
+        Center of mass?
+        Rotation after impact?
+        Friction with collisions?
+
     Basic car control
-    Collisions
+        Steering
+        Forward Forces
+        Braking
+        Wheel grip
+
     Hit boxes
