@@ -1,7 +1,6 @@
 #include <glad/glad.h>
 #include <Mesh.hpp>
 #include <cstddef>
-#include <iostream>
 
 Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices,
            std::vector<Texture> textures)
@@ -17,9 +16,7 @@ Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, glm:
 {
     this->vertices = vertices;
     this->indices  = indices;
-    std::cout << "Setting mesh color -> " << color.r << ", " << color.g << ", " << color.b
-              << std::endl;
-    this->color = color;
+    this->color    = color;
 
     setupMesh();
 }

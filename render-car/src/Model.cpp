@@ -123,8 +123,6 @@ Mesh Model::processMesh(aiMesh *mesh, const aiScene *scene)
         if (material->Get(AI_MATKEY_COLOR_DIFFUSE, diffuse) == AI_SUCCESS)
         {
             color = glm::vec3(diffuse.r, diffuse.g, diffuse.b);
-            std::cout << "Successfully extracted color from material -> " << color.r << ", "
-                      << color.g << ", " << color.b << std::endl;
         }
         else
         {

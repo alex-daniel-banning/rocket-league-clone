@@ -19,44 +19,6 @@
 #include "Model.hpp"
 #include "Shader.hpp"
 
-float vertices[] = {
-    -0.5f, -0.5f, -0.5f, 0.0f,  0.0f,  -1.0f, 0.5f,  -0.5f, -0.5f, 0.0f,  0.0f,  -1.0f,
-    0.5f,  0.5f,  -0.5f, 0.0f,  0.0f,  -1.0f, 0.5f,  0.5f,  -0.5f, 0.0f,  0.0f,  -1.0f,
-    -0.5f, 0.5f,  -0.5f, 0.0f,  0.0f,  -1.0f, -0.5f, -0.5f, -0.5f, 0.0f,  0.0f,  -1.0f,
-
-    -0.5f, -0.5f, 0.5f,  0.0f,  0.0f,  1.0f,  0.5f,  -0.5f, 0.5f,  0.0f,  0.0f,  1.0f,
-    0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
-    -0.5f, 0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  -0.5f, -0.5f, 0.5f,  0.0f,  0.0f,  1.0f,
-
-    -0.5f, 0.5f,  0.5f,  -1.0f, 0.0f,  0.0f,  -0.5f, 0.5f,  -0.5f, -1.0f, 0.0f,  0.0f,
-    -0.5f, -0.5f, -0.5f, -1.0f, 0.0f,  0.0f,  -0.5f, -0.5f, -0.5f, -1.0f, 0.0f,  0.0f,
-    -0.5f, -0.5f, 0.5f,  -1.0f, 0.0f,  0.0f,  -0.5f, 0.5f,  0.5f,  -1.0f, 0.0f,  0.0f,
-
-    0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  0.5f,  0.5f,  -0.5f, 1.0f,  0.0f,  0.0f,
-    0.5f,  -0.5f, -0.5f, 1.0f,  0.0f,  0.0f,  0.5f,  -0.5f, -0.5f, 1.0f,  0.0f,  0.0f,
-    0.5f,  -0.5f, 0.5f,  1.0f,  0.0f,  0.0f,  0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
-
-    -0.5f, -0.5f, -0.5f, 0.0f,  -1.0f, 0.0f,  0.5f,  -0.5f, -0.5f, 0.0f,  -1.0f, 0.0f,
-    0.5f,  -0.5f, 0.5f,  0.0f,  -1.0f, 0.0f,  0.5f,  -0.5f, 0.5f,  0.0f,  -1.0f, 0.0f,
-    -0.5f, -0.5f, 0.5f,  0.0f,  -1.0f, 0.0f,  -0.5f, -0.5f, -0.5f, 0.0f,  -1.0f, 0.0f,
-
-    -0.5f, 0.5f,  -0.5f, 0.0f,  1.0f,  0.0f,  0.5f,  0.5f,  -0.5f, 0.0f,  1.0f,  0.0f,
-    0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-    -0.5f, 0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  -0.5f, 0.5f,  -0.5f, 0.0f,  1.0f,  0.0f};
-unsigned int indices[] = {
-    // Back face
-    0, 1, 2, 2, 3, 0,
-    // Front face
-    4, 5, 6, 6, 7, 4,
-    // Left face
-    0, 3, 7, 7, 4, 0,
-    // Right face
-    1, 5, 6, 6, 2, 1,
-    // Bottom face
-    0, 1, 5, 5, 4, 0,
-    // Top face
-    3, 2, 6, 6, 7, 3};
-
 Camera camera = Camera();
 
 float deltaTime = 0.0f; // Time between current frame and last frame
@@ -104,31 +66,6 @@ int main()
         return -1;
     }
 
-    unsigned int VBO, cubeVAO;
-    glGenBuffers(1, &VBO);
-    glGenVertexArrays(1, &cubeVAO);
-    glBindVertexArray(cubeVAO);
-
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    // position
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)0);
-    glEnableVertexAttribArray(0);
-    // normal
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
-
-    unsigned int lightVAO;
-    glGenVertexArrays(1, &lightVAO);
-    glBindVertexArray(lightVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    // position
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)0);
-    glEnableVertexAttribArray(0);
-
     Shader lightingShader("resources/shaders/basic.vert", "resources/shaders/basic.frag");
     Shader lightSourceShader("resources/shaders/basic.vert", "resources/shaders/light_source.frag");
 
@@ -136,7 +73,7 @@ int main()
 
     glm::vec3 lightPos(1.2f, 2.0f, 2.0f);
 
-    Model myModel("/home/alex/source/rocket-league-clone/render-car/resources/cube/cube.obj");
+    Model myModel("/home/alex/source/rocket-league-clone/render-car/resources/car/car.obj");
     Shader modelShader("resources/shaders/model_loading.vert",
                        "resources/shaders/model_loading.frag");
 
