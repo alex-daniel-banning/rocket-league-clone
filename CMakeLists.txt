@@ -14,8 +14,8 @@ add_library(engine STATIC
 
 target_include_directories(engine PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-add_subdirectory(render-car)
-add_subdirectory(physics-playground)
+add_subdirectory(modules/render-car)
+add_subdirectory(modules/physics-playground)
 
 # Find packages
 find_package(glfw3 3.3 REQUIRED)

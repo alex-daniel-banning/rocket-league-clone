@@ -17,5 +17,5 @@ target_include_directories(render-car PRIVATE include)
 target_link_libraries(render-car PRIVATE engine)
 
 # Copy the entire resources folder (recursively) into the build folder
-file(COPY "${PROJECT_SOURCE_DIR}/resources"
-     DESTINATION "${CMAKE_BINARY_DIR}/render-car")
+file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/resources"
+    DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")

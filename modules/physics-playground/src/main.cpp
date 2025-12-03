@@ -7,15 +7,14 @@
 
 #include <iostream>
 
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
-#include <glm/gtx/dual_quaternion.hpp>
-#include <glm/gtx/quaternion.hpp>
-#include <glm/gtx/string_cast.hpp>
+// #include <glm/glm.hpp>
+// #include <glm/gtc/matrix_transform.hpp>
+// #include <glm/gtc/type_ptr.hpp>
+// #include <glm/gtx/dual_quaternion.hpp>
+// #include <glm/gtx/quaternion.hpp>
+// #include <glm/gtx/string_cast.hpp>
 
 #include <engine/render/Camera.hpp>
-#include <engine/render/Model.hpp>
 #include <engine/render/Shader.hpp>
 
 float deltaTime = 0.0f; // Time between current frame and last frame
@@ -25,8 +24,7 @@ void processInput(GLFWwindow *window, engine::render::Camera &camera);
 
 int main()
 {
-    std::string debugTest = "pee pee poo poo";
-
+    std::cout << "Testing!" << std::endl;
     // Initialize GLFW
     if (!glfwInit())
     {
@@ -65,25 +63,6 @@ int main()
 
     engine::render::Camera camera;
 
-    engine::render::Shader lightingShader("resources/shaders/basic.vert",
-                                          "resources/shaders/basic.frag");
-    engine::render::Shader lightSourceShader("resources/shaders/basic.vert",
-                                             "resources/shaders/light_source.frag");
-
-    glEnable(GL_DEPTH_TEST);
-
-    glm::vec3 lightPos(1.2f, 2.0f, 2.0f);
-
-    engine::render::Model myModel(
-        "/home/alex/source/rocket-league-clone/render-car/resources/car/car.obj");
-    engine::render::Shader modelShader("resources/shaders/model_loading.vert",
-                                       "resources/shaders/model_loading.frag");
-    GLenum err_preloop;
-    while ((err_preloop = glGetError()) != GL_NO_ERROR)
-    {
-        std::cout << "GL ERROR (pre loop): " << err_preloop << "\n";
-    }
-
     // Main loop
     while (!glfwWindowShouldClose(window))
     {
@@ -96,20 +75,6 @@ int main()
         // Clear the screen
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        modelShader.use();
-        glm::mat4 model = glm::mat4(1.0f);
-        glm::mat4 view;
-        view = camera.GetViewMatrix();
-        glm::mat4 projection;
-        projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
-        modelShader.setMat4("model", model);
-        modelShader.setMat4("view", view);
-        modelShader.setMat4("projection", projection);
-        modelShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
-        modelShader.setVec3("lightPos", 5.0f, 5.0f, 5.0f);
-        modelShader.setBool("useTexture", false);
-        myModel.Draw(modelShader);
 
         GLenum err;
         while ((err = glGetError()) != GL_NO_ERROR)
