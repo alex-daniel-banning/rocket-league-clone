@@ -1,7 +1,9 @@
-#ifndef CAMERA_H
-#define CAMERA_H
+#pragma once
 
 #include <glm/glm.hpp>
+
+namespace engine
+{
 
 // Defines several possible options for camera movement. Used as abstraction to stay away from
 // window-system specific input methods
@@ -60,4 +62,4 @@ class Camera
     // calculates the front vector from the Camera's (updated) Euler Angles
     void updateCameraVectors();
 };
-#endif
+} // namespace engine

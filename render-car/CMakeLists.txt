@@ -16,7 +16,6 @@ find_package(assimp REQUIRED)
 add_executable(render-car
     src/main.cpp
     src/glad.c
-    src/Camera.cpp
     src/Shader.cpp
     src/Mesh.cpp
     src/Model.cpp
@@ -29,6 +28,8 @@ target_include_directories(render-car PRIVATE include)
 target_link_libraries(render-car PRIVATE glfw OpenGL::GL)
 target_link_libraries(render-car PRIVATE assimp::assimp)
 
+target_link_libraries(render-car PRIVATE engine)
+
 # Copy the entire resources folder (recursively) into the build folder
 file(COPY "${PROJECT_SOURCE_DIR}/resources"
-     DESTINATION "${CMAKE_BINARY_DIR}")
+     DESTINATION "${CMAKE_BINARY_DIR}/render-car")

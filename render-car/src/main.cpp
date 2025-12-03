@@ -1,4 +1,3 @@
-#include "Model.hpp"
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glad/glad.h>
 
@@ -15,16 +14,14 @@
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtx/string_cast.hpp>
 
-#include "Camera.hpp"
+#include <engine/Camera.hpp>
 #include "Model.hpp"
 #include "Shader.hpp"
-
-Camera camera = Camera();
 
 float deltaTime = 0.0f; // Time between current frame and last frame
 float lastFrame = 0.0f; // Time of last frame
 
-void processInput(GLFWwindow *window);
+void processInput(GLFWwindow *window, engine::Camera &camera);
 
 int main()
 {
@@ -66,6 +63,8 @@ int main()
         return -1;
     }
 
+    engine::Camera camera;
+
     Shader lightingShader("resources/shaders/basic.vert", "resources/shaders/basic.frag");
     Shader lightSourceShader("resources/shaders/basic.vert", "resources/shaders/light_source.frag");
 
@@ -76,6 +75,11 @@ int main()
     Model myModel("/home/alex/source/rocket-league-clone/render-car/resources/car/car.obj");
     Shader modelShader("resources/shaders/model_loading.vert",
                        "resources/shaders/model_loading.frag");
+    GLenum err_preloop;
+    while ((err_preloop = glGetError()) != GL_NO_ERROR)
+    {
+        std::cout << "GL ERROR (pre loop): " << err_preloop << "\n";
+    }
 
     // Main loop
     while (!glfwWindowShouldClose(window))
@@ -84,7 +88,7 @@ int main()
         deltaTime          = currentFrame - lastFrame;
         lastFrame          = currentFrame;
 
-        processInput(window);
+        processInput(window, camera);
 
         // Clear the screen
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -123,7 +127,7 @@ int main()
     return 0;
 }
 
-void processInput(GLFWwindow *window)
+void processInput(GLFWwindow *window, engine::Camera &camera)
 {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);

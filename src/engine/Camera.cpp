@@ -1,6 +1,9 @@
-#include "Camera.hpp"
+#include <engine/Camera.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+
+namespace engine
+{
 
 // constructor with vectors
 Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch)
@@ -72,3 +75,4 @@ void Camera::lookAtOrigin()
     Pitch = glm::degrees(std::asin(Front.y));
     Yaw   = glm::degrees(atan2(Front.z, Front.x));
 }
+} // namespace engine
