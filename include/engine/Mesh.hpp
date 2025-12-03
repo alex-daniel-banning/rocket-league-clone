@@ -1,9 +1,9 @@
 #pragma once
 
+#include <engine/Shader.hpp>
 #include <glm/glm.hpp>
 #include <string>
 #include <vector>
-#include "Shader.hpp"
 
 struct Vertex
 {

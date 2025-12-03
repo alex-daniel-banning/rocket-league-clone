@@ -15,8 +15,8 @@
 #include <glm/gtx/string_cast.hpp>
 
 #include <engine/Camera.hpp>
-#include "Model.hpp"
-#include "Shader.hpp"
+#include <engine/Model.hpp>
+#include <engine/Shader.hpp>
 
 float deltaTime = 0.0f; // Time between current frame and last frame
 float lastFrame = 0.0f; // Time of last frame

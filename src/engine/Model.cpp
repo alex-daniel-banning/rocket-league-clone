@@ -1,8 +1,8 @@
-#include "Model.hpp"
 #include <glad/glad.h>
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
+#include <engine/Model.hpp>
 #include <stb_image.h>
 #include "iostream"
 

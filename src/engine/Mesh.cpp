@@ -1,6 +1,6 @@
 #include <glad/glad.h>
-#include <Mesh.hpp>
 #include <cstddef>
+#include <engine/Mesh.hpp>
 
 Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices,
            std::vector<Texture> textures)

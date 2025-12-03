@@ -2,9 +2,9 @@
 
 #include <assimp/material.h>
 #include <assimp/scene.h>
+#include <engine/Mesh.hpp>
+#include <engine/Shader.hpp>
 #include <vector>
-#include "Mesh.hpp"
-#include "Shader.hpp"
 
 unsigned int TextureFromFile(const char *path, const std::string &directory, bool gamma = false);
 
