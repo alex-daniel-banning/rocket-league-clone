@@ -2,14 +2,14 @@
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
-#include <engine/Model.hpp>
+#include <engine/render/Model.hpp>
 #include <stb_image.h>
 #include "iostream"
 
-namespace engine
+namespace engine::render
 {
 
-void Model::Draw(Shader &shader)
+void Model::Draw(engine::render::Shader &shader)
 {
     for (unsigned int i = 0; i < meshes.size(); i++)
     {
@@ -220,4 +220,4 @@ unsigned int TextureFromFile(const char *path, const std::string &directory, boo
     }
     return textureID;
 }
-} // namespace engine
+} // namespace engine::render

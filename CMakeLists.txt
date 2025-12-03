@@ -5,10 +5,10 @@ project(rocket-league-clone)
 add_library(engine STATIC
     src/engine/glad.c
     src/engine/stb_image.cpp
-    src/engine/Camera.cpp
-    src/engine/Shader.cpp
-    src/engine/Mesh.cpp
-    src/engine/Model.cpp
+    src/engine/render/Camera.cpp
+    src/engine/render/Shader.cpp
+    src/engine/render/Mesh.cpp
+    src/engine/render/Model.cpp
 )
 
 target_include_directories(engine PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)

@@ -2,7 +2,7 @@
 
 #include <glm/glm.hpp>
 
-namespace engine
+namespace engine::render
 {
 
 // Defines several possible options for camera movement. Used as abstraction to stay away from
@@ -62,4 +62,4 @@ class Camera
     // calculates the front vector from the Camera's (updated) Euler Angles
     void updateCameraVectors();
 };
-} // namespace engine
+} // namespace engine::render

@@ -5,9 +5,9 @@
 #include <glad/glad.h>
 #include <glm/gtc/type_ptr.hpp>
 
-#include <engine/Shader.hpp>
+#include <engine/render/Shader.hpp>
 
-namespace engine
+namespace engine::render
 {
 namespace fs = std::filesystem;
 
@@ -137,4 +137,4 @@ void Shader::checkCompileErrors(unsigned int shader, std::string type)
         }
     }
 };
-} // namespace engine
+} // namespace engine::render

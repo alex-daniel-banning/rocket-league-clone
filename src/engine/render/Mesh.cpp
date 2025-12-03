@@ -1,8 +1,8 @@
 #include <glad/glad.h>
 #include <cstddef>
-#include <engine/Mesh.hpp>
+#include <engine/render/Mesh.hpp>
 
-namespace engine
+namespace engine::render
 {
 
 Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices,
@@ -54,7 +54,7 @@ void Mesh::setupMesh()
     glBindVertexArray(0);
 };
 
-void Mesh::Draw(Shader &shader)
+void Mesh::Draw(engine::render::Shader &shader)
 {
     unsigned int diffuseNr  = 1;
     unsigned int specularNr = 1;
@@ -86,4 +86,4 @@ void Mesh::Draw(Shader &shader)
     glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
 }
-} // namespace engine
+} // namespace engine::render

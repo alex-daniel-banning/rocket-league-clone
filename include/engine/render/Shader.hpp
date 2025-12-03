@@ -3,7 +3,7 @@
 
 #include <string>
 
-namespace engine
+namespace engine::render
 {
 
 class Shader
@@ -39,4 +39,4 @@ class Shader
     // ------------------------------------------------------------------------
     void checkCompileErrors(unsigned int shader, std::string type);
 };
-} // namespace engine
+} // namespace engine::render

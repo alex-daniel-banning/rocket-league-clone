@@ -1,11 +1,11 @@
 #pragma once
 
-#include <engine/Shader.hpp>
+#include <engine/render/Shader.hpp>
 #include <glm/glm.hpp>
 #include <string>
 #include <vector>
 
-namespace engine
+namespace engine::render
 {
 
 struct Vertex
@@ -36,7 +36,7 @@ class Mesh
     Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices,
          std::vector<Texture> textures);
     Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, glm::vec3 color);
-    void Draw(Shader &shader);
+    void Draw(engine::render::Shader &shader);
 
   private:
     // render data
@@ -44,4 +44,4 @@ class Mesh
 
     void setupMesh();
 };
-} // namespace engine
+} // namespace engine::render

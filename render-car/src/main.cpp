@@ -14,14 +14,14 @@
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtx/string_cast.hpp>
 
-#include <engine/Camera.hpp>
-#include <engine/Model.hpp>
-#include <engine/Shader.hpp>
+#include <engine/render/Camera.hpp>
+#include <engine/render/Model.hpp>
+#include <engine/render/Shader.hpp>
 
 float deltaTime = 0.0f; // Time between current frame and last frame
 float lastFrame = 0.0f; // Time of last frame
 
-void processInput(GLFWwindow *window, engine::Camera &camera);
+void processInput(GLFWwindow *window, engine::render::Camera &camera);
 
 int main()
 {
@@ -63,19 +63,21 @@ int main()
         return -1;
     }
 
-    engine::Camera camera;
+    engine::render::Camera camera;
 
-    engine::Shader lightingShader("resources/shaders/basic.vert", "resources/shaders/basic.frag");
-    engine::Shader lightSourceShader("resources/shaders/basic.vert",
-                                     "resources/shaders/light_source.frag");
+    engine::render::Shader lightingShader("resources/shaders/basic.vert",
+                                          "resources/shaders/basic.frag");
+    engine::render::Shader lightSourceShader("resources/shaders/basic.vert",
+                                             "resources/shaders/light_source.frag");
 
     glEnable(GL_DEPTH_TEST);
 
     glm::vec3 lightPos(1.2f, 2.0f, 2.0f);
 
-    engine::Model myModel("/home/alex/source/rocket-league-clone/render-car/resources/car/car.obj");
-    engine::Shader modelShader("resources/shaders/model_loading.vert",
-                               "resources/shaders/model_loading.frag");
+    engine::render::Model myModel(
+        "/home/alex/source/rocket-league-clone/render-car/resources/car/car.obj");
+    engine::render::Shader modelShader("resources/shaders/model_loading.vert",
+                                       "resources/shaders/model_loading.frag");
     GLenum err_preloop;
     while ((err_preloop = glGetError()) != GL_NO_ERROR)
     {
@@ -128,7 +130,7 @@ int main()
     return 0;
 }
 
-void processInput(GLFWwindow *window, engine::Camera &camera)
+void processInput(GLFWwindow *window, engine::render::Camera &camera)
 {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);

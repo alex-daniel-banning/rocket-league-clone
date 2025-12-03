@@ -2,11 +2,11 @@
 
 #include <assimp/material.h>
 #include <assimp/scene.h>
-#include <engine/Mesh.hpp>
-#include <engine/Shader.hpp>
+#include <engine/render/Mesh.hpp>
+#include <engine/render/Shader.hpp>
 #include <vector>
 
-namespace engine
+namespace engine::render
 {
 
 unsigned int TextureFromFile(const char *path, const std::string &directory, bool gamma = false);
@@ -15,7 +15,7 @@ class Model
 {
   public:
     Model(const char *path) { loadModel(path); }
-    void Draw(Shader &shader);
+    void Draw(engine::render::Shader &shader);
 
   private:
     // model data
@@ -29,4 +29,4 @@ class Model
     std::vector<Texture> loadMaterialTextures(aiMaterial *mat, aiTextureType type,
                                               std::string typeName);
 };
-} // namespace engine
+} // namespace engine::render
