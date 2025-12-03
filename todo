@@ -1,6 +1,10 @@
 First I need something I can render:
     boxes
     spheres
+    Render a box and a sphere via renderer class
+
+Create 'modules' directory in root, and put subprojects in it
+Setup clang-tidy to warn about unused imports
 
 Next mini project options:
     Collisions/Physics

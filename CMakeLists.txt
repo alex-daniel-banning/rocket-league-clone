@@ -9,11 +9,13 @@ add_library(engine STATIC
     src/engine/render/Shader.cpp
     src/engine/render/Mesh.cpp
     src/engine/render/Model.cpp
+    src/engine/render/Renderer.cpp
 )
 
 target_include_directories(engine PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 add_subdirectory(render-car)
+add_subdirectory(physics-playground)
 
 # Find packages
 find_package(glfw3 3.3 REQUIRED)
