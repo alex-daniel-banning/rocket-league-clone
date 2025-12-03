@@ -65,16 +65,17 @@ int main()
 
     engine::Camera camera;
 
-    Shader lightingShader("resources/shaders/basic.vert", "resources/shaders/basic.frag");
-    Shader lightSourceShader("resources/shaders/basic.vert", "resources/shaders/light_source.frag");
+    engine::Shader lightingShader("resources/shaders/basic.vert", "resources/shaders/basic.frag");
+    engine::Shader lightSourceShader("resources/shaders/basic.vert",
+                                     "resources/shaders/light_source.frag");
 
     glEnable(GL_DEPTH_TEST);
 
     glm::vec3 lightPos(1.2f, 2.0f, 2.0f);
 
-    Model myModel("/home/alex/source/rocket-league-clone/render-car/resources/car/car.obj");
-    Shader modelShader("resources/shaders/model_loading.vert",
-                       "resources/shaders/model_loading.frag");
+    engine::Model myModel("/home/alex/source/rocket-league-clone/render-car/resources/car/car.obj");
+    engine::Shader modelShader("resources/shaders/model_loading.vert",
+                               "resources/shaders/model_loading.frag");
     GLenum err_preloop;
     while ((err_preloop = glGetError()) != GL_NO_ERROR)
     {

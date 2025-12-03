@@ -5,6 +5,9 @@
 #include <string>
 #include <vector>
 
+namespace engine
+{
+
 struct Vertex
 {
     glm::vec3 Position;
@@ -41,3 +44,4 @@ class Mesh
 
     void setupMesh();
 };
+} // namespace engine

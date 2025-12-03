@@ -7,6 +7,8 @@
 
 #include <engine/Shader.hpp>
 
+namespace engine
+{
 namespace fs = std::filesystem;
 
 Shader::Shader(const char *vertexPath, const char *fragmentPath)
@@ -135,3 +137,4 @@ void Shader::checkCompileErrors(unsigned int shader, std::string type)
         }
     }
 };
+} // namespace engine

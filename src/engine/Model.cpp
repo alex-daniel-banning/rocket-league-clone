@@ -6,6 +6,9 @@
 #include <stb_image.h>
 #include "iostream"
 
+namespace engine
+{
+
 void Model::Draw(Shader &shader)
 {
     for (unsigned int i = 0; i < meshes.size(); i++)
@@ -217,3 +220,4 @@ unsigned int TextureFromFile(const char *path, const std::string &directory, boo
     }
     return textureID;
 }
+} // namespace engine

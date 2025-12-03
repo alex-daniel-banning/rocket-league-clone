@@ -1,9 +1,10 @@
-#ifndef SHADER_H
-#define SHADER_H
-
+#pragma once
 #include <glm/glm.hpp>
 
 #include <string>
+
+namespace engine
+{
 
 class Shader
 {
@@ -38,4 +39,4 @@ class Shader
     // ------------------------------------------------------------------------
     void checkCompileErrors(unsigned int shader, std::string type);
 };
-#endif
+} // namespace engine

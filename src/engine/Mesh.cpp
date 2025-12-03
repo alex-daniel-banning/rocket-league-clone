@@ -2,6 +2,9 @@
 #include <cstddef>
 #include <engine/Mesh.hpp>
 
+namespace engine
+{
+
 Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices,
            std::vector<Texture> textures)
 {
@@ -83,3 +86,4 @@ void Mesh::Draw(Shader &shader)
     glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
 }
+} // namespace engine

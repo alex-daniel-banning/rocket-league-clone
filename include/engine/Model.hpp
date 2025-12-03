@@ -6,6 +6,9 @@
 #include <engine/Shader.hpp>
 #include <vector>
 
+namespace engine
+{
+
 unsigned int TextureFromFile(const char *path, const std::string &directory, bool gamma = false);
 
 class Model
@@ -26,3 +29,4 @@ class Model
     std::vector<Texture> loadMaterialTextures(aiMaterial *mat, aiTextureType type,
                                               std::string typeName);
 };
+} // namespace engine
