@@ -1,5 +1,6 @@
-Setup next mini project (Cmake files, move shared code, etc.)
-
+First I need something I can render:
+    boxes
+    spheres
 
 Next mini project options:
     Collisions/Physics
@@ -14,6 +15,9 @@ Next mini project options:
         Collisions:
             AABB
             Sphere
+            Are planes handled by AABB? Does it make sense to use planes for walls?
+            Static object (walls, floor, etc.)
+            Dynamic objects (ball, car)
         Mass?
         Center of mass?
         Rotation after impact?
