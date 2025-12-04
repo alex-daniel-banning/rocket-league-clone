@@ -1,8 +1,6 @@
-Clean up how paths are handled (See Shader constructor)
-First I need something I can render:
-    boxes
-    spheres
-    Render a box and a sphere via renderer class
+clean up box rendering code
+render Sphere
+change module name from physics-playground to just physics
 
 Next mini project options:
     Collisions/Physics

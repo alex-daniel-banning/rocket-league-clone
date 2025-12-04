@@ -14,7 +14,10 @@
 // #include <glm/gtx/quaternion.hpp>
 // #include <glm/gtx/string_cast.hpp>
 
+#include <engine/PathManager.hpp>
+#include <engine/physics/Box.hpp>
 #include <engine/render/Camera.hpp>
+#include <engine/render/Renderer.hpp>
 #include <engine/render/Shader.hpp>
 
 float deltaTime = 0.0f; // Time between current frame and last frame
@@ -60,7 +63,24 @@ int main()
         return -1;
     }
 
+    glEnable(GL_DEPTH_TEST);
+
     engine::render::Camera camera;
+
+    engine::render::Renderer renderer;
+    engine::physics::Box box;
+    box.size.x = 1.0f;
+    box.size.y = 2.0f;
+    box.size.z = 4.0f;
+
+    engine::render::Shader lightingShader(
+        engine::PathManager::globalAsset("shaders/basic.vert").c_str(),
+        engine::PathManager::globalAsset("shaders/basic.frag").c_str());
+    lightingShader.use();
+    lightingShader.setVec3("objectColor", 1.0f, 0.0f, 0.0f);
+    lightingShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
+    lightingShader.setVec3("lightPos", 0.0f, 5.0f, 0.0f);
+    lightingShader.setVec3("viewPos", camera.Position.x, camera.Position.y, camera.Position.z);
 
     // Main loop
     while (!glfwWindowShouldClose(window))
@@ -74,6 +94,8 @@ int main()
         // Clear the screen
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        renderer.drawBoxWireframe(box, lightingShader, camera);
 
         GLenum err;
         while ((err = glGetError()) != GL_NO_ERROR)
