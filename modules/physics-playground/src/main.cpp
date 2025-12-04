@@ -24,7 +24,6 @@ void processInput(GLFWwindow *window, engine::render::Camera &camera);
 
 int main()
 {
-    std::cout << "Testing!" << std::endl;
     // Initialize GLFW
     if (!glfwInit())
     {

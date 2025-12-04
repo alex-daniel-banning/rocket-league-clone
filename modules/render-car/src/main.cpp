@@ -14,6 +14,7 @@
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtx/string_cast.hpp>
 
+#include <engine/PathManager.hpp>
 #include <engine/render/Camera.hpp>
 #include <engine/render/Model.hpp>
 #include <engine/render/Shader.hpp>
@@ -25,8 +26,6 @@ void processInput(GLFWwindow *window, engine::render::Camera &camera);
 
 int main()
 {
-    std::string debugTest = "pee pee poo poo";
-
     // Initialize GLFW
     if (!glfwInit())
     {
@@ -65,24 +64,23 @@ int main()
 
     engine::render::Camera camera;
 
-    engine::render::Shader lightingShader("resources/shaders/basic.vert",
-                                          "resources/shaders/basic.frag");
-    engine::render::Shader lightSourceShader("resources/shaders/basic.vert",
-                                             "resources/shaders/light_source.frag");
+    engine::render::Shader lightingShader(
+        engine::PathManager::globalAsset("shaders/basic.vert").c_str(),
+        engine::PathManager::globalAsset("shaders/basic.frag").c_str());
+    engine::render::Shader lightSourceShader(
+        engine::PathManager::globalAsset("shaders/basic.vert").c_str(),
+        engine::PathManager::moduleAsset("render-car", "shaders/light_source.frag").c_str());
 
     glEnable(GL_DEPTH_TEST);
 
     glm::vec3 lightPos(1.2f, 2.0f, 2.0f);
 
     engine::render::Model myModel(
-        "/home/alex/source/rocket-league-clone/modules/render-car/resources/car/car.obj");
-    engine::render::Shader modelShader("resources/shaders/model_loading.vert",
-                                       "resources/shaders/model_loading.frag");
-    GLenum err_preloop;
-    while ((err_preloop = glGetError()) != GL_NO_ERROR)
-    {
-        std::cout << "GL ERROR (pre loop): " << err_preloop << "\n";
-    }
+        engine::PathManager::moduleAsset("render-car", "car/car.obj").c_str());
+
+    engine::render::Shader modelShader(
+        engine::PathManager::moduleAsset("render-car", "shaders/model_loading.vert").c_str(),
+        engine::PathManager::moduleAsset("render-car", "shaders/model_loading.frag").c_str());
 
     // Main loop
     while (!glfwWindowShouldClose(window))
