@@ -1,7 +1,3 @@
-clean up box rendering code
-render Sphere
-change module name from physics-playground to just physics
-
 Next mini project options:
     Collisions/Physics
         Rigid-body basis:
@@ -30,3 +26,6 @@ Next mini project options:
         Wheel grip
 
     Hit boxes
+
+Backlog:
+    Wireframe/Debug render with basic frag shader (bright green, perhaps)

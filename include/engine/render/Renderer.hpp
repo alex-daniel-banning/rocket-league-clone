@@ -15,10 +15,14 @@ class Renderer
                  const Camera &camera);
     void drawBoxWireframe(const engine::physics::Box &box, engine::render::Shader &shader,
                           const Camera &camera);
-    void drawSphere(const engine::physics::Sphere &sphere, engine::render::Shader &shader);
+    void drawSphere(const engine::physics::Sphere &sphere, engine::render::Shader &shader,
+                    const Camera &camera);
+    void drawSphereWireframe(const engine::physics::Sphere &sphere, engine::render::Shader &shader,
+                             const Camera &camera);
 
     glm::mat4 getProjection(float aspect, float fov = 45.0f);
     glm::mat4 makeModelMatrix(const engine::physics::Box &box);
+    glm::mat4 makeModelMatrix(const engine::physics::Sphere &sphere);
 
     // todo, I don't know what these are useful for, but chat gpt suggested
     // void beginFrame();
@@ -27,8 +31,10 @@ class Renderer
   private:
     unsigned int cubeVAO, cubeVBO;
     unsigned int cubeWireVAO, cubeWireVBO, cubeWireEBO;
+    unsigned int sphereVAO, sphereEBO, sphereIndexCount;
     void initCube();
     void initWireCube();
+    void initSphere();
 };
 
 } // namespace engine::render
