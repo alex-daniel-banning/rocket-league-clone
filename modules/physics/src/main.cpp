@@ -74,7 +74,9 @@ int main()
     box.size.z = 4.0f;
 
     engine::physics::Sphere sphere;
-    sphere.radius = 1.0f;
+    sphere.radius   = 1.0f;
+    sphere.position = glm::vec3(0.0f, 0.0f, 0.0f);
+    sphere.velocity = glm::vec3(1.0f, 0.0f, 0.0f);
 
     engine::render::Shader lightingShader(
         engine::PathManager::globalAsset("shaders/basic.vert").c_str(),
@@ -97,9 +99,14 @@ int main()
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // renderer.drawBox(box, lightingShader, camera);
         lightingShader.setVec3("viewPos", camera.Position.x, camera.Position.y, camera.Position.z);
-        renderer.drawSphereWireframe(sphere, lightingShader, camera);
+        sphere.position += sphere.velocity * deltaTime;
+        if (std::abs(sphere.position.x) > 2.0f || std::abs(sphere.position.y) > 2.0f ||
+            std::abs(sphere.position.z) > 2.0f)
+        {
+            sphere.position = glm::vec3(0.0f, 0.0f, 0.0f);
+        }
+        renderer.drawSphere(sphere, lightingShader, camera);
 
         GLenum err;
         while ((err = glGetError()) != GL_NO_ERROR)

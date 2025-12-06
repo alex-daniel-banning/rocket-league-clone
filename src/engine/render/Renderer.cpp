@@ -132,7 +132,10 @@ glm::mat4 Renderer::makeModelMatrix(const engine::physics::Box &box)
 
 glm::mat4 Renderer::makeModelMatrix(const engine::physics::Sphere &sphere)
 {
-    return glm::scale(glm::mat4(1.0f), glm::vec3(sphere.radius));
+    glm::mat4 model = glm::mat4(1.0f);
+    model           = glm::translate(model, glm::vec3(sphere.position));
+    model           = glm::scale(model, glm::vec3(sphere.radius));
+    return model;
 }
 
 void Renderer::initCube()
