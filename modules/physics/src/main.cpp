@@ -1,3 +1,4 @@
+#include "engine/render/Model.hpp"
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glad/glad.h>
 
@@ -7,15 +8,16 @@
 
 #include <iostream>
 
-// #include <glm/glm.hpp>
-// #include <glm/gtc/matrix_transform.hpp>
-// #include <glm/gtc/type_ptr.hpp>
-// #include <glm/gtx/dual_quaternion.hpp>
-// #include <glm/gtx/quaternion.hpp>
-// #include <glm/gtx/string_cast.hpp>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/dual_quaternion.hpp>
+#include <glm/gtx/quaternion.hpp>
+#include <glm/gtx/string_cast.hpp>
 
 #include <engine/PathManager.hpp>
 #include <engine/physics/Box.hpp>
+#include <engine/physics/Plane.hpp>
 #include <engine/render/Camera.hpp>
 #include <engine/render/Renderer.hpp>
 #include <engine/render/Shader.hpp>
@@ -86,6 +88,19 @@ int main()
     lightingShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
     lightingShader.setVec3("lightPos", 0.0f, 5.0f, 0.0f);
 
+    engine::physics::Plane ground;
+    ground.size     = glm::vec2(100.0f, 75.0f);
+    ground.position = glm::vec3(0.0f, 0.0f, 0.0f);
+    engine::render::Model grass(engine::PathManager::globalAsset("grass/grass.obj").c_str());
+    engine::render::Shader modelShader(
+        engine::PathManager::moduleAsset("render-car", "shaders/model_loading.vert").c_str(),
+        engine::PathManager::moduleAsset("render-car", "shaders/model_loading.frag").c_str());
+    modelShader.use();
+    modelShader.setVec3("objectColor", 1.0f, 0.0f, 0.0f);
+    modelShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
+    modelShader.setVec3("lightPos", 0.0f, 5.0f, 0.0f);
+    modelShader.setFloat("textureRepeat", 20.0f);
+
     // Main loop
     while (!glfwWindowShouldClose(window))
     {
@@ -96,17 +111,26 @@ int main()
         processInput(window, camera);
 
         // Clear the screen
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        lightingShader.setVec3("viewPos", camera.Position.x, camera.Position.y, camera.Position.z);
-        sphere.position += sphere.velocity * deltaTime;
-        if (std::abs(sphere.position.x) > 2.0f || std::abs(sphere.position.y) > 2.0f ||
-            std::abs(sphere.position.z) > 2.0f)
-        {
-            sphere.position = glm::vec3(0.0f, 0.0f, 0.0f);
-        }
-        renderer.drawSphere(sphere, lightingShader, camera);
+        modelShader.use();
+        glm::mat4 model = glm::mat4(1.0f);
+        model           = glm::translate(model, ground.position);
+        // todo,
+        // model = model * glm::mat4_cast(rotation);
+        model = glm::scale(model, glm::vec3(ground.size.x, 1.0f, ground.size.y));
+        glm::mat4 view;
+        view = camera.GetViewMatrix();
+        glm::mat4 projection;
+        projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
+        modelShader.setMat4("model", model);
+        modelShader.setMat4("view", view);
+        modelShader.setMat4("projection", projection);
+        modelShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
+        modelShader.setVec3("lightPos", 5.0f, 5.0f, 5.0f);
+        modelShader.setBool("useTexture", true);
+        grass.Draw(modelShader);
 
         GLenum err;
         while ((err = glGetError()) != GL_NO_ERROR)
@@ -147,7 +171,6 @@ void processInput(GLFWwindow *window, engine::render::Camera &camera)
         camera.Position += glm::vec3(0.0f, 1.0f, 0.0f) * cameraSpeed;
     if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
         camera.Position -= glm::vec3(0.0f, 1.0f, 0.0f) * cameraSpeed;
-    camera.lookAtOrigin();
 
     // make sure that when camera.Pitch is out of bounds, screen doesn't get flipped
     if (camera.Pitch > 89.0f)

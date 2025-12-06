@@ -10,10 +10,11 @@ out vec3 Normal;
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
+uniform float textureRepeat = 1;
 
 void main()
 {
-    TexCoords = aTexCoords;    
+    TexCoords = aTexCoords * textureRepeat;    
     gl_Position = projection * view * model * vec4(aPos, 1.0);
     FragPos = vec3(model * vec4(aPos, 1.0));
     Normal = aNormal;
