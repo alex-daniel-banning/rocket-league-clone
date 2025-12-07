@@ -49,6 +49,28 @@ void Camera::ProcessKeyboard(Camera_Movement direction, float deltaTime)
         Position += Right * velocity;
 };
 
+void Camera::ProcessMouseMovement(float xoffset, float yoffset, const float mouseSensitivity,
+                                  bool constrainPitch)
+{
+    xoffset *= mouseSensitivity;
+    yoffset *= mouseSensitivity;
+
+    Yaw += xoffset;
+    Pitch += yoffset;
+
+    // make sure that when pitch is out of bounds, screen doesn't get flipped
+    if (constrainPitch)
+    {
+        if (Pitch > 89.0f)
+            Pitch = 89.0f;
+        if (Pitch < -89.0f)
+            Pitch = -89.0f;
+    }
+
+    // update Front, Right and Up Vectors using the updated Euler angles
+    updateCameraVectors();
+}
+
 // calculates the front vector from the Camera's (updated) Euler Angles
 void Camera::updateCameraVectors()
 {

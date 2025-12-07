@@ -5,9 +5,6 @@
 #include <engine/render/Camera.hpp>
 #include <engine/render/Renderer.hpp>
 
-#include <iomanip>
-#include <iostream>
-
 namespace engine::render
 {
 static constexpr float cubeVertices[] = {
@@ -53,8 +50,10 @@ static const float cubeWireVertices[8][3] = {
 
 static constexpr unsigned int cubeWireIndices[] = {0, 1, 1, 2, 2, 3, 3, 0, 4, 5, 5, 6,
                                                    6, 7, 7, 4, 0, 4, 1, 5, 2, 6, 3, 7};
-Renderer::Renderer()
+Renderer::Renderer(const float screenWidth, const float screenHeight)
 {
+    this->screenWidth  = screenWidth;
+    this->screenHeight = screenHeight;
     initCube();
     initWireCube();
     initSphere();
@@ -66,7 +65,7 @@ void Renderer::drawBox(const engine::physics::Box &box, engine::render::Shader &
     glm::mat4 model = makeModelMatrix(box);
     glm::mat4 view  = camera.GetViewMatrix();
     glm::mat4 projection;
-    projection = getProjection(800.0f / 600.0f);
+    projection = getProjection(screenWidth / screenHeight);
 
     shader.use();
     shader.setMat4("model", model);
@@ -82,7 +81,7 @@ void Renderer::drawBoxWireframe(const engine::physics::Box &box, engine::render:
 {
     glm::mat4 model      = makeModelMatrix(box);
     glm::mat4 view       = camera.GetViewMatrix();
-    glm::mat4 projection = getProjection(800.0f / 600.0f);
+    glm::mat4 projection = getProjection(screenWidth / screenHeight);
 
     shader.use();
     shader.setMat4("model", model);
@@ -102,7 +101,7 @@ void Renderer::drawSphere(const engine::physics::Sphere &sphere, engine::render:
     glm::mat4 model = makeModelMatrix(sphere);
     glm::mat4 view  = camera.GetViewMatrix();
     glm::mat4 projection;
-    projection = getProjection(800.0f / 600.0f);
+    projection = getProjection(screenWidth / screenHeight);
 
     shader.use();
     shader.setMat4("model", model);
@@ -118,6 +117,28 @@ void Renderer::drawSphereWireframe(const engine::physics::Sphere &sphere,
 {
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     drawSphere(sphere, shader, camera);
+}
+
+void Renderer::drawModel(engine::render::Model &model, engine::render::Shader &shader,
+                         const Camera &camera, glm::vec3 position, glm::vec3 scale)
+{
+    shader.use();
+    glm::mat4 modelMatrix = glm::mat4(1.0f);
+    modelMatrix           = glm::translate(modelMatrix, position);
+    // todo,
+    // modelMatrix = modelMatrix * glm::mat4_cast(rotation);
+    modelMatrix = glm::scale(modelMatrix, scale);
+    glm::mat4 view;
+    view = camera.GetViewMatrix();
+    glm::mat4 projection;
+    projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
+    shader.setMat4("model", modelMatrix);
+    shader.setMat4("view", view);
+    shader.setMat4("projection", projection);
+    shader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
+    shader.setVec3("lightPos", 5.0f, 5.0f, 5.0f);
+    shader.setBool("useTexture", true);
+    model.Draw(shader);
 }
 
 glm::mat4 Renderer::getProjection(float aspect, float fov)

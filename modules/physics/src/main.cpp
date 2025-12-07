@@ -25,6 +25,13 @@
 float deltaTime = 0.0f; // Time between current frame and last frame
 float lastFrame = 0.0f; // Time of last frame
 
+float SCR_WIDTH  = 800.0f;
+float SCR_HEIGHT = 600.0f;
+float lastX      = SCR_WIDTH / 2.0f;
+float lastY      = SCR_HEIGHT / 2.0f;
+bool firstMouse  = true;
+
+void mouse_callback(GLFWwindow *window, double xpos, double ypos);
 void processInput(GLFWwindow *window, engine::render::Camera &camera);
 
 int main()
@@ -57,6 +64,8 @@ int main()
 
     // Make the window's context current
     glfwMakeContextCurrent(window);
+    glfwSetCursorPosCallback(window, mouse_callback);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     // Initialize glad
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
@@ -68,8 +77,9 @@ int main()
     glEnable(GL_DEPTH_TEST);
 
     engine::render::Camera camera;
+    glfwSetWindowUserPointer(window, &camera);
 
-    engine::render::Renderer renderer;
+    engine::render::Renderer renderer(SCR_WIDTH, SCR_HEIGHT);
     engine::physics::Box box;
     box.size.x = 1.0f;
     box.size.y = 2.0f;
@@ -88,18 +98,28 @@ int main()
     lightingShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
     lightingShader.setVec3("lightPos", 0.0f, 5.0f, 0.0f);
 
-    engine::physics::Plane ground;
-    ground.size     = glm::vec2(100.0f, 75.0f);
-    ground.position = glm::vec3(0.0f, 0.0f, 0.0f);
-    engine::render::Model grass(engine::PathManager::globalAsset("grass/grass.obj").c_str());
+    // Setting
     engine::render::Shader modelShader(
         engine::PathManager::moduleAsset("render-car", "shaders/model_loading.vert").c_str(),
         engine::PathManager::moduleAsset("render-car", "shaders/model_loading.frag").c_str());
     modelShader.use();
-    modelShader.setVec3("objectColor", 1.0f, 0.0f, 0.0f);
     modelShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
     modelShader.setVec3("lightPos", 0.0f, 5.0f, 0.0f);
     modelShader.setFloat("textureRepeat", 20.0f);
+    modelShader.setFloat("ambientStrength", 1.0f);
+    float pitchLength = 150.0f;
+    float pitchWidth  = 75.0f;
+    float pitchHeight = 75.0f;
+    // Ground
+    engine::physics::Plane ground;
+    ground.size     = glm::vec2(pitchLength, pitchWidth);
+    ground.position = glm::vec3(0.0f, 0.0f, 0.0f);
+    engine::render::Model grass(engine::PathManager::globalAsset("grass/grass.obj").c_str());
+    // Walls
+    engine::physics::Plane wall_1;
+    wall_1.size     = glm::vec2(pitchLength, pitchWidth);
+    wall_1.position = glm::vec3(pitchLength, pitchHeight / 2, pitchWidth);
+    engine::render::Model brick(engine::PathManager::globalAsset("brick/brick.obj").c_str());
 
     // Main loop
     while (!glfwWindowShouldClose(window))
@@ -114,23 +134,10 @@ int main()
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        modelShader.use();
-        glm::mat4 model = glm::mat4(1.0f);
-        model           = glm::translate(model, ground.position);
-        // todo,
-        // model = model * glm::mat4_cast(rotation);
-        model = glm::scale(model, glm::vec3(ground.size.x, 1.0f, ground.size.y));
-        glm::mat4 view;
-        view = camera.GetViewMatrix();
-        glm::mat4 projection;
-        projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
-        modelShader.setMat4("model", model);
-        modelShader.setMat4("view", view);
-        modelShader.setMat4("projection", projection);
-        modelShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
-        modelShader.setVec3("lightPos", 5.0f, 5.0f, 5.0f);
-        modelShader.setBool("useTexture", true);
-        grass.Draw(modelShader);
+        renderer.drawModel(grass, modelShader, camera, ground.position,
+                           glm::vec3(ground.size.x, 1.0f, ground.size.y));
+        renderer.drawModel(brick, modelShader, camera, wall_1.position,
+                           glm::vec3(wall_1.size.x, 1.0f, wall_1.size.y));
 
         GLenum err;
         while ((err = glGetError()) != GL_NO_ERROR)
@@ -151,6 +158,29 @@ int main()
     return 0;
 }
 
+void mouse_callback(GLFWwindow *window, double xposIn, double yposIn)
+{
+    auto *camera = static_cast<engine::render::Camera *>(glfwGetWindowUserPointer(window));
+    float mouseSensitivity = 0.05f;
+    float xpos             = static_cast<float>(xposIn);
+    float ypos             = static_cast<float>(yposIn);
+
+    if (firstMouse)
+    {
+        lastX      = xpos;
+        lastY      = ypos;
+        firstMouse = false;
+    }
+
+    float xoffset = xpos - lastX;
+    float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
+
+    lastX = xpos;
+    lastY = ypos;
+
+    assert(camera && "Camera pointer not set via glfwSetWindowUserPointer!");
+    camera->ProcessMouseMovement(xoffset, yoffset, mouseSensitivity);
+}
 void processInput(GLFWwindow *window, engine::render::Camera &camera)
 {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)

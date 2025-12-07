@@ -2,6 +2,7 @@
 #include <engine/physics/Box.hpp>
 #include <engine/physics/Sphere.hpp>
 #include <engine/render/Camera.hpp>
+#include <engine/render/Model.hpp>
 #include <engine/render/Shader.hpp>
 
 namespace engine::render
@@ -10,7 +11,7 @@ namespace engine::render
 class Renderer
 {
   public:
-    Renderer();
+    Renderer(const float screenWidth, const float screenHeight);
     void drawBox(const engine::physics::Box &box, engine::render::Shader &shader,
                  const Camera &camera);
     void drawBoxWireframe(const engine::physics::Box &box, engine::render::Shader &shader,
@@ -19,6 +20,9 @@ class Renderer
                     const Camera &camera);
     void drawSphereWireframe(const engine::physics::Sphere &sphere, engine::render::Shader &shader,
                              const Camera &camera);
+
+    void drawModel(engine::render::Model &model, engine::render::Shader &shader,
+                   const Camera &camera, glm::vec3 position, glm::vec3 scale);
 
     glm::mat4 getProjection(float aspect, float fov = 45.0f);
     glm::mat4 makeModelMatrix(const engine::physics::Box &box);
@@ -29,6 +33,7 @@ class Renderer
     // void endFrame();
 
   private:
+    float screenWidth, screenHeight;
     unsigned int cubeVAO, cubeVBO;
     unsigned int cubeWireVAO, cubeWireVBO, cubeWireEBO;
     unsigned int sphereVAO, sphereEBO, sphereIndexCount;

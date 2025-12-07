@@ -1,10 +1,7 @@
 Make environment less disorienting
     Add shadows
     Add walls
-Make camera more intuitive for viewing physics interactions
-    Where to put it?
-    How should it move?
-
+        Continue here (need to rotate the walls (quarterions))
 
 Next mini project options:
     Collisions/Physics
@@ -37,3 +34,4 @@ Next mini project options:
 
 Backlog:
     Wireframe/Debug render with basic frag shader (bright green, perhaps)
+    Add coordinates at top left of screen for debugging
