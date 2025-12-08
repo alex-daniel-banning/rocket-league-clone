@@ -77,6 +77,8 @@ int main()
     glEnable(GL_DEPTH_TEST);
 
     engine::render::Camera camera;
+    camera.projection.farPlane = 300.0f;
+    camera.MovementSpeed       = 10.0f;
     glfwSetWindowUserPointer(window, &camera);
 
     engine::render::Renderer renderer(SCR_WIDTH, SCR_HEIGHT);
@@ -105,21 +107,30 @@ int main()
     modelShader.use();
     modelShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
     modelShader.setVec3("lightPos", 0.0f, 5.0f, 0.0f);
-    modelShader.setFloat("textureRepeat", 20.0f);
-    modelShader.setFloat("ambientStrength", 1.0f);
+    modelShader.setFloat("textureRepeat", 5.0f);
     float pitchLength = 150.0f;
     float pitchWidth  = 75.0f;
-    float pitchHeight = 75.0f;
+    float pitchHeight = 30.0f;
     // Ground
     engine::physics::Plane ground;
     ground.size     = glm::vec2(pitchLength, pitchWidth);
     ground.position = glm::vec3(0.0f, 0.0f, 0.0f);
+    ground.rotation = glm::angleAxis(glm::radians(0.0f), glm::vec3(1, 0, 0));
     engine::render::Model grass(engine::PathManager::globalAsset("grass/grass.obj").c_str());
     // Walls
-    engine::physics::Plane wall_1;
-    wall_1.size     = glm::vec2(pitchLength, pitchWidth);
-    wall_1.position = glm::vec3(pitchLength, pitchHeight / 2, pitchWidth);
+    glm::quat upright = glm::angleAxis(glm::radians(-90.0f), glm::vec3(1, 0, 0));
+    glm::vec3 pitchCenter(0.0f, pitchHeight / 2.0f, 0.0f);
     engine::render::Model brick(engine::PathManager::globalAsset("brick/brick.obj").c_str());
+    engine::physics::Plane wall_1;
+    wall_1.size     = glm::vec2(pitchLength, pitchHeight);
+    wall_1.position = glm::vec3(0, pitchHeight / 2, pitchWidth / 2);
+    engine::physics::Plane wall_2;
+    wall_2.size     = glm::vec2(pitchLength, pitchHeight);
+    wall_2.position = glm::vec3(0, pitchHeight / 2, -pitchWidth / 2);
+    engine::physics::Plane wall_3;
+    wall_3.size     = glm::vec2(pitchLength, pitchHeight);
+    wall_3.position = glm::vec3(pitchLength / 2, pitchHeight / 2, 0);
+    wall_3.rotation = glm::angleAxis(glm::radians(90.0f), glm::vec3(0, 1, 0));
 
     // Main loop
     while (!glfwWindowShouldClose(window))
@@ -135,9 +146,13 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         renderer.drawModel(grass, modelShader, camera, ground.position,
-                           glm::vec3(ground.size.x, 1.0f, ground.size.y));
+                           glm::vec3(ground.size.x, 1.0f, ground.size.y), ground.rotation);
         renderer.drawModel(brick, modelShader, camera, wall_1.position,
-                           glm::vec3(wall_1.size.x, 1.0f, wall_1.size.y));
+                           glm::vec3(wall_1.size.x, 1.0f, wall_1.size.y), wall_1.rotation);
+        // renderer.drawModel(brick, modelShader, camera, wall_2.position,
+        //                    glm::vec3(wall_2.size.x, 1.0f, wall_2.size.y), wall_2.rotation);
+        // renderer.drawModel(brick, modelShader, camera, wall_3.position,
+        //                    glm::vec3(wall_3.size.x, 1.0f, wall_3.size.y), wall_3.rotation);
 
         GLenum err;
         while ((err = glGetError()) != GL_NO_ERROR)

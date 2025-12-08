@@ -1,4 +1,7 @@
 #pragma once
+
+#include <glm/gtc/quaternion.hpp>
+
 #include <engine/physics/Box.hpp>
 #include <engine/physics/Sphere.hpp>
 #include <engine/render/Camera.hpp>
@@ -22,7 +25,7 @@ class Renderer
                              const Camera &camera);
 
     void drawModel(engine::render::Model &model, engine::render::Shader &shader,
-                   const Camera &camera, glm::vec3 position, glm::vec3 scale);
+                   const Camera &camera, glm::vec3 position, glm::vec3 scale, glm::quat rotation);
 
     glm::mat4 getProjection(float aspect, float fov = 45.0f);
     glm::mat4 makeModelMatrix(const engine::physics::Box &box);

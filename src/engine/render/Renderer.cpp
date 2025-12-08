@@ -120,18 +120,19 @@ void Renderer::drawSphereWireframe(const engine::physics::Sphere &sphere,
 }
 
 void Renderer::drawModel(engine::render::Model &model, engine::render::Shader &shader,
-                         const Camera &camera, glm::vec3 position, glm::vec3 scale)
+                         const Camera &camera, glm::vec3 position, glm::vec3 scale,
+                         glm::quat rotation)
 {
     shader.use();
     glm::mat4 modelMatrix = glm::mat4(1.0f);
     modelMatrix           = glm::translate(modelMatrix, position);
-    // todo,
-    // modelMatrix = modelMatrix * glm::mat4_cast(rotation);
-    modelMatrix = glm::scale(modelMatrix, scale);
+    modelMatrix           = modelMatrix * glm::mat4_cast(rotation);
+    modelMatrix           = glm::scale(modelMatrix, scale);
     glm::mat4 view;
     view = camera.GetViewMatrix();
     glm::mat4 projection;
-    projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
+    projection = glm::perspective(camera.projection.fov, screenWidth / screenHeight,
+                                  camera.projection.nearPlane, camera.projection.farPlane);
     shader.setMat4("model", modelMatrix);
     shader.setMat4("view", view);
     shader.setMat4("projection", projection);
