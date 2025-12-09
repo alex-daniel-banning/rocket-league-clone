@@ -138,7 +138,6 @@ void Renderer::drawModel(engine::render::Model &model, engine::render::Shader &s
     shader.setMat4("projection", projection);
     shader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
     shader.setVec3("lightPos", 5.0f, 5.0f, 5.0f);
-    shader.setBool("useTexture", true);
     model.Draw(shader);
 }
 

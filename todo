@@ -1,7 +1,5 @@
 Make environment less disorienting
     Add shadows
-    Add walls
-        Continue here (need to rotate the walls (quarterions))
 
 Next mini project options:
     Collisions/Physics
@@ -35,3 +33,4 @@ Next mini project options:
 Backlog:
     Wireframe/Debug render with basic frag shader (bright green, perhaps)
     Add coordinates at top left of screen for debugging
+    When camera movement is controlled by mouse, it's apparent that the mouse position jolts the camera when starting the program

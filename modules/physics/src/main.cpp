@@ -76,7 +76,8 @@ int main()
 
     glEnable(GL_DEPTH_TEST);
 
-    engine::render::Camera camera;
+    engine::render::Camera camera(glm::vec3(0.0f, 5.0f, 11.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f,
+                                  0.0f);
     camera.projection.farPlane = 300.0f;
     camera.MovementSpeed       = 10.0f;
     glfwSetWindowUserPointer(window, &camera);
@@ -118,19 +119,35 @@ int main()
     ground.rotation = glm::angleAxis(glm::radians(0.0f), glm::vec3(1, 0, 0));
     engine::render::Model grass(engine::PathManager::globalAsset("grass/grass.obj").c_str());
     // Walls
-    glm::quat upright = glm::angleAxis(glm::radians(-90.0f), glm::vec3(1, 0, 0));
     glm::vec3 pitchCenter(0.0f, pitchHeight / 2.0f, 0.0f);
     engine::render::Model brick(engine::PathManager::globalAsset("brick/brick.obj").c_str());
     engine::physics::Plane wall_1;
     wall_1.size     = glm::vec2(pitchLength, pitchHeight);
     wall_1.position = glm::vec3(0, pitchHeight / 2, pitchWidth / 2);
+    wall_1.rotation =
+        glm::quat(glm::vec3(glm::radians(-90.0f), glm::radians(0.0f), glm::radians(0.0f)));
     engine::physics::Plane wall_2;
     wall_2.size     = glm::vec2(pitchLength, pitchHeight);
     wall_2.position = glm::vec3(0, pitchHeight / 2, -pitchWidth / 2);
+    wall_2.rotation =
+        glm::quat(glm::vec3(glm::radians(90.0f), glm::radians(0.0f), glm::radians(0.0f)));
     engine::physics::Plane wall_3;
-    wall_3.size     = glm::vec2(pitchLength, pitchHeight);
+    wall_3.size     = glm::vec2(pitchWidth, pitchHeight);
     wall_3.position = glm::vec3(pitchLength / 2, pitchHeight / 2, 0);
-    wall_3.rotation = glm::angleAxis(glm::radians(90.0f), glm::vec3(0, 1, 0));
+    wall_3.rotation =
+        glm::quat(glm::vec3(glm::radians(0.0f), glm::radians(90.0f), glm::radians(90.0f)));
+    engine::physics::Plane wall_4;
+    wall_4.size     = glm::vec2(pitchWidth, pitchHeight);
+    wall_4.position = glm::vec3(-pitchLength / 2, pitchHeight / 2, 0);
+    wall_4.rotation =
+        glm::quat(glm::vec3(glm::radians(0.0f), glm::radians(-90.0f), glm::radians(-90.0f)));
+
+    glm::quat carRotation = glm::quat(glm::vec3(0.0f));
+    //     glm::quat(glm::vec3(glm::radians(90.0f), glm::radians(0.0f), glm::radians(90.0f)));
+    engine::render::Model car(
+        engine::PathManager::moduleAsset("render-car", "car/car.obj").c_str());
+    glm::vec3 carPosition = glm::vec3(0.0f, 2.0f, 0.0f);
+    camera.lookAt(carPosition);
 
     // Main loop
     while (!glfwWindowShouldClose(window))
@@ -145,14 +162,19 @@ int main()
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        modelShader.setBool("useTexture", true);
         renderer.drawModel(grass, modelShader, camera, ground.position,
                            glm::vec3(ground.size.x, 1.0f, ground.size.y), ground.rotation);
         renderer.drawModel(brick, modelShader, camera, wall_1.position,
                            glm::vec3(wall_1.size.x, 1.0f, wall_1.size.y), wall_1.rotation);
-        // renderer.drawModel(brick, modelShader, camera, wall_2.position,
-        //                    glm::vec3(wall_2.size.x, 1.0f, wall_2.size.y), wall_2.rotation);
-        // renderer.drawModel(brick, modelShader, camera, wall_3.position,
-        //                    glm::vec3(wall_3.size.x, 1.0f, wall_3.size.y), wall_3.rotation);
+        renderer.drawModel(brick, modelShader, camera, wall_2.position,
+                           glm::vec3(wall_2.size.x, 1.0f, wall_2.size.y), wall_2.rotation);
+        renderer.drawModel(brick, modelShader, camera, wall_3.position,
+                           glm::vec3(wall_3.size.x, 1.0f, wall_3.size.y), wall_3.rotation);
+        renderer.drawModel(brick, modelShader, camera, wall_4.position,
+                           glm::vec3(wall_4.size.x, 1.0f, wall_4.size.y), wall_4.rotation);
+        modelShader.setBool("useTexture", false);
+        renderer.drawModel(car, modelShader, camera, carPosition, glm::vec3(1.0f), carRotation);
 
         GLenum err;
         while ((err = glGetError()) != GL_NO_ERROR)
