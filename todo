@@ -1,5 +1,7 @@
 Make environment less disorienting
     Add shadows
+        https://learnopengl.com/Advanced-Lighting/Shadows/Shadow-Mapping
+            Go to "The depth map"
 
 Next mini project options:
     Collisions/Physics
@@ -31,6 +33,7 @@ Next mini project options:
     Hit boxes
 
 Backlog:
-    Wireframe/Debug render with basic frag shader (bright green, perhaps)
+    Debug rendering (for collisions)
+        Wireframe/Debug render with basic frag shader (bright green, perhaps)
     Add coordinates at top left of screen for debugging
     When camera movement is controlled by mouse, it's apparent that the mouse position jolts the camera when starting the program

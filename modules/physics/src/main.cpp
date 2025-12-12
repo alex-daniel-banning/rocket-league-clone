@@ -33,6 +33,16 @@ bool firstMouse  = true;
 
 void mouse_callback(GLFWwindow *window, double xpos, double ypos);
 void processInput(GLFWwindow *window, engine::render::Camera &camera);
+void CheckGLError(const char *where);
+void renderQuad();
+
+// ugly, just getting to work for now
+void tempDrawModel(engine::render::Model &model, engine::render::Shader &shader,
+                   const engine::render::Camera &camera, glm::vec3 position, glm::vec3 scale,
+                   glm::quat rotation);
+void tempDrawModelShadow(engine::render::Model &model, engine::render::Shader &shader,
+                         const engine::render::Camera &camera, glm::vec3 position, glm::vec3 scale,
+                         glm::quat rotation);
 
 int main()
 {
@@ -52,8 +62,10 @@ int main()
     const GLFWvidmode *mode = glfwGetVideoMode(primary);
 
     // Create a windowed mode window
+    // GLFWwindow *window =
+    //    glfwCreateWindow(mode->width, mode->height, "Fullscreen example", primary, nullptr);
     GLFWwindow *window =
-        glfwCreateWindow(mode->width, mode->height, "Fullscreen example", primary, nullptr);
+        glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Non-Fullscreen example", nullptr, nullptr);
 
     if (!window)
     {
@@ -64,7 +76,7 @@ int main()
 
     // Make the window's context current
     glfwMakeContextCurrent(window);
-    glfwSetCursorPosCallback(window, mouse_callback);
+    // glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     // Initialize glad
@@ -76,8 +88,11 @@ int main()
 
     glEnable(GL_DEPTH_TEST);
 
-    engine::render::Camera camera(glm::vec3(0.0f, 5.0f, 11.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f,
+    engine::render::Camera camera(glm::vec3(0.0f, 5.0f, 0.01f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f,
                                   0.0f);
+    camera.lookAtOrigin();
+    std::cout << "DEBUG! -> " << camera.Position.x << ", " << camera.Position.y << ", "
+              << camera.Position.z << std::endl;
     camera.projection.farPlane = 300.0f;
     camera.MovementSpeed       = 10.0f;
     glfwSetWindowUserPointer(window, &camera);
@@ -96,10 +111,11 @@ int main()
     engine::render::Shader lightingShader(
         engine::PathManager::globalAsset("shaders/basic.vert").c_str(),
         engine::PathManager::globalAsset("shaders/basic.frag").c_str());
+    glm::vec3 lightPos = glm::vec3(0.0f, 7.0f, 0.0f);
     lightingShader.use();
     lightingShader.setVec3("objectColor", 1.0f, 0.0f, 0.0f);
     lightingShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
-    lightingShader.setVec3("lightPos", 0.0f, 5.0f, 0.0f);
+    lightingShader.setVec3("lightPos", lightPos);
 
     // Setting
     engine::render::Shader modelShader(
@@ -107,7 +123,7 @@ int main()
         engine::PathManager::moduleAsset("render-car", "shaders/model_loading.frag").c_str());
     modelShader.use();
     modelShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
-    modelShader.setVec3("lightPos", 0.0f, 5.0f, 0.0f);
+    modelShader.setVec3("lightPos", lightPos);
     modelShader.setFloat("textureRepeat", 5.0f);
     float pitchLength = 150.0f;
     float pitchWidth  = 75.0f;
@@ -149,6 +165,62 @@ int main()
     glm::vec3 carPosition = glm::vec3(0.0f, 2.0f, 0.0f);
     camera.lookAt(carPosition);
 
+    // Shadows
+    unsigned int depthMapFBO;
+    glGenFramebuffers(1, &depthMapFBO);
+
+    const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
+    unsigned int depthMap;
+    glGenTextures(1, &depthMap);
+    glBindTexture(GL_TEXTURE_2D, depthMap);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0,
+                 GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
+    glDrawBuffer(GL_NONE);
+    glReadBuffer(GL_NONE);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    engine::render::Shader simpleDepthShader(
+        engine::PathManager::globalAsset("shaders/simple_depth_shader.vert").c_str(),
+        engine::PathManager::globalAsset("shaders/empty_shader.frag").c_str());
+    engine::render::Shader debugDepthQuad(
+        engine::PathManager::globalAsset("shaders/debugQuad.vert").c_str(),
+        engine::PathManager::globalAsset("shaders/debugDepthQuad.frag").c_str());
+    // set up vertex data (and buffer(s)) and configure vertex attributes
+    // ------------------------------------------------------------------
+    float planeVertices[] = {
+        // positions            // normals         // texcoords
+        25.0f, -0.5f, 25.0f, 0.0f,  1.0f,   0.0f,  25.0f,  0.0f, -25.0f, -0.5f, 25.0f,  0.0f,
+        1.0f,  0.0f,  0.0f,  0.0f,  -25.0f, -0.5f, -25.0f, 0.0f, 1.0f,   0.0f,  0.0f,   25.0f,
+
+        25.0f, -0.5f, 25.0f, 0.0f,  1.0f,   0.0f,  25.0f,  0.0f, -25.0f, -0.5f, -25.0f, 0.0f,
+        1.0f,  0.0f,  0.0f,  25.0f, 25.0f,  -0.5f, -25.0f, 0.0f, 1.0f,   0.0f,  25.0f,  25.0f};
+    // plane VAO
+    unsigned int planeVAO;
+    unsigned int planeVBO;
+    glGenVertexArrays(1, &planeVAO);
+    glGenBuffers(1, &planeVBO);
+    glBindVertexArray(planeVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, planeVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(planeVertices), planeVertices, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(3 * sizeof(float)));
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(6 * sizeof(float)));
+    glBindVertexArray(0);
+    debugDepthQuad.use();
+    debugDepthQuad.setInt("depthMap", 0);
+
+    float near_plane = 1.0f, far_plane = 7.5f;
+    bool firstPass = true;
     // Main loop
     while (!glfwWindowShouldClose(window))
     {
@@ -162,31 +234,85 @@ int main()
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        modelShader.setBool("useTexture", true);
-        renderer.drawModel(grass, modelShader, camera, ground.position,
-                           glm::vec3(ground.size.x, 1.0f, ground.size.y), ground.rotation);
-        renderer.drawModel(brick, modelShader, camera, wall_1.position,
-                           glm::vec3(wall_1.size.x, 1.0f, wall_1.size.y), wall_1.rotation);
-        renderer.drawModel(brick, modelShader, camera, wall_2.position,
-                           glm::vec3(wall_2.size.x, 1.0f, wall_2.size.y), wall_2.rotation);
-        renderer.drawModel(brick, modelShader, camera, wall_3.position,
-                           glm::vec3(wall_3.size.x, 1.0f, wall_3.size.y), wall_3.rotation);
-        renderer.drawModel(brick, modelShader, camera, wall_4.position,
-                           glm::vec3(wall_4.size.x, 1.0f, wall_4.size.y), wall_4.rotation);
-        modelShader.setBool("useTexture", false);
-        renderer.drawModel(car, modelShader, camera, carPosition, glm::vec3(1.0f), carRotation);
+        /*
+         */
+        // Shadows
+        // 1. first render to depth depthMap
+        // todo, configure shader and matrices?
+        glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
+        glm::mat4 lightView = glm::lookAt(glm::vec3(0.0f, 7.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f),
+                                          glm::vec3(0.0f, 1.0f, 0.0f));
+        glm::mat4 lightSpaceMatrix = lightProjection * lightView;
+        simpleDepthShader.use();
+        simpleDepthShader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
 
-        GLenum err;
-        while ((err = glGetError()) != GL_NO_ERROR)
+        glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+        glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
         {
-            std::cout << "GL ERROR: " << err << "\n";
+            std::cerr << "Shadow FBO incomplete\n";
         }
+        glClear(GL_DEPTH_BUFFER_BIT);
+        ////////////////////////////todo, render scene?///////////////////////////
+        // tempDrawModelShadow(grass, simpleDepthShader, camera, ground.position,
+        //                     glm::vec3(ground.size.x, 1.0f, ground.size.y), ground.rotation);
+        //  tempDrawModelShadow(brick, simpleDepthShader, camera, wall_1.position,
+        //                      glm::vec3(wall_1.size.x, 1.0f, wall_1.size.y), wall_1.rotation);
+        //  tempDrawModelShadow(brick, simpleDepthShader, camera, wall_2.position,
+        //                      glm::vec3(wall_2.size.x, 1.0f, wall_2.size.y), wall_2.rotation);
+        //  tempDrawModelShadow(brick, simpleDepthShader, camera, wall_3.position,
+        //                      glm::vec3(wall_3.size.x, 1.0f, wall_3.size.y), wall_3.rotation);
+        //  tempDrawModelShadow(brick, simpleDepthShader, camera, wall_4.position,
+        //                      glm::vec3(wall_4.size.x, 1.0f, wall_4.size.y), wall_4.rotation);
+        tempDrawModelShadow(car, simpleDepthShader, camera, carPosition, glm::vec3(1.0f),
+                            carRotation);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        ////////////////////////////////////////////////////////////////////////
+        // 2. then render scene as normal with shadow mapping (using depth map)
+        glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        // glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+        glDisable(GL_DEPTH_TEST);
+        debugDepthQuad.use();
+        debugDepthQuad.setFloat("near_plane", near_plane);
+        debugDepthQuad.setFloat("far_plane", far_plane);
+        glActiveTexture(GL_TEXTURE0);
+        // todo, configure shader and matrices?
+        glBindTexture(GL_TEXTURE_2D, depthMap);
+        renderQuad();
+        glEnable(GL_DEPTH_TEST);
+        //  todo, render scene?
+
+        // modelShader.use();
+        // modelShader.setBool("useTexture", true);
+        // tempDrawModel(grass, modelShader, camera, ground.position,
+        //               glm::vec3(ground.size.x, 1.0f, ground.size.y), ground.rotation);
+        // tempDrawModel(grass, modelShader, camera, ground.position,
+        //               glm::vec3(ground.size.x, 1.0f, ground.size.y), ground.rotation);
+        // tempDrawModel(brick, modelShader, camera, wall_1.position,
+        //               glm::vec3(wall_1.size.x, 1.0f, wall_1.size.y), wall_1.rotation);
+        // tempDrawModel(brick, modelShader, camera, wall_2.position,
+        //               glm::vec3(wall_2.size.x, 1.0f, wall_2.size.y), wall_2.rotation);
+        // tempDrawModel(brick, modelShader, camera, wall_3.position,
+        //               glm::vec3(wall_3.size.x, 1.0f, wall_3.size.y), wall_3.rotation);
+        // tempDrawModel(brick, modelShader, camera, wall_4.position,
+        //               glm::vec3(wall_4.size.x, 1.0f, wall_4.size.y), wall_4.rotation);
+        // modelShader.setBool("useTexture", false);
+        // tempDrawModel(car, modelShader, camera, carPosition, glm::vec3(1.0f), carRotation);
 
         // Swap front and back buffers
         glfwSwapBuffers(window);
 
         // Poll for and process events
         glfwPollEvents();
+        if (firstPass)
+        {
+            CheckGLError("peepeepoopoo");
+        }
+        if (firstPass)
+        {
+            firstPass = false;
+        }
     }
 
     // Clean up
@@ -250,4 +376,84 @@ void processInput(GLFWwindow *window, engine::render::Camera &camera)
     front.y      = sin(glm::radians(camera.Pitch));
     front.z      = sin(glm::radians(camera.Yaw)) * cos(glm::radians(camera.Pitch));
     camera.Front = glm::normalize(front);
+}
+
+void tempDrawModelShadow(engine::render::Model &model, engine::render::Shader &shader,
+                         const engine::render::Camera &camera, glm::vec3 position, glm::vec3 scale,
+                         glm::quat rotation)
+{
+    shader.use();
+    glm::mat4 modelMatrix = glm::mat4(1.0f);
+    modelMatrix           = glm::translate(modelMatrix, position);
+    modelMatrix           = modelMatrix * glm::mat4_cast(rotation);
+    modelMatrix           = glm::scale(modelMatrix, scale);
+    shader.setMat4("model", modelMatrix);
+    model.Draw(shader);
+}
+
+void tempDrawModel(engine::render::Model &model, engine::render::Shader &shader,
+                   const engine::render::Camera &camera, glm::vec3 position, glm::vec3 scale,
+                   glm::quat rotation)
+{
+    shader.use();
+    glm::mat4 modelMatrix = glm::mat4(1.0f);
+    modelMatrix           = glm::translate(modelMatrix, position);
+    modelMatrix           = modelMatrix * glm::mat4_cast(rotation);
+    modelMatrix           = glm::scale(modelMatrix, scale);
+    glm::mat4 view;
+    view = camera.GetViewMatrix();
+    glm::mat4 projection;
+    projection = glm::perspective(camera.projection.fov, SCR_WIDTH / SCR_HEIGHT,
+                                  camera.projection.nearPlane, camera.projection.farPlane);
+    shader.setMat4("model", modelMatrix);
+    shader.setMat4("view", view);
+    shader.setMat4("projection", projection);
+    shader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
+    shader.setVec3("lightPos", 0.0f, 7.0f, 0.0f);
+    model.Draw(shader);
+}
+
+void CheckGLError(const char *where)
+{
+    GLenum err;
+    bool hit = false;
+
+    while ((err = glGetError()) != GL_NO_ERROR)
+    {
+        std::cout << "GL ERROR at " << where << ": " << err << "\n";
+        hit = true;
+    }
+
+    if (hit)
+        assert(false);
+}
+
+// renderQuad() renders a 1x1 XY quad in NDC
+// -----------------------------------------
+unsigned int quadVAO = 0;
+unsigned int quadVBO;
+void renderQuad()
+{
+    if (quadVAO == 0)
+    {
+        float quadVertices[] = {
+            // positions        // texture Coords
+            -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
+            1.0f,  1.0f, 0.0f, 1.0f, 1.0f, 1.0f,  -1.0f, 0.0f, 1.0f, 0.0f,
+        };
+        // setup plane VAO
+        glGenVertexArrays(1, &quadVAO);
+        glGenBuffers(1, &quadVBO);
+        glBindVertexArray(quadVAO);
+        glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float),
+                              (void *)(3 * sizeof(float)));
+    }
+    glBindVertexArray(quadVAO);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    glBindVertexArray(0);
 }

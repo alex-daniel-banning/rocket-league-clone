@@ -119,6 +119,7 @@ void Renderer::drawSphereWireframe(const engine::physics::Sphere &sphere,
     drawSphere(sphere, shader, camera);
 }
 
+// todo, remove this, too coupled perhaps
 void Renderer::drawModel(engine::render::Model &model, engine::render::Shader &shader,
                          const Camera &camera, glm::vec3 position, glm::vec3 scale,
                          glm::quat rotation)
@@ -138,6 +139,12 @@ void Renderer::drawModel(engine::render::Model &model, engine::render::Shader &s
     shader.setMat4("projection", projection);
     shader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
     shader.setVec3("lightPos", 5.0f, 5.0f, 5.0f);
+    model.Draw(shader);
+}
+
+void Renderer::drawModel(engine::render::Model &model, engine::render::Shader &shader)
+{
+    shader.use();
     model.Draw(shader);
 }
 
