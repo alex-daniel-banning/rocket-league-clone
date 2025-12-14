@@ -1,10 +1,10 @@
 Make environment less disorienting
     Add shadows
         https://learnopengl.com/Advanced-Lighting/Shadows/Shadow-Mapping
-            Go to "The depth map"
-            Work backwards from learnopengl example.
-            Figure out cause of my code not showing shadows
-        Add assertion/error when camera looks straight down
+    Why are shadows not working with floor model? (currently only working with renderScene/planeVAO)
+    Move/Copy model_loading shader to global scope. Rename perhaps
+    Add assertion/error when camera looks straight down
+
 
 Next mini project options:
     Collisions/Physics
