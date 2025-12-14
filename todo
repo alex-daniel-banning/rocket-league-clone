@@ -2,6 +2,9 @@ Make environment less disorienting
     Add shadows
         https://learnopengl.com/Advanced-Lighting/Shadows/Shadow-Mapping
             Go to "The depth map"
+            Work backwards from learnopengl example.
+            Figure out cause of my code not showing shadows
+        Add assertion/error when camera looks straight down
 
 Next mini project options:
     Collisions/Physics

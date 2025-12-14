@@ -128,10 +128,23 @@ int main()
     debugDepthQuad.setInt("depthMap", 0);
     // lighting info
     // -------------
-    glm::vec3 lightPos(-2.0f, 4.0f, -1.0f);
+    // glm::vec3 lightPos(-2.0f, 4.0f, -1.0f);
+    glm::vec3 lightPos(0.0f, 4.0f, -0.1f);
     engine::render::Shader simpleDepthShader(
         engine::PathManager::globalAsset("shaders/simple_depth_shader.vert").c_str(),
         engine::PathManager::globalAsset("shaders/empty_shader.frag").c_str());
+
+    engine::render::Camera camera(glm::vec3(0.0f, 7.0f, 0.01f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f,
+                                  0.0f);
+    camera.lookAtOrigin();
+    camera.projection.farPlane = 300.0f;
+
+    glm::quat carRotation = glm::quat(glm::vec3(0.0f));
+    //     glm::quat(glm::vec3(glm::radians(90.0f), glm::radians(0.0f), glm::radians(90.0f)));
+    engine::render::Model car(
+        engine::PathManager::moduleAsset("render-car", "car/car.obj").c_str());
+    glm::vec3 carPosition = glm::vec3(0.0f, 2.0f, 0.0f);
+    camera.lookAt(carPosition);
 
     while (!glfwWindowShouldClose(window))
     {
@@ -146,7 +159,7 @@ int main()
         glm::mat4 lightSpaceMatrix;
         float near_plane = 1.0f, far_plane = 7.5f;
         lightProjection  = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
-        lightView        = glm::lookAt(lightPos, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
+        lightView        = camera.GetViewMatrix();
         lightSpaceMatrix = lightProjection * lightView;
         // render scene from light's point of view
         simpleDepthShader.use();
@@ -155,7 +168,23 @@ int main()
         glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
         glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
         glClear(GL_DEPTH_BUFFER_BIT);
-        renderScene(simpleDepthShader);
+        // renderScene(simpleDepthShader);
+
+        glm::mat4 model = glm::mat4(1.0f);
+        simpleDepthShader.setMat4("model", model);
+        glBindVertexArray(planeVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(0.0f, 1.5f, 0.0));
+        model = glm::scale(model, glm::vec3(0.5f));
+        simpleDepthShader.setMat4("model", model);
+        simpleDepthShader.use();
+        glm::mat4 modelMatrix = glm::mat4(1.0f);
+        modelMatrix           = glm::translate(modelMatrix, carPosition);
+        modelMatrix           = modelMatrix * glm::mat4_cast(carRotation);
+        modelMatrix           = glm::scale(modelMatrix, glm::vec3(1.0f));
+        simpleDepthShader.setMat4("model", modelMatrix);
+        car.Draw(simpleDepthShader);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
         // reset viewport
@@ -208,6 +237,7 @@ void renderScene(const engine::render::Shader &shader)
     renderCube();
 }
 
+/*
 // renderCube() renders a 1x1 3D cube in NDC.
 // -------------------------------------------------
 unsigned int cubeVAO = 0;
@@ -284,6 +314,7 @@ void renderCube()
     glDrawArrays(GL_TRIANGLES, 0, 36);
     glBindVertexArray(0);
 }
+*/
 
 unsigned int quadVAO = 0;
 unsigned int quadVBO;
