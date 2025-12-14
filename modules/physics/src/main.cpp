@@ -168,16 +168,7 @@ int main()
         glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
         glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
         glClear(GL_DEPTH_BUFFER_BIT);
-        // renderScene(simpleDepthShader);
 
-        glm::mat4 model = glm::mat4(1.0f);
-        simpleDepthShader.setMat4("model", model);
-        glBindVertexArray(planeVAO);
-        glDrawArrays(GL_TRIANGLES, 0, 6);
-        model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(0.0f, 1.5f, 0.0));
-        model = glm::scale(model, glm::vec3(0.5f));
-        simpleDepthShader.setMat4("model", model);
         simpleDepthShader.use();
         glm::mat4 modelMatrix = glm::mat4(1.0f);
         modelMatrix           = glm::translate(modelMatrix, carPosition);
