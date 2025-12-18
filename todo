@@ -1,7 +1,5 @@
 Make environment less disorienting
-    Add shadows
-        https://learnopengl.com/Advanced-Lighting/Shadows/Shadow-Mapping
-    Move/Copy model_loading shader to global scope. Rename perhaps
+    Add the walls and floow with textures?
     Add assertion/error when camera looks straight down
 
 

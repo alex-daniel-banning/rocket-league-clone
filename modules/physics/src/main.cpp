@@ -27,6 +27,11 @@ float SCR_HEIGHT = 600.0f;
 
 unsigned int loadTexture(const char *path);
 
+float lastX, lastY;
+bool firstMouse = true;
+void mouse_callback(GLFWwindow *window, double xpos, double ypos);
+void processInput(GLFWwindow *window, engine::render::Camera &camera);
+
 float deltaTime = 0.0f; // Time between current frame and last frame
 float lastFrame = 0.0f; // Time of last frame
 
@@ -52,9 +57,13 @@ int main()
 
     GLFWmonitor *primary    = glfwGetPrimaryMonitor();
     const GLFWvidmode *mode = glfwGetVideoMode(primary);
+    float screenWidth       = mode->width;
+    float screenHeight      = mode->height;
+    lastX                   = screenWidth / 2.0f;
+    lastY                   = screenHeight / 2.0f;
 
     GLFWwindow *window =
-        glfwCreateWindow(mode->width, mode->height, "Fullscreen Window", primary, NULL);
+        glfwCreateWindow(screenWidth, screenHeight, "Fullscreen Window", primary, NULL);
 
     if (!window)
     {
@@ -65,7 +74,8 @@ int main()
 
     // Make the window's context current
     glfwMakeContextCurrent(window);
-    // glfwSetCursorPosCallback(window, mouse_callback);
+
+    glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     // Initialize glad
@@ -76,6 +86,11 @@ int main()
     }
 
     glEnable(GL_DEPTH_TEST);
+    engine::render::Camera camera(glm::vec3(3.0f, 7.0f, 7.01f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f,
+                                  0.0f);
+    camera.lookAtOrigin();
+    camera.projection.farPlane = 300.0f;
+    glfwSetWindowUserPointer(window, &camera);
 
     setupShadowBuffer();
 
@@ -83,11 +98,6 @@ int main()
     engine::render::Shader simpleDepthShader(
         engine::PathManager::globalAsset("shaders/simple_depth_shader.vert").c_str(),
         engine::PathManager::globalAsset("shaders/empty_shader.frag").c_str());
-
-    engine::render::Camera camera(glm::vec3(3.0f, 7.0f, 7.01f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f,
-                                  0.0f);
-    camera.lookAtOrigin();
-    camera.projection.farPlane = 300.0f;
 
     glm::quat carRotation = glm::quat(glm::vec3(0.0f));
     engine::render::Model car(
@@ -114,6 +124,8 @@ int main()
         float currentFrame = glfwGetTime();
         deltaTime          = currentFrame - lastFrame;
         lastFrame          = currentFrame;
+
+        processInput(window, camera);
 
         // render
         // ------
@@ -224,4 +236,60 @@ void setupShadowBuffer()
     glDrawBuffer(GL_NONE);
     glReadBuffer(GL_NONE);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void processInput(GLFWwindow *window, engine::render::Camera &camera)
+{
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, true);
+
+    const float cameraSpeed = camera.MovementSpeed * deltaTime;
+    glm::vec3 forward       = glm::normalize(glm::vec3(camera.Front.x, 0.0f, camera.Front.z));
+
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        camera.Position += cameraSpeed * forward;
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        camera.Position -= cameraSpeed * forward;
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        camera.Position -= glm::normalize(glm::cross(camera.Front, camera.Up)) * cameraSpeed;
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        camera.Position += glm::normalize(glm::cross(camera.Front, camera.Up)) * cameraSpeed;
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+        camera.Position += glm::vec3(0.0f, 1.0f, 0.0f) * cameraSpeed;
+    if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+        camera.Position -= glm::vec3(0.0f, 1.0f, 0.0f) * cameraSpeed;
+
+    // make sure that when camera.Pitch is out of bounds, screen doesn't get flipped
+    if (camera.Pitch > 89.0f)
+        camera.Pitch = 89.0f;
+    if (camera.Pitch < -89.0f)
+        camera.Pitch = -89.0f;
+
+    glm::vec3 front;
+    front.x      = cos(glm::radians(camera.Yaw)) * cos(glm::radians(camera.Pitch));
+    front.y      = sin(glm::radians(camera.Pitch));
+    front.z      = sin(glm::radians(camera.Yaw)) * cos(glm::radians(camera.Pitch));
+    camera.Front = glm::normalize(front);
+}
+
+void mouse_callback(GLFWwindow *window, double xposIn, double yposIn)
+{
+    auto *camera = static_cast<engine::render::Camera *>(glfwGetWindowUserPointer(window));
+    float mouseSensitivity = 0.05f;
+    float xpos             = static_cast<float>(xposIn);
+    float ypos             = static_cast<float>(yposIn);
+    if (firstMouse)
+    {
+        lastX      = xpos;
+        lastY      = ypos;
+        firstMouse = false;
+    }
+    float xoffset = xpos - lastX;
+    float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
+
+    lastX = xpos;
+    lastY = ypos;
+
+    assert(camera && "Camera pointer not set via glfwSetWindowUserPointer!");
+    camera->ProcessMouseMovement(xoffset, yoffset, mouseSensitivity);
 }
