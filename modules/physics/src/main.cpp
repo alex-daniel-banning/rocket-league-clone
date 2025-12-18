@@ -96,10 +96,9 @@ int main()
     camera.lookAt(carPosition);
 
     // create regular shader
-    // todo, move model_loading shader to global scope
     engine::render::Shader modelLoadingShader(
-        engine::PathManager::moduleAsset("render-car", "shaders/model_loading.vert").c_str(),
-        engine::PathManager::moduleAsset("render-car", "shaders/model_loading.frag").c_str());
+        engine::PathManager::globalAsset("shaders/model_loading.vert").c_str(),
+        engine::PathManager::globalAsset("shaders/model_loading.frag").c_str());
 
     // Add quad/floor for shadows to appear on
     engine::render::Model floor(engine::PathManager::globalAsset("floor/floor.obj").c_str());
