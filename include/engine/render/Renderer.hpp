@@ -26,7 +26,6 @@ class Renderer
 
     void drawModel(engine::render::Model &model, engine::render::Shader &shader,
                    const Camera &camera, glm::vec3 position, glm::vec3 scale, glm::quat rotation);
-    void drawModel(engine::render::Model &model, engine::render::Shader &shader);
 
     glm::mat4 getProjection(float aspect, float fov = 45.0f);
     glm::mat4 makeModelMatrix(const engine::physics::Box &box);

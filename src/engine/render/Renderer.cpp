@@ -142,12 +142,6 @@ void Renderer::drawModel(engine::render::Model &model, engine::render::Shader &s
     model.Draw(shader);
 }
 
-void Renderer::drawModel(engine::render::Model &model, engine::render::Shader &shader)
-{
-    shader.use();
-    model.Draw(shader);
-}
-
 glm::mat4 Renderer::getProjection(float aspect, float fov)
 {
     return glm::perspective(glm::radians(fov), aspect, 0.1f, 100.0f);
