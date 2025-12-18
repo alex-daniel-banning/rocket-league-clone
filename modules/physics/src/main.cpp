@@ -57,7 +57,8 @@ int main()
     const GLFWvidmode *mode = glfwGetVideoMode(primary);
 
     GLFWwindow *window =
-        glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Non-Fullscreen example", NULL, NULL);
+        glfwCreateWindow(mode->width, mode->height, "Fullscreen Window", primary, NULL);
+    // glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Non-Fullscreen example", NULL, NULL);
 
     if (!window)
     {
@@ -118,8 +119,8 @@ int main()
                  GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     // attach depth texture as FBO's depth buffer
     glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
@@ -160,11 +161,11 @@ int main()
         engine::PathManager::moduleAsset("render-car", "shaders/model_loading.frag").c_str());
 
     // Add quad/floor for shadows to appear on
-    engine::render::Model floor(engine::PathManager::globalAsset("grass/grass.obj").c_str());
+    engine::render::Model floor(engine::PathManager::globalAsset("floor/floor.obj").c_str());
     engine::physics::Plane ground;
     float pitchLength = 150.0f;
     float pitchWidth  = 75.0f;
-    ground.size       = glm::vec2(pitchLength, pitchWidth);
+    ground.size       = glm::vec2(1, 1);
     ground.position   = glm::vec3(0.0f, 0.0f, 0.0f);
     ground.rotation   = glm::angleAxis(glm::radians(0.0f), glm::vec3(1, 0, 0));
 
@@ -206,20 +207,20 @@ int main()
         modelMatrix           = glm::scale(modelMatrix, glm::vec3(1.0f));
         simpleDepthShader.setMat4("model", modelMatrix);
         car.Draw(simpleDepthShader);
-        /*
         modelMatrix = glm::mat4(1.0f);
         modelMatrix = glm::translate(modelMatrix, ground.position);
         modelMatrix = modelMatrix * glm::mat4_cast(ground.rotation);
         modelMatrix = glm::scale(modelMatrix, glm::vec3(ground.size.x, 1.0f, ground.size.y));
         simpleDepthShader.setMat4("model", modelMatrix);
         floor.Draw(simpleDepthShader);
-        */
+        /*
         modelMatrix = glm::mat4(1.0f);
         modelMatrix = glm::translate(modelMatrix, glm::vec3(0.0f));
         modelMatrix = modelMatrix * glm::mat4_cast(glm::quat(glm::vec3(0.0f)));
         modelMatrix = glm::scale(modelMatrix, glm::vec3(1.0f));
         simpleDepthShader.setMat4("model", modelMatrix);
         renderScene(simpleDepthShader);
+        */
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -240,7 +241,9 @@ int main()
         }
         else
         {
-            // Render Car Model
+            glViewport(0, 0, mode->width, mode->height);
+
+            //  Render Car Model
             modelLoadingShader.use();
             // uniform mat4 model;
             // uniform mat4 view;
@@ -303,8 +306,8 @@ int main()
             modelLoadingShader.setVec3("lightPos", lightPos);
             // uniform vec3 viewPos;
             modelLoadingShader.setVec3("viewPos", camera.Position);
-            // floor.Draw(modelLoadingShader);
-            renderScene(modelLoadingShader);
+            floor.Draw(modelLoadingShader);
+            // renderScene(modelLoadingShader);
         }
 
         glfwSwapBuffers(window);

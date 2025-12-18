@@ -19,7 +19,7 @@ uniform vec3 viewPos;
 
 // uniform float ambientStrength = 0.01;
 
-float ShadowCalculations(vec4 fragPosLightSpace)
+float ShadowCalculations(vec4 fragPosLightSpace, vec3 normal, vec3 lightDir)
 {
     // perform perspective divide
     vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
@@ -27,7 +27,19 @@ float ShadowCalculations(vec4 fragPosLightSpace)
 
     float closestDepth = texture(shadowMap, projCoords.xy).r;
     float currentDepth = projCoords.z;
-    float shadow = currentDepth > closestDepth ? 1.0 : 0.0;
+    float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005);
+    //float shadow = currentDepth - bias > closestDepth ? 1.0 : 0.0;
+    float shadow = 0.0;
+    vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
+    for (int x = -1; x <= 1; ++x)
+    {
+        for (int y = -1; y <= 1; ++y)
+        {
+            float pcfDepth = texture(shadowMap, projCoords.xy + vec2(x, y) * texelSize).r;
+            shadow += currentDepth - bias > pcfDepth ? 1.0 : 0.0;
+        }
+    }
+    shadow /= 9;
     return shadow;
 }
 
@@ -53,7 +65,7 @@ void main()
     float diff = max(dot(normal, lightDir), 0.0);
     vec3 diffuse = diff * lightColor;
 
-    float shadow = ShadowCalculations(fs_in.FragPosLightSpace);
+    float shadow = ShadowCalculations(fs_in.FragPosLightSpace, normal, lightDir);
 
     vec3 result = (ambient + (1.0 - shadow) * diffuse) * baseColor;
     FragColor = vec4(result, alpha);
