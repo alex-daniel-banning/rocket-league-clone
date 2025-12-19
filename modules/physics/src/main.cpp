@@ -36,7 +36,7 @@ float deltaTime = 0.0f; // Time between current frame and last frame
 float lastFrame = 0.0f; // Time of last frame
 
 const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
-const float LIGHT_PROJECTION_NEAR_PLANE = 1.0f, LIGHT_PROJECTION_FAR_PLANE = 50.0f;
+const float LIGHT_PROJECTION_NEAR_PLANE = 1.0f, LIGHT_PROJECTION_FAR_PLANE = 70.0f;
 unsigned int depthMapFBO;
 unsigned int depthMap;
 void setupShadowBuffer();
@@ -113,10 +113,7 @@ int main()
     // Add quad/floor for shadows to appear on
     engine::render::Model floor(engine::PathManager::globalAsset("floor2/floor2.obj").c_str());
     // todo, generate the model data dynamically/programmatically for simple objects like a plane
-    engine::physics::Plane ground;
-    ground.size     = glm::vec2(1, 1);
-    ground.position = glm::vec3(0.0f, 0.0f, 0.0f);
-    ground.rotation = glm::angleAxis(glm::radians(0.0f), glm::vec3(1, 0, 0));
+    engine::physics::Plane ground(100.0f, 100.0f);
 
     while (!glfwWindowShouldClose(window))
     {
@@ -140,6 +137,7 @@ int main()
         glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
         glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
         glClear(GL_DEPTH_BUFFER_BIT);
+        // lightPos.y       = 50 + (std::sin(currentFrame));
         lightView        = glm::lookAt(lightPos, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
         lightSpaceMatrix = lightProjection * lightView;
         simpleDepthShader.use();
@@ -155,9 +153,10 @@ int main()
         modelMatrix = glm::mat4(1.0f);
         modelMatrix = glm::translate(modelMatrix, ground.position);
         modelMatrix = modelMatrix * glm::mat4_cast(ground.rotation);
-        modelMatrix = glm::scale(modelMatrix, glm::vec3(ground.size.x, 1.0f, ground.size.y));
+        modelMatrix = glm::scale(modelMatrix, glm::vec3(1.0f));
         simpleDepthShader.setMat4("model", modelMatrix);
-        floor.Draw(simpleDepthShader);
+        ground.Draw(simpleDepthShader);
+        // floor.Draw(simpleDepthShader);
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -174,14 +173,14 @@ int main()
         glm::mat4 view;
         view = camera.GetViewMatrix();
         glm::mat4 projection;
-        projection = glm::perspective(camera.projection.fov, SCR_WIDTH / SCR_HEIGHT,
+        projection = glm::perspective(camera.projection.fov, screenWidth / screenHeight,
                                       camera.projection.nearPlane, camera.projection.farPlane);
         modelLoadingShader.setMat4("model", modelMatrix);
         modelLoadingShader.setMat4("view", view);
         modelLoadingShader.setMat4("projection", projection);
         modelLoadingShader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
-        modelLoadingShader.setInt("shadowMap", 0);
-        glActiveTexture(GL_TEXTURE0);
+        modelLoadingShader.setInt("shadowMap", 8);
+        glActiveTexture(GL_TEXTURE8);
         glBindTexture(GL_TEXTURE_2D, depthMap);
         modelLoadingShader.setBool("useTexture", false);
         modelLoadingShader.setVec3("diffuseColor", glm::vec3(0.0f, 0.0f, 0.7f));
@@ -194,7 +193,7 @@ int main()
         modelMatrix = glm::mat4(1.0f);
         modelMatrix = glm::translate(modelMatrix, ground.position);
         modelMatrix = modelMatrix * glm::mat4_cast(ground.rotation);
-        modelMatrix = glm::scale(modelMatrix, glm::vec3(ground.size.x, 1.0f, ground.size.y));
+        modelMatrix = glm::scale(modelMatrix, glm::vec3(1.0f));
         modelLoadingShader.setMat4("model", modelMatrix);
         modelLoadingShader.setMat4("view", view);
         modelLoadingShader.setMat4("projection", projection);
@@ -203,12 +202,13 @@ int main()
         glActiveTexture(GL_TEXTURE8); // todo set to 8 so it doesn't conflict with model texture
                                       // index, need a better long term solution
         glBindTexture(GL_TEXTURE_2D, depthMap);
-        modelLoadingShader.setBool("useTexture", true);
+        modelLoadingShader.setBool("useTexture", false);
         modelLoadingShader.setVec3("diffuseColor", glm::vec3(1.0f, 1.0f, 1.0f));
         modelLoadingShader.setVec3("lightColor", glm::vec3(1.0f));
         modelLoadingShader.setVec3("lightPos", lightPos);
         modelLoadingShader.setVec3("viewPos", camera.Position);
-        floor.Draw(modelLoadingShader);
+        ground.Draw(modelLoadingShader);
+        // floor.Draw(modelLoadingShader);
 
         glfwSwapBuffers(window);
         glfwPollEvents();

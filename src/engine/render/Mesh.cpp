@@ -2,6 +2,8 @@
 #include <cstddef>
 #include <engine/render/Mesh.hpp>
 
+#include <iostream>
+
 namespace engine::render
 {
 
@@ -52,6 +54,21 @@ void Mesh::setupMesh()
                           (void *)offsetof(Vertex, TexCoords));
 
     glBindVertexArray(0);
+    std::cout << "Printing mesh data:\n";
+    for (int i = 0; i < indices.size(); i++)
+    {
+        float vx = vertices[indices[i]].Position.x;
+        float vy = vertices[indices[i]].Position.y;
+        float vz = vertices[indices[i]].Position.z;
+        float nx = vertices[indices[i]].Normal.x;
+        float ny = vertices[indices[i]].Normal.y;
+        float nz = vertices[indices[i]].Normal.z;
+        float tx = vertices[indices[i]].TexCoords.x;
+        float ty = vertices[indices[i]].TexCoords.y;
+        std::cout << vx << ", " << vy << ", " << vz << ", " << nx << ", " << ny << ", " << nz
+                  << ", " << tx << ", " << ty << "\n";
+    }
+    std::cout << "Finished printing mesh data." << std::endl;
 };
 
 void Mesh::Draw(engine::render::Shader &shader)

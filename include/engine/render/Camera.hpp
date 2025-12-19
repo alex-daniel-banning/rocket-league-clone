@@ -25,8 +25,8 @@ struct ProjectionSettings
 // Default camera values
 const float YAW         = -90.0f;
 const float PITCH       = 0.0f;
-const float SPEED       = 4.0f;
-const float SENSITIVITY = 2.0f;
+const float SPEED       = 15.0f;
+const float SENSITIVITY = 4.0f;
 const float ZOOM        = 45.0f;
 
 // An abstract camera class that processes input and calculates the corresponding Euler Angles,

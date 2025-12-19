@@ -10,6 +10,7 @@ add_library(engine STATIC
     src/engine/render/Mesh.cpp
     src/engine/render/Model.cpp
     src/engine/render/Renderer.cpp
+    src/engine/physics/Plane.cpp
 )
 
 target_include_directories(engine PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)

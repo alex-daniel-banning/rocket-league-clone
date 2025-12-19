@@ -1,4 +1,6 @@
 Make environment less disorienting
+    Make plane data programmable
+        Restructure plane construction so that normals to rotation
     Add the walls and floow with textures?
     Add assertion/error when camera looks straight down
 Come up with strategy to avoid messy main.cpp merges

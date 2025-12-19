@@ -1,0 +1,31 @@
+You can construct the view matrix manually using a right-handed basis. Here’s an example for a directional light pointing straight down (-Y):
+
+glm::vec3 lightDir = glm::normalize(glm::vec3(0.0f, -1.0f, 0.0f));
+glm::vec3 lightPos = glm::vec3(0.0f, 30.0f, 0.0f); // above the field
+
+// Choose a world-up that is not parallel
+glm::vec3 up = glm::vec3(0.0f, 0.0f, -1.0f);
+
+// Compute basis
+glm::vec3 zaxis = -lightDir;             // forward
+glm::vec3 xaxis = glm::normalize(glm::cross(up, zaxis));  // right
+glm::vec3 yaxis = glm::cross(zaxis, xaxis);              // true up
+
+// Construct view matrix
+lightView = glm::mat4(1.0f);
+lightView[0] = glm::vec4(xaxis, 0.0f);
+lightView[1] = glm::vec4(yaxis, 0.0f);
+lightView[2] = glm::vec4(zaxis, 0.0f);
+lightView[3] = glm::vec4(-glm::dot(xaxis, lightPos),
+                         -glm::dot(yaxis, lightPos),
+                         -glm::dot(zaxis, lightPos),
+                         1.0f);
+
+lightSpaceMatrix = lightProjection * lightView;
+simpleDepthShader.use();
+simpleDepthShader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
+
+
+This avoids lookAt entirely, so the “up parallel to direction” problem doesn’t happen.
+
+Do you want me to simplify it for any arbitrary direction of the light?
