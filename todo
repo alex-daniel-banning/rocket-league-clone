@@ -1,7 +1,8 @@
 Make environment less disorienting
     Add the walls and floow with textures?
     Add assertion/error when camera looks straight down
-
+Come up with strategy to avoid messy main.cpp merges
+    Most appealing is creating targeted source files with descriptive names
 
 Next mini project options:
     Collisions/Physics

@@ -111,13 +111,12 @@ int main()
         engine::PathManager::globalAsset("shaders/model_loading.frag").c_str());
 
     // Add quad/floor for shadows to appear on
-    engine::render::Model floor(engine::PathManager::globalAsset("floor/floor.obj").c_str());
+    engine::render::Model floor(engine::PathManager::globalAsset("floor2/floor2.obj").c_str());
+    // todo, generate the model data dynamically/programmatically for simple objects like a plane
     engine::physics::Plane ground;
-    float pitchLength = 150.0f;
-    float pitchWidth  = 75.0f;
-    ground.size       = glm::vec2(1, 1);
-    ground.position   = glm::vec3(0.0f, 0.0f, 0.0f);
-    ground.rotation   = glm::angleAxis(glm::radians(0.0f), glm::vec3(1, 0, 0));
+    ground.size     = glm::vec2(1, 1);
+    ground.position = glm::vec3(0.0f, 0.0f, 0.0f);
+    ground.rotation = glm::angleAxis(glm::radians(0.0f), glm::vec3(1, 0, 0));
 
     while (!glfwWindowShouldClose(window))
     {
@@ -200,10 +199,11 @@ int main()
         modelLoadingShader.setMat4("view", view);
         modelLoadingShader.setMat4("projection", projection);
         modelLoadingShader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
-        modelLoadingShader.setInt("shadowMap", 0);
-        glActiveTexture(GL_TEXTURE1);
+        modelLoadingShader.setInt("shadowMap", 8);
+        glActiveTexture(GL_TEXTURE8); // todo set to 8 so it doesn't conflict with model texture
+                                      // index, need a better long term solution
         glBindTexture(GL_TEXTURE_2D, depthMap);
-        modelLoadingShader.setBool("useTexture", false);
+        modelLoadingShader.setBool("useTexture", true);
         modelLoadingShader.setVec3("diffuseColor", glm::vec3(1.0f, 1.0f, 1.0f));
         modelLoadingShader.setVec3("lightColor", glm::vec3(1.0f));
         modelLoadingShader.setVec3("lightPos", lightPos);
