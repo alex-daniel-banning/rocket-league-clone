@@ -100,8 +100,7 @@ int main()
         engine::PathManager::globalAsset("shaders/empty_shader.frag").c_str());
 
     glm::quat carRotation = glm::quat(glm::vec3(0.0f));
-    engine::render::Model car(
-        engine::PathManager::moduleAsset("render-car", "car/car.obj").c_str());
+    engine::render::Model car(engine::PathManager::globalAsset("car/car.obj").c_str());
     glm::vec3 carPosition = glm::vec3(0.0f, 2.0f, 0.0f);
     camera.lookAt(carPosition);
 

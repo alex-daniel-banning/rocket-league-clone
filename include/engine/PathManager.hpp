@@ -16,11 +16,6 @@ class PathManager
     {
         return projectRoot / "resources" / p;
     }
-    static std::filesystem::path moduleAsset(const std::string moduleName,
-                                             const std::filesystem::path &p)
-    {
-        return projectRoot / "modules" / moduleName / "resources" / p;
-    }
 
   private:
     // todo, put in config/properties file
