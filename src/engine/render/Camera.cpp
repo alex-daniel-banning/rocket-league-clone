@@ -67,10 +67,18 @@ void Camera::updateCameraVectors()
     front.y = sin(glm::radians(Pitch));
     front.z = sin(glm::radians(Yaw)) * cos(glm::radians(Pitch));
     Front   = glm::normalize(front);
+
+    // Assert that Front is not parallel to WorldUp (gimbal lock check)
+    float dotProduct = std::abs(glm::dot(Front, glm::normalize(WorldUp)));
+    assert(dotProduct < 0.9999f && "Camera Front Vector is parallel to WorldUp - gimbal lock!");
+
     // also re-calculate the Right and Up vector
     Right = glm::normalize(glm::cross(
         Front, WorldUp)); // normalize the vectors, because their length gets closer to 0 the
                           // more you look up or down which results in slower movement.
+    assert(glm::length(glm::cross(Front, WorldUp)) > 0.0001f &&
+           "Right vector has near-zero length - camera looking straight up/down!");
+
     Up = glm::normalize(glm::cross(Right, Front));
 };
 

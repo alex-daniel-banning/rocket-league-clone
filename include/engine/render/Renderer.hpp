@@ -3,6 +3,7 @@
 #include <glm/gtc/quaternion.hpp>
 
 #include <engine/physics/Box.hpp>
+#include <engine/physics/Plane.hpp>
 #include <engine/physics/Sphere.hpp>
 #include <engine/render/Camera.hpp>
 #include <engine/render/Model.hpp>
@@ -26,6 +27,7 @@ class Renderer
 
     void drawModel(engine::render::Model &model, engine::render::Shader &shader,
                    const Camera &camera, glm::vec3 position, glm::vec3 scale, glm::quat rotation);
+    void drawPhysicsPlane(const physics::Plane &plane, Shader &shader);
 
     glm::mat4 getProjection(float aspect, float fov = 45.0f);
     glm::mat4 makeModelMatrix(const engine::physics::Box &box);
