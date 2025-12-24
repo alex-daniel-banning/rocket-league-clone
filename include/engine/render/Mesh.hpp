@@ -36,7 +36,7 @@ class Mesh
     Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices,
          std::vector<Texture> textures);
     Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, glm::vec3 color);
-    void Draw(engine::render::Shader &shader);
+    void Draw(engine::render::Shader &shader) const;
 
   private:
     // render data

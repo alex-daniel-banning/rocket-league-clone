@@ -2,7 +2,7 @@
 set(ALL_DEMO_NAMES "" CACHE INTERNAL "List of all demo executable names")
 
 set(DEMO_SOURCES
-    rendering/shadow_mapping.cpp
+    rendering/ortho_shadows.cpp
 )
 
 foreach(DEMO_SRC ${DEMO_SOURCES})

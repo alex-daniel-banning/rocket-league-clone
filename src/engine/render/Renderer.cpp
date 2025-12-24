@@ -142,6 +142,11 @@ void Renderer::drawModel(engine::render::Model &model, engine::render::Shader &s
     model.Draw(shader);
 }
 
+void Renderer::drawPhysicsPlane(const physics::Plane &plane, Shader &shader)
+{
+    plane.getMesh().Draw(shader);
+}
+
 glm::mat4 Renderer::getProjection(float aspect, float fov)
 {
     return glm::perspective(glm::radians(fov), aspect, 0.1f, 100.0f);
