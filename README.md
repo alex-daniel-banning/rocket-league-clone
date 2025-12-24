@@ -47,3 +47,19 @@ ln -sf build/compile_commands.json .
 6. **Clean up**—delete the experimental branch once it's been mined for value
 
 This approach keeps master stable while allowing aggressive experimentation in branches.
+
+## Testing Strategy
+
+**Unit tests** for deterministic components:
+- Math calculations
+- Collision detection
+- Integrators
+- Other pure functions
+
+**Scene-based tests** for complex interactions:
+- Create deterministic test scenes to verify behavior
+- Useful for physics interactions, rendering pipelines, and system integration
+
+**TODO:**
+- Implement debug visualization for rendering
+- Add logging system (including OpenGL API call tracing)
