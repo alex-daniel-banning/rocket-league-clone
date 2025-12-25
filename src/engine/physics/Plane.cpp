@@ -1,19 +1,25 @@
 #include <engine/physics/Plane.hpp>
-#include <iostream>
 
 namespace engine::physics
 {
 const glm::vec3 Plane::DEFAULT_NORMAL = glm::vec3(0.0f, 1.0f, 0.0f);
 
-Plane::Plane(float xsize, float zsize)
-    : size(xsize, zsize), position(0.0f), mesh(createMesh(xsize, zsize))
+Plane::Plane(float xsize, float zsize, glm::vec3 color)
+    : size(xsize, zsize), position(0.0f), mesh(createMesh(xsize, zsize, color))
 {
-    rotation = glm::quat(glm::vec3(0.0f));
+    this->rotation = glm::quat(glm::vec3(0.0f));
+}
+
+Plane::Plane(float xsize, float zsize, glm::vec3 color, glm::vec3 position, glm::quat rotation)
+    : mesh(createMesh(xsize, zsize, color))
+{
+    this->position = position;
+    this->rotation = rotation;
 }
 
 glm::vec3 Plane::getNormal() const { return rotation * DEFAULT_NORMAL; }
 
-engine::render::Mesh Plane::createMesh(float xsize, float zsize)
+engine::render::Mesh Plane::createMesh(float xsize, float zsize, glm::vec3 color)
 {
     std::vector<render::Vertex> vertices;
     // clang-format off
@@ -44,7 +50,6 @@ engine::render::Mesh Plane::createMesh(float xsize, float zsize)
             2, 3, 0
         };
     // clang-format on
-    glm::vec3 color(0.5f);
     return render::Mesh(vertices, indices, color);
 }
 } // namespace engine::physics

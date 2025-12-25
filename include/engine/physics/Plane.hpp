@@ -18,7 +18,8 @@ class Plane
     glm::vec3 position;
     glm::quat rotation;
 
-    Plane(float xsize, float zsize);
+    Plane(float xsize, float zsize, glm::vec3 color);
+    Plane(float xsize, float zsize, glm::vec3 color, glm::vec3 position, glm::quat rotation);
 
     const render::Mesh &getMesh() const { return mesh; }
     glm::vec3 getNormal() const;
@@ -27,6 +28,6 @@ class Plane
     // depends on DEFAULT_NORMAL
     engine::render::Mesh mesh;
     static const glm::vec3 DEFAULT_NORMAL;
-    static engine::render::Mesh createMesh(float xsize, float zsize);
+    static engine::render::Mesh createMesh(float xsize, float zsize, glm::vec3 color);
 };
 } // namespace engine::physics

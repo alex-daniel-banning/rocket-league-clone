@@ -64,8 +64,9 @@ void Renderer::drawBox(const engine::physics::Box &box, engine::render::Shader &
 {
     glm::mat4 model = makeModelMatrix(box);
     glm::mat4 view  = camera.GetViewMatrix();
-    glm::mat4 projection;
-    projection = getProjection(screenWidth / screenHeight);
+    glm::mat4 projection =
+        glm::perspective(camera.projection.fov, screenWidth / screenHeight,
+                         camera.projection.nearPlane, camera.projection.farPlane);
 
     shader.use();
     shader.setMat4("model", model);
@@ -79,9 +80,11 @@ void Renderer::drawBox(const engine::physics::Box &box, engine::render::Shader &
 void Renderer::drawBoxWireframe(const engine::physics::Box &box, engine::render::Shader &shader,
                                 const Camera &camera)
 {
-    glm::mat4 model      = makeModelMatrix(box);
-    glm::mat4 view       = camera.GetViewMatrix();
-    glm::mat4 projection = getProjection(screenWidth / screenHeight);
+    glm::mat4 model = makeModelMatrix(box);
+    glm::mat4 view  = camera.GetViewMatrix();
+    glm::mat4 projection =
+        glm::perspective(camera.projection.fov, screenWidth / screenHeight,
+                         camera.projection.nearPlane, camera.projection.farPlane);
 
     shader.use();
     shader.setMat4("model", model);
@@ -100,13 +103,14 @@ void Renderer::drawSphere(const engine::physics::Sphere &sphere, engine::render:
 {
     glm::mat4 model = makeModelMatrix(sphere);
     glm::mat4 view  = camera.GetViewMatrix();
-    glm::mat4 projection;
-    projection = getProjection(screenWidth / screenHeight);
+    glm::mat4 projection =
+        glm::perspective(camera.projection.fov, screenWidth / screenHeight,
+                         camera.projection.nearPlane, camera.projection.farPlane);
 
     shader.use();
     shader.setMat4("model", model);
     shader.setMat4("view", view);
-    shader.setMat4("projection", projection);
+    // shader.setMat4("projection", projection);
     glBindVertexArray(sphereVAO);
     glDrawElements(GL_TRIANGLES, sphereIndexCount, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
@@ -147,9 +151,22 @@ void Renderer::drawPhysicsPlane(const physics::Plane &plane, Shader &shader)
     plane.getMesh().Draw(shader);
 }
 
-glm::mat4 Renderer::getProjection(float aspect, float fov)
+void Renderer::drawPhysicsPlane(const physics::Plane &plane, Shader &shader, const Camera &camera)
 {
-    return glm::perspective(glm::radians(fov), aspect, 0.1f, 100.0f);
+    glm::mat4 modelMatrix = glm::mat4(1.0f);
+    glm::mat4 view;
+    view = camera.GetViewMatrix();
+    glm::mat4 projection;
+    projection = glm::perspective(camera.projection.fov, screenWidth / screenHeight,
+                                  camera.projection.nearPlane, camera.projection.farPlane);
+
+    modelMatrix = glm::translate(modelMatrix, plane.position);
+    modelMatrix = modelMatrix * glm::mat4_cast(plane.rotation);
+    modelMatrix = glm::scale(modelMatrix, glm::vec3(1.0f));
+    shader.setMat4("model", modelMatrix);
+    shader.setMat4("view", view);
+    shader.setMat4("projection", projection);
+    plane.getMesh().Draw(shader);
 }
 
 glm::mat4 Renderer::makeModelMatrix(const engine::physics::Box &box)

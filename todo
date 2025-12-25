@@ -1,5 +1,14 @@
-Finalize shadow rendering demo
-    Create tag when complete
+First create a basic scene with walls and sphere
+    Have game ticks that track physics objects
+        tick() function that accepts time delta and updates the state of the scene
+        Game class that tracks all the objects
+
+Collisions
+    1. Sphere-AABB for ball vs wall
+    2. Sphere-OBB for ball vs car
+        https://gamedev.stackexchange.com/questions/163873/separating-axis-theorem-obb-vs-sphere
+    3. SAT for car vs car
+    4. Optimization (spatial partitioning)
 
 Next mini project options:
     Collisions/Physics
@@ -35,3 +44,4 @@ Backlog:
         Wireframe/Debug render with basic frag shader (bright green, perhaps)
     Add coordinates at top left of screen for debugging
     When camera movement is controlled by mouse, it's apparent that the mouse position jolts the camera when starting the program
+    Shader wrapper class to catch unset uniforms

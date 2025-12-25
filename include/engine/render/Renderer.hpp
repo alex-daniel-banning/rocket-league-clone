@@ -28,8 +28,8 @@ class Renderer
     void drawModel(engine::render::Model &model, engine::render::Shader &shader,
                    const Camera &camera, glm::vec3 position, glm::vec3 scale, glm::quat rotation);
     void drawPhysicsPlane(const physics::Plane &plane, Shader &shader);
+    void drawPhysicsPlane(const physics::Plane &plane, Shader &shader, const Camera &camera);
 
-    glm::mat4 getProjection(float aspect, float fov = 45.0f);
     glm::mat4 makeModelMatrix(const engine::physics::Box &box);
     glm::mat4 makeModelMatrix(const engine::physics::Sphere &sphere);
 
@@ -39,6 +39,7 @@ class Renderer
 
   private:
     float screenWidth, screenHeight;
+    float nearPlane, farPlane;
     unsigned int cubeVAO, cubeVBO;
     unsigned int cubeWireVAO, cubeWireVBO, cubeWireEBO;
     unsigned int sphereVAO, sphereEBO, sphereIndexCount;
