@@ -122,6 +122,7 @@ int main()
     glm::vec3 color(0.2f, 0.2f, 0.2f);
     float groundSize = 50.0f;
     engine::physics::Plane ground(groundSize, groundSize, color);
+    ground.initializeRenderData();
 
     glm::vec3 wallColor(0.2f, 0.15f, 0.15f);
     // clang-format off
@@ -134,6 +135,10 @@ int main()
         engine::physics::Plane(groundSize, groundSize, wallColor, glm::vec3(0.0f, wallTranslationSize, -wallTranslationSize), glm::angleAxis(glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f)))
     };
     // clang-format on
+    for (engine::physics::Plane wall : walls)
+    {
+        wall.initializeRenderData();
+    }
 
     engine::physics::Sphere ball;
     ball.radius   = 1.0f;
@@ -183,8 +188,8 @@ int main()
 
         simpleDepthShader.use();
         glm::mat4 modelMatrix = glm::mat4(1.0f);
-        modelMatrix           = glm::translate(modelMatrix, ground.position);
-        modelMatrix           = modelMatrix * glm::mat4_cast(ground.rotation);
+        modelMatrix           = glm::translate(modelMatrix, ground.getPosition());
+        modelMatrix           = modelMatrix * glm::mat4_cast(ground.getRotation());
         modelMatrix           = glm::scale(modelMatrix, glm::vec3(1.0f));
         simpleDepthShader.setMat4("model", modelMatrix);
         renderer.drawPhysicsPlane(match.getGround(), simpleDepthShader);

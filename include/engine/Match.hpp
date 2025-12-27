@@ -10,21 +10,23 @@ class Match
 {
   public:
     // Constructor
-    Match(engine::physics::Sphere b, engine::physics::Plane g,
-          std::vector<engine::physics::Plane> w = {})
+    Match(physics::Sphere b, physics::Plane g, std::vector<physics::Plane> w = {})
         : ball(std::move(b)), ground(std::move(g)), walls(std::move(w))
     {
     }
 
     // Accessors
-    const engine::physics::Sphere &getBall() const { return ball; }
-    const engine::physics::Plane &getGround() const { return ground; }
-    const std::vector<engine::physics::Plane> &getWalls() const { return walls; }
+    const physics::Sphere &getBall() const { return ball; }
+    const physics::Plane &getGround() const { return ground; }
+    const std::vector<physics::Plane> &getWalls() const { return walls; }
     void tick(float deltaTime);
 
   private:
-    engine::physics::Sphere ball;
-    engine::physics::Plane ground;
-    std::vector<engine::physics::Plane> walls;
+    physics::Sphere ball;
+    physics::Plane ground;
+    std::vector<physics::Plane> walls;
+
+    void handleCollisions();
+    bool ballCollides(const physics::Plane &plane);
 };
 } // namespace engine

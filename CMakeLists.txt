@@ -14,7 +14,7 @@ add_library(engine STATIC
     src/engine/physics/Plane.cpp
 )
 
-target_include_directories(engine PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_include_directories(engine PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include /usr/include)
 
 add_subdirectory(src/demos)
 
@@ -26,3 +26,15 @@ find_package(assimp REQUIRED)
 # Link GLFW and OpenGL
 target_link_libraries(engine PRIVATE glfw OpenGL::GL)
 target_link_libraries(engine PRIVATE assimp::assimp)
+
+# Enable testing
+enable_testing()
+
+# Create test executable
+add_executable(tests tests/test_Plane.cpp)
+target_link_libraries(tests PRIVATE engine gtest gtest_main)
+target_include_directories(tests PRIVATE ${CMAKE_SOURCE_DIR}/include)
+
+# Register tests
+include(GoogleTest)
+gtest_discover_tests(tests)

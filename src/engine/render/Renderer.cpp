@@ -148,7 +148,7 @@ void Renderer::drawModel(engine::render::Model &model, engine::render::Shader &s
 
 void Renderer::drawPhysicsPlane(const physics::Plane &plane, Shader &shader)
 {
-    plane.getMesh().Draw(shader);
+    plane.getMesh()->Draw(shader);
 }
 
 void Renderer::drawPhysicsPlane(const physics::Plane &plane, Shader &shader, const Camera &camera)
@@ -160,13 +160,13 @@ void Renderer::drawPhysicsPlane(const physics::Plane &plane, Shader &shader, con
     projection = glm::perspective(camera.projection.fov, screenWidth / screenHeight,
                                   camera.projection.nearPlane, camera.projection.farPlane);
 
-    modelMatrix = glm::translate(modelMatrix, plane.position);
-    modelMatrix = modelMatrix * glm::mat4_cast(plane.rotation);
+    modelMatrix = glm::translate(modelMatrix, plane.getPosition());
+    modelMatrix = modelMatrix * glm::mat4_cast(plane.getRotation());
     modelMatrix = glm::scale(modelMatrix, glm::vec3(1.0f));
     shader.setMat4("model", modelMatrix);
     shader.setMat4("view", view);
     shader.setMat4("projection", projection);
-    plane.getMesh().Draw(shader);
+    plane.getMesh()->Draw(shader);
 }
 
 glm::mat4 Renderer::makeModelMatrix(const engine::physics::Box &box)

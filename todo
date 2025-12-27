@@ -1,10 +1,18 @@
-First create a basic scene with walls and sphere
-    Have game ticks that track physics objects
-        tick() function that accepts time delta and updates the state of the scene
-        Game class that tracks all the objects
+Setup testing suite
+1. Sphere-AABB for ball vs wall
+Refactor Plane so size doesn't have y correlate to z (since it defaults to xz plane)
+    Options:
+        - don't use vec2
+        - store just the points? It might be useful to keep the size member
+Remove createMesh() usage from plane class
+    Reasons:
+        Will allow more flexible color rendering?
+        Decouples rendering logic from physics object
+
+Test pre-commit hook
+    Once at a clean spot (clean branch), make a new branch to test this
 
 Collisions
-    1. Sphere-AABB for ball vs wall
     2. Sphere-OBB for ball vs car
         https://gamedev.stackexchange.com/questions/163873/separating-axis-theorem-obb-vs-sphere
     3. SAT for car vs car
