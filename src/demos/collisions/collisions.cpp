@@ -138,7 +138,7 @@ int main()
     engine::physics::Sphere ball;
     ball.radius   = 1.0f;
     ball.position = glm::vec3(0.0f, 2.0f, 1.0f);
-    ball.velocity = glm::vec3(0.0f);
+    ball.velocity = glm::vec3(10.0f, 0.0f, 0.0f);
 
     engine::Match match(ball, ground, walls);
 
@@ -150,6 +150,8 @@ int main()
         lastFrame          = currentFrame;
 
         processInput(window, camera);
+
+        match.tick(deltaTime);
 
         // render
         // ------
@@ -185,9 +187,9 @@ int main()
         modelMatrix           = modelMatrix * glm::mat4_cast(ground.rotation);
         modelMatrix           = glm::scale(modelMatrix, glm::vec3(1.0f));
         simpleDepthShader.setMat4("model", modelMatrix);
-        renderer.drawPhysicsPlane(ground, simpleDepthShader);
+        renderer.drawPhysicsPlane(match.getGround(), simpleDepthShader);
 
-        renderer.drawSphere(ball, simpleDepthShader, camera);
+        renderer.drawSphere(match.getBall(), simpleDepthShader, camera);
 
         GL_CHECK();
 
@@ -208,14 +210,14 @@ int main()
         modelLoadingShader.setVec3("lightColor", glm::vec3(1.0f));
         modelLoadingShader.setVec3("lightPos", lightPos);
         modelLoadingShader.setVec3("viewPos", camera.Position);
-        renderer.drawPhysicsPlane(ground, modelLoadingShader, camera);
-        for (engine::physics::Plane wall : walls)
+        renderer.drawPhysicsPlane(match.getGround(), modelLoadingShader, camera);
+        for (engine::physics::Plane wall : match.getWalls())
         {
             renderer.drawPhysicsPlane(wall, modelLoadingShader, camera);
         }
 
         modelLoadingShader.setVec3("diffuseColor", glm::vec3(0.0f, 0.5f, 0.3f));
-        renderer.drawSphere(ball, modelLoadingShader, camera);
+        renderer.drawSphere(match.getBall(), modelLoadingShader, camera);
 
         glfwSwapBuffers(window);
         glfwPollEvents();

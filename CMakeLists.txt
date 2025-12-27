@@ -5,6 +5,7 @@ project(rocket-league-clone)
 add_library(engine STATIC
     src/engine/glad.c
     src/engine/stb_image.cpp
+    src/engine/Match.cpp
     src/engine/render/Camera.cpp
     src/engine/render/Shader.cpp
     src/engine/render/Mesh.cpp

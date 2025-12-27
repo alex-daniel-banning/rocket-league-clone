@@ -20,6 +20,7 @@ class Match
     const engine::physics::Sphere &getBall() const { return ball; }
     const engine::physics::Plane &getGround() const { return ground; }
     const std::vector<engine::physics::Plane> &getWalls() const { return walls; }
+    void tick(float deltaTime);
 
   private:
     engine::physics::Sphere ball;
