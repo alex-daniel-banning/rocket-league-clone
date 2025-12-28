@@ -43,9 +43,11 @@ class Renderer
     unsigned int cubeVAO, cubeVBO;
     unsigned int cubeWireVAO, cubeWireVBO, cubeWireEBO;
     unsigned int sphereVAO, sphereEBO, sphereIndexCount;
+    unsigned int planeVAO, planeVBO;
     void initCube();
     void initWireCube();
     void initSphere();
+    void initPlane();
 };
 
 } // namespace engine::render

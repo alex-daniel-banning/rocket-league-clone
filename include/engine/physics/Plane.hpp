@@ -28,7 +28,7 @@ class Plane
     void calculateCornerPositions();
     void initializeRenderData();
 
-    const render::Mesh *getMesh() const;
+    // const render::Mesh *getMesh() const;
     glm::vec3 getNormal() const;
     glm::vec3 getMin() const;
     glm::vec3 getMax() const;
@@ -39,11 +39,8 @@ class Plane
 
   private:
     // depends on DEFAULT_NORMAL
-    bool initializedFlag;
     glm::vec3 position;
     glm::quat rotation;
-    engine::render::Mesh *mesh;
     static const glm::vec3 DEFAULT_NORMAL;
-    static engine::render::Mesh createMesh(float xsize, float zsize, glm::vec3 color);
 };
 } // namespace engine::physics
