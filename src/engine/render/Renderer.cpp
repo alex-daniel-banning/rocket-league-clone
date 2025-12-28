@@ -5,6 +5,8 @@
 #include <engine/render/Camera.hpp>
 #include <engine/render/Renderer.hpp>
 
+#include <iostream>
+
 namespace engine::render
 {
 // clang-format off
@@ -90,6 +92,7 @@ Renderer::Renderer(const float screenWidth, const float screenHeight)
     initWireCube();
     initSphere();
     initPlane();
+    initLine();
 }
 
 void Renderer::drawBox(const engine::physics::Box &box, engine::render::Shader &shader,
@@ -200,13 +203,34 @@ void Renderer::drawPhysicsPlane(const physics::Plane &plane, Shader &shader, con
 
     modelMatrix = glm::translate(modelMatrix, plane.getPosition());
     modelMatrix = modelMatrix * glm::mat4_cast(plane.getRotation());
-    modelMatrix = glm::scale(modelMatrix, glm::vec3(plane.size.x, 1.0f, plane.size.y));
+    modelMatrix = glm::scale(modelMatrix, glm::vec3(plane.getXLength(), 1.0f, plane.getZLength()));
     shader.setMat4("model", modelMatrix);
     shader.setMat4("view", view);
     shader.setMat4("projection", projection);
     shader.setVec3("diffuseColor", plane.color);
     glBindVertexArray(planeVAO);
     glDrawArrays(GL_TRIANGLES, 0, 6);
+    glBindVertexArray(0);
+}
+
+void Renderer::drawPhysicsPlaneNormal(const physics::Plane &plane, Shader &shader,
+                                      const Camera &camera)
+{
+    glm::mat4 modelMatrix = glm::mat4(1.0f);
+    glm::mat4 view;
+    view = camera.GetViewMatrix();
+    glm::mat4 projection;
+    projection = glm::perspective(camera.projection.fov, screenWidth / screenHeight,
+                                  camera.projection.nearPlane, camera.projection.farPlane);
+
+    modelMatrix = glm::translate(modelMatrix, plane.getPosition());
+    modelMatrix = modelMatrix * glm::mat4_cast(plane.getRotation());
+    modelMatrix = glm::scale(modelMatrix, glm::vec3(1.0f));
+    shader.setMat4("model", modelMatrix);
+    shader.setMat4("view", view);
+    shader.setMat4("projection", projection);
+    glBindVertexArray(lineVAO);
+    glDrawArrays(GL_LINES, 0, 2);
     glBindVertexArray(0);
 }
 
@@ -262,6 +286,25 @@ void Renderer::initPlane()
     glEnableVertexAttribArray(1);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+}
+
+void Renderer::initLine()
+{
+    glm::vec3 start(0.0f, 0.0f, 0.0f);
+    glm::vec3 end(0.0f, 1.0f, 0.0f);
+    glm::vec3 lineVertices[2] = {start, end};
+    glGenVertexArrays(1, &lineVAO);
+    glGenBuffers(1, &lineVBO);
+
+    glBindVertexArray(lineVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, lineVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(lineVertices), lineVertices, GL_STATIC_DRAW);
+
+    // Positions
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void *)0);
+
     glBindVertexArray(0);
 }
 

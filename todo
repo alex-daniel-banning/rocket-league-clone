@@ -1,9 +1,5 @@
 Setup testing suite
 1. Sphere-AABB for ball vs wall
-Refactor Plane so size doesn't have y correlate to z (since it defaults to xz plane)
-    Options:
-        - don't use vec2
-        - store just the points? It might be useful to keep the size member
 Remove createMesh() usage from plane class
     Reasons:
         Will allow more flexible color rendering?
@@ -18,6 +14,10 @@ Collisions
     3. SAT for car vs car
     4. Optimization (spatial partitioning)
 
+Collisions advanced:
+    Look into various solutions to tunneling problem (ball going so fast it goes through wall)
+
+Brainstorming:
 Next mini project options:
     Collisions/Physics
         Rigid-body basis:

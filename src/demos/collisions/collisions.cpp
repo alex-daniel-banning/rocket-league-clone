@@ -39,7 +39,8 @@ float SCR_HEIGHT = 600.0f;
 unsigned int loadTexture(const char *path);
 
 float lastX, lastY;
-bool firstMouse = true;
+bool firstMouse        = true;
+int mouseCallbackCount = 0;
 void mouse_callback(GLFWwindow *window, double xpos, double ypos);
 void processInput(GLFWwindow *window, engine::render::Camera &camera);
 
@@ -86,6 +87,7 @@ int main()
     // Make the window's context current
     glfwMakeContextCurrent(window);
 
+    glfwSetCursorPos(window, screenWidth / 2.0f, screenHeight / 2.0f);
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
@@ -98,8 +100,8 @@ int main()
     // Setup completed.
 
     glEnable(GL_DEPTH_TEST);
-    engine::render::Camera camera(glm::vec3(3.0f, 7.0f, 7.01f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f,
-                                  0.0f);
+    engine::render::Camera camera(glm::vec3(25.0f, 50.0f, 25.0f), glm::vec3(0.0f, 1.0f, 0.0f),
+                                  -90.0f, 0.0f);
     camera.lookAtOrigin();
     camera.projection.farPlane = 300.0f;
     glfwSetWindowUserPointer(window, &camera);
@@ -137,10 +139,14 @@ int main()
 
     engine::physics::Sphere ball;
     ball.radius   = 1.0f;
-    ball.position = glm::vec3(0.0f, 2.0f, 1.0f);
-    ball.velocity = glm::vec3(10.0f, 0.0f, 0.0f);
+    ball.position = glm::vec3(0.0f, 20.0f, 1.0f);
+    ball.velocity = glm::vec3(-40.0f, -10.0f, 0.0f);
 
     engine::Match match(ball, ground, walls);
+
+    engine::render::Shader lineShader(
+        engine::PathManager::globalAsset("shaders/lineShader.vert").c_str(),
+        engine::PathManager::globalAsset("shaders/lineShader.frag").c_str());
 
     // Main loop
     while (!glfwWindowShouldClose(window))
@@ -215,9 +221,16 @@ int main()
         {
             renderer.drawPhysicsPlane(wall, modelLoadingShader, camera);
         }
-
         modelLoadingShader.setVec3("diffuseColor", glm::vec3(0.0f, 0.5f, 0.3f));
         renderer.drawSphere(match.getBall(), modelLoadingShader, camera);
+
+        //// debug
+        lineShader.use();
+        for (engine::physics::Plane wall : match.getWalls())
+        {
+            renderer.drawPhysicsPlaneNormal(wall, lineShader, camera);
+        }
+        renderer.drawPhysicsPlaneNormal(match.getGround(), lineShader, camera);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -287,11 +300,21 @@ void mouse_callback(GLFWwindow *window, double xposIn, double yposIn)
     float mouseSensitivity = 0.05f;
     float xpos             = static_cast<float>(xposIn);
     float ypos             = static_cast<float>(yposIn);
+
+    if (mouseCallbackCount < 2)
+    {
+        lastX = xpos;
+        lastY = ypos;
+        mouseCallbackCount++;
+        return;
+    }
+
     if (firstMouse)
     {
         lastX      = xpos;
         lastY      = ypos;
         firstMouse = false;
+        return;
     }
     float xoffset = xpos - lastX;
     float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top

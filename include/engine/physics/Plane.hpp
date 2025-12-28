@@ -14,17 +14,11 @@ namespace engine::physics
 class Plane
 {
   public:
-    glm::vec2 size;
-
-    // Listed clockwise, starting at the top left position when viewing down the y axis where up is
-    // in the -z direction.
-    std::array<glm::vec3, 4> cornerPositions;
-
     // temp
     glm::vec3 color;
 
-    Plane(float xsize, float zsize, glm::vec3 color);
-    Plane(float xsize, float zsize, glm::vec3 color, glm::vec3 position, glm::quat rotation);
+    Plane(float xLength, float zLength, glm::vec3 color);
+    Plane(float xLength, float zLength, glm::vec3 color, glm::vec3 position, glm::quat rotation);
     void calculateCornerPositions();
     void initializeRenderData();
 
@@ -36,10 +30,18 @@ class Plane
     void setPosition(const glm::vec3 p);
     glm::quat getRotation() const;
     void setRotation(const glm::quat r);
+    float getXLength() const;
+    float getZLength() const;
+    std::array<glm::vec3, 4> getCornerPositions() const;
 
   private:
-    // depends on DEFAULT_NORMAL
-    glm::vec3 position;
+    // Listed clockwise, starting at the top left position when viewing down the y axis where up is
+    // in the -z direction.
+    std::array<glm::vec3, 4> cornerPositions;
+
+    float xLength, zLength;
+    bool initializedFlag;
+    glm::vec3 position; // depends on DEFAULT_NORMAL
     glm::quat rotation;
     static const glm::vec3 DEFAULT_NORMAL;
 };

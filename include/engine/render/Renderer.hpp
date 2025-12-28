@@ -29,6 +29,7 @@ class Renderer
                    const Camera &camera, glm::vec3 position, glm::vec3 scale, glm::quat rotation);
     void drawPhysicsPlane(const physics::Plane &plane, Shader &shader);
     void drawPhysicsPlane(const physics::Plane &plane, Shader &shader, const Camera &camera);
+    void drawPhysicsPlaneNormal(const physics::Plane &plane, Shader &shader, const Camera &camera);
 
     glm::mat4 makeModelMatrix(const engine::physics::Box &box);
     glm::mat4 makeModelMatrix(const engine::physics::Sphere &sphere);
@@ -44,10 +45,12 @@ class Renderer
     unsigned int cubeWireVAO, cubeWireVBO, cubeWireEBO;
     unsigned int sphereVAO, sphereEBO, sphereIndexCount;
     unsigned int planeVAO, planeVBO;
+    unsigned int lineVAO, lineVBO;
     void initCube();
     void initWireCube();
     void initSphere();
     void initPlane();
+    void initLine();
 };
 
 } // namespace engine::render
