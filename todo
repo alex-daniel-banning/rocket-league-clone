@@ -1,9 +1,18 @@
 Setup testing suite
 1. Sphere-AABB for ball vs wall
-Remove createMesh() usage from plane class
-    Reasons:
-        Will allow more flexible color rendering?
-        Decouples rendering logic from physics object
+    Tests to add:
+        Collision detection
+            Sphere intersecting plane
+            Sphere separate from plane
+            Sphere exactly touching plane
+            Single collision response
+            Multi collision (in one frame) response
+            After I add more advanced collisions:
+                Fast moving object (tunneling)
+            Edge cases:
+                Zero velocity collision
+                Parallel motion along plane?
+                Initialized objects are overlapping
 
 Test pre-commit hook
     Once at a clean spot (clean branch), make a new branch to test this
