@@ -27,6 +27,5 @@ class Match
     std::vector<physics::Plane> walls;
 
     void handleCollisions();
-    bool ballCollides(const physics::Plane &plane);
 };
 } // namespace engine

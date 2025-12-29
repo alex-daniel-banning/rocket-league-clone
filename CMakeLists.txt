@@ -6,6 +6,7 @@ add_library(engine STATIC
     src/engine/glad.c
     src/engine/stb_image.cpp
     src/engine/Match.cpp
+    src/engine/physics/Collisions.cpp
     src/engine/render/Camera.cpp
     src/engine/render/Shader.cpp
     src/engine/render/Mesh.cpp
@@ -31,9 +32,14 @@ target_link_libraries(engine PRIVATE assimp::assimp)
 enable_testing()
 
 # Create test executable
-add_executable(tests tests/test_Plane.cpp)
+add_executable(tests 
+    tests/test_Plane.cpp
+    tests/test_Collisions.cpp
+    tests/TestUtil.cpp)
 target_link_libraries(tests PRIVATE engine gtest gtest_main)
-target_include_directories(tests PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_include_directories(tests PRIVATE
+    ${CMAKE_SOURCE_DIR}/include
+    ${CMAKE_SOURCE_DIR}/tests/include)
 
 # Register tests
 include(GoogleTest)

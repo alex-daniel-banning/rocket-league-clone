@@ -1,12 +1,6 @@
 #include <engine/physics/Plane.hpp>
 #include <gtest/gtest.h>
-
-void ExpectVec3Near(const glm::vec3 &a, const glm::vec3 &b, float eps = 1e-5f)
-{
-    EXPECT_NEAR(a.x, b.x, eps);
-    EXPECT_NEAR(a.y, b.y, eps);
-    EXPECT_NEAR(a.z, b.z, eps);
-}
+#include "TestUtil.hpp"
 
 // todo, remove
 TEST(PlaneTest, DefaultInitialization)
@@ -26,10 +20,10 @@ TEST(PlaneTest, PlaneRotation)
     engine::physics::Plane p(xsize, zsize, glm::vec3(0.5f), glm::vec3(0.0f),
                              glm::angleAxis(degreesOfRotation, xAxis));
     // clang-format off
-    ExpectVec3Near(p.getCornerPositions()[0], glm::vec3(-hx, hz, 0.0f)); 
-    ExpectVec3Near(p.getCornerPositions()[1], glm::vec3( hx,  hz, 0.0f));
-    ExpectVec3Near(p.getCornerPositions()[2], glm::vec3( hx, -hz, 0.0f));
-    ExpectVec3Near(p.getCornerPositions()[3], glm::vec3(-hx, -hz, 0.0f));
+    TestUtil::ExpectVec3Near(p.getCornerPositions()[0], glm::vec3(-hx, hz, 0.0f)); 
+    TestUtil::ExpectVec3Near(p.getCornerPositions()[1], glm::vec3( hx,  hz, 0.0f));
+    TestUtil::ExpectVec3Near(p.getCornerPositions()[2], glm::vec3( hx, -hz, 0.0f));
+    TestUtil::ExpectVec3Near(p.getCornerPositions()[3], glm::vec3(-hx, -hz, 0.0f));
     // clang-format on
 }
 
@@ -44,10 +38,10 @@ TEST(PlaneTest, PlaneTranslation)
     engine::physics::Plane p(xsize, zsize, glm::vec3(0.5f), pos,
                              glm::angleAxis(degreesOfRotation, xAxis));
     // clang-format off
-    ExpectVec3Near(p.getCornerPositions()[0], pos + glm::vec3(-hx, 0.0f,-hz)); 
-    ExpectVec3Near(p.getCornerPositions()[1], pos + glm::vec3( hx, 0.0f,-hz));
-    ExpectVec3Near(p.getCornerPositions()[2], pos + glm::vec3( hx, 0.0f, hz));
-    ExpectVec3Near(p.getCornerPositions()[3], pos + glm::vec3(-hx, 0.0f, hz));
+    TestUtil::ExpectVec3Near(p.getCornerPositions()[0], pos + glm::vec3(-hx, 0.0f,-hz)); 
+    TestUtil::ExpectVec3Near(p.getCornerPositions()[1], pos + glm::vec3( hx, 0.0f,-hz));
+    TestUtil::ExpectVec3Near(p.getCornerPositions()[2], pos + glm::vec3( hx, 0.0f, hz));
+    TestUtil::ExpectVec3Near(p.getCornerPositions()[3], pos + glm::vec3(-hx, 0.0f, hz));
     // clang-format on
 }
 
@@ -62,9 +56,9 @@ TEST(PlaneTest, PlaneRotationAndTranslation)
     engine::physics::Plane p(xsize, zsize, glm::vec3(0.5f), pos,
                              glm::angleAxis(degreesOfRotation, xAxis));
     // clang-format off
-    ExpectVec3Near(p.getCornerPositions()[0], pos + glm::vec3(-hx, hz, 0.0f)); 
-    ExpectVec3Near(p.getCornerPositions()[1], pos + glm::vec3( hx,  hz, 0.0f));
-    ExpectVec3Near(p.getCornerPositions()[2], pos + glm::vec3( hx, -hz, 0.0f));
-    ExpectVec3Near(p.getCornerPositions()[3], pos + glm::vec3(-hx, -hz, 0.0f));
+    TestUtil::ExpectVec3Near(p.getCornerPositions()[0], pos + glm::vec3(-hx, hz, 0.0f)); 
+    TestUtil::ExpectVec3Near(p.getCornerPositions()[1], pos + glm::vec3( hx,  hz, 0.0f));
+    TestUtil::ExpectVec3Near(p.getCornerPositions()[2], pos + glm::vec3( hx, -hz, 0.0f));
+    TestUtil::ExpectVec3Near(p.getCornerPositions()[3], pos + glm::vec3(-hx, -hz, 0.0f));
     // clang-format on
 }

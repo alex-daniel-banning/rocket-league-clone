@@ -1,18 +1,4 @@
 Setup testing suite
-1. Sphere-AABB for ball vs wall
-    Tests to add:
-        Collision detection
-            Sphere intersecting plane
-            Sphere separate from plane
-            Sphere exactly touching plane
-            Single collision response
-            Multi collision (in one frame) response
-            After I add more advanced collisions:
-                Fast moving object (tunneling)
-            Edge cases:
-                Zero velocity collision
-                Parallel motion along plane?
-                Initialized objects are overlapping
 
 Test pre-commit hook
     Once at a clean spot (clean branch), make a new branch to test this
@@ -62,3 +48,5 @@ Backlog:
     Add coordinates at top left of screen for debugging
     When camera movement is controlled by mouse, it's apparent that the mouse position jolts the camera when starting the program
     Shader wrapper class to catch unset uniforms
+    Implement debug visualization for rendering
+    Add logging system (including OpenGL API call tracing)

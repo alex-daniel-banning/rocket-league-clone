@@ -1,4 +1,5 @@
 #include <engine/Match.hpp>
+#include <engine/physics/Collisions.hpp>
 
 namespace engine
 {
@@ -11,39 +12,17 @@ void Match::tick(float deltaTime)
 
 void Match::handleCollisions()
 {
-    // determine if the ball collides with any of the walls
     for (physics::Plane wall : walls)
     {
-        // todo, what if it collides with two walls at once (corner)?
-        if (ballCollides(wall))
+        if (physics::Collisions::collides(wall, ball))
         {
-            // handle
-            // The velocity component that is parallel with the wall's normal should be inversed
-            // The component that is parallel to the wall should be unaffected (for elastic
-            // collision)
-            glm::vec3 vPerpendicular = glm::dot(ball.velocity, wall.getNormal()) * wall.getNormal();
-            glm::vec3 vParallel      = ball.velocity - vPerpendicular;
-            ball.velocity            = vParallel - vPerpendicular;
+            physics::Collisions::handleElasticCollision(wall, ball);
         }
     }
-    // determine if the ball collides with the ground
-    if (ballCollides(ground))
+    if (physics::Collisions::collides(ground, ball))
     {
-        glm::vec3 vPerpendicular = glm::dot(ball.velocity, ground.getNormal()) * ground.getNormal();
-        glm::vec3 vParallel      = ball.velocity - vPerpendicular;
-        ball.velocity            = vParallel - vPerpendicular;
+        physics::Collisions::handleElasticCollision(ground, ball);
     }
 }
 
-bool Match::ballCollides(const physics::Plane &plane)
-{
-    // find closes point on the aabb to the sphere center
-    glm::vec3 closest;
-    closest.x = glm::clamp(ball.position.x, plane.getMin().x, plane.getMax().x);
-    closest.y = glm::clamp(ball.position.y, plane.getMin().y, plane.getMax().y);
-    closest.z = glm::clamp(ball.position.z, plane.getMin().z, plane.getMax().z);
-
-    float distanceSquared = glm::dot(closest - ball.position, closest - ball.position);
-    return distanceSquared <= ball.radius * ball.radius;
-}
 } // namespace engine

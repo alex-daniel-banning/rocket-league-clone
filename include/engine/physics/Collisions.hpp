@@ -10,6 +10,8 @@ class Collisions
 {
   public:
     static bool collides(const Plane &plane, Sphere sphere);
+    static void handleElasticCollision(const Plane &plane, Sphere &sphere);
+    static float distanceSquared(const Plane &plane, Sphere sphere);
 };
 
 } // namespace engine::physics
