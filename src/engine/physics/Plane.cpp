@@ -24,8 +24,6 @@ void Plane::calculateCornerPositions()
     // clang-format on
 }
 
-glm::vec3 Plane::getNormal() const { return rotation * DEFAULT_NORMAL; }
-
 glm::vec3 Plane::getMin() const
 {
     glm::vec3 minPos = cornerPositions[0];
@@ -58,26 +56,16 @@ glm::vec3 Plane::getMax() const
     return maxPos;
 }
 
-glm::vec3 Plane::getPosition() const { return this->position; }
-
 void Plane::setPosition(const glm::vec3 p)
 {
-    this->position = p;
+    position = p;
     calculateCornerPositions();
 }
-
-glm::quat Plane::getRotation() const { return this->rotation; }
 
 void Plane::setRotation(const glm::quat r)
 {
-    this->rotation = r;
+    rotation = r;
     calculateCornerPositions();
 }
-
-float Plane::getXLength() const { return this->xLength; }
-
-float Plane::getZLength() const { return this->zLength; }
-
-std::array<glm::vec3, 4> Plane::getCornerPositions() const { return this->cornerPositions; }
 
 } // namespace engine::physics

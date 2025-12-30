@@ -1,6 +1,4 @@
 2. Sphere-OBB for ball vs car
-    Have demo repeat every 3 seconds
-        Store initial conditions/state in match?
 Put getters and setters in hpp. Compilation is faster when inline this way
 
 Collisions

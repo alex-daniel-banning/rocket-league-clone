@@ -149,15 +149,12 @@ int main()
         float currentFrame = glfwGetTime();
         if (currentFrame - demoStart > 3.0)
         {
-            std::cout << "3 more seconds..." << std::endl;
             demoStart = glfwGetTime();
             match.reset();
         }
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
-
         processInput(window, camera);
-
         match.tick(deltaTime);
 
         // render

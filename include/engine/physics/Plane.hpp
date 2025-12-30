@@ -23,17 +23,18 @@ class Plane
     void calculateCornerPositions();
     void initializeRenderData();
 
-    // const render::Mesh *getMesh() const;
-    glm::vec3 getNormal() const;
+    glm::vec3 getNormal() const { return rotation * DEFAULT_NORMAL; }
+    glm::vec3 getPosition() const { return position; }
+    glm::quat getRotation() const { return rotation; }
+    float getXLength() const { return xLength; }
+    float getZLength() const { return zLength; }
+    std::array<glm::vec3, 4> getCornerPositions() const { return cornerPositions; }
+
+    void setPosition(const glm::vec3 p);
+    void setRotation(const glm::quat r);
+
     glm::vec3 getMin() const;
     glm::vec3 getMax() const;
-    glm::vec3 getPosition() const;
-    void setPosition(const glm::vec3 p);
-    glm::quat getRotation() const;
-    void setRotation(const glm::quat r);
-    float getXLength() const;
-    float getZLength() const;
-    std::array<glm::vec3, 4> getCornerPositions() const;
 
   private:
     // Listed clockwise, starting at the top left position when viewing down the y axis where up is
