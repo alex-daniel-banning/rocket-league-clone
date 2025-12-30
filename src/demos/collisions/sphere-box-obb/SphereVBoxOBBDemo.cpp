@@ -133,13 +133,10 @@ int main()
     };
     // clang-format on
 
-    engine::physics::Box box;
-    box.size     = glm::vec3(5.0f);
-    box.position = glm::vec3(0.0f, 3.0f, 0.0f);
-    box.velocity = glm::vec3(0.0f);
-
-    engine::Match match(engine::physics::Sphere(1.0f, glm::vec3(10.0f, 3.0f, 0.0f)),
-                        engine::physics::Plane(groundSize, groundSize), walls);
+    engine::Match match(
+        engine::physics::Sphere(1.0f, glm::vec3(10.0f, 3.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f)),
+        engine::physics::Plane(groundSize, groundSize), walls,
+        {engine::physics::Box(glm::vec3(5.0f), glm::vec3(0.0f, 3.0f, 0.0f))});
 
     engine::render::Shader lineShader(
         engine::PathManager::globalAsset("shaders/lineShader.vert").c_str(),
@@ -154,6 +151,7 @@ int main()
         {
             std::cout << "3 more seconds..." << std::endl;
             demoStart = glfwGetTime();
+            match.reset();
         }
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
@@ -193,7 +191,10 @@ int main()
         simpleDepthShader.use();
         renderer.drawPhysicsPlane(match.getGround(), simpleDepthShader);
         renderer.drawSphere(match.getBall(), simpleDepthShader);
-        renderer.drawBox(box, simpleDepthShader);
+        for (engine::physics::Box box : match.getBoxes())
+        {
+            renderer.drawBox(box, simpleDepthShader);
+        }
 
         GL_CHECK();
 
@@ -221,7 +222,10 @@ int main()
         }
         modelLoadingShader.setVec3("diffuseColor", glm::vec3(0.0f, 0.5f, 0.3f));
         renderer.drawSphere(match.getBall(), modelLoadingShader, camera);
-        renderer.drawBox(box, modelLoadingShader, camera);
+        for (engine::physics::Box box : match.getBoxes())
+        {
+            renderer.drawBox(box, modelLoadingShader, camera);
+        }
 
         // debug rendering
         lineShader.use();
@@ -230,7 +234,10 @@ int main()
             renderer.drawPhysicsPlaneNormal(wall, lineShader, camera);
         }
         renderer.drawPhysicsPlaneNormal(match.getGround(), lineShader, camera);
-        renderer.drawBoxWireframe(box, modelLoadingShader, camera);
+        for (engine::physics::Box box : match.getBoxes())
+        {
+            renderer.drawBoxWireframe(box, modelLoadingShader, camera);
+        }
 
         glfwSwapBuffers(window);
         glfwPollEvents();

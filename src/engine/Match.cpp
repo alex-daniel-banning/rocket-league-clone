@@ -10,6 +10,12 @@ void Match::tick(float deltaTime)
     handleCollisions();
 }
 
+void Match::reset()
+{
+    ball  = initialBall;
+    boxes = initialBoxes;
+}
+
 void Match::handleCollisions()
 {
     for (physics::Plane wall : walls)

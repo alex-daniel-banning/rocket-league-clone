@@ -7,7 +7,6 @@ namespace engine::physics
 
 struct Sphere
 {
-  public:
     float radius       = 1.0f;
     glm::vec3 position = glm::vec3(0.0f);
     glm::vec3 velocity = glm::vec3(0.0f);
