@@ -17,8 +17,9 @@ class Plane
     // temp
     glm::vec3 color;
 
-    Plane(float xLength, float zLength, glm::vec3 color);
-    Plane(float xLength, float zLength, glm::vec3 color, glm::vec3 position, glm::quat rotation);
+    Plane() = default;
+    Plane(float xLength = 1.0f, float zLength = 1.0f, glm::vec3 color = glm::vec3(0.2f),
+          glm::vec3 position = glm::vec3(0.0f), glm::quat rotation = glm::quat(glm::vec3(0.0f)));
     void calculateCornerPositions();
     void initializeRenderData();
 

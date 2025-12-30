@@ -1,15 +1,9 @@
 #include <engine/physics/Plane.hpp>
+#include <iostream>
 
 namespace engine::physics
 {
 const glm::vec3 Plane::DEFAULT_NORMAL = glm::vec3(0.0f, 1.0f, 0.0f);
-
-Plane::Plane(float xLength, float zLength, glm::vec3 color)
-    : xLength(xLength), zLength(zLength), color(color), position(0.0f),
-      rotation(glm::quat(glm::vec3(0.0f)))
-{
-    calculateCornerPositions();
-}
 
 Plane::Plane(float xLength, float zLength, glm::vec3 color, glm::vec3 position, glm::quat rotation)
     : xLength(xLength), zLength(zLength), color(color), position(position), rotation(rotation)

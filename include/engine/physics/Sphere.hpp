@@ -5,12 +5,18 @@
 namespace engine::physics
 {
 
-class Sphere
+struct Sphere
 {
   public:
-    float radius;
-    glm::vec3 position;
-    glm::vec3 velocity;
+    float radius       = 1.0f;
+    glm::vec3 position = glm::vec3(0.0f);
+    glm::vec3 velocity = glm::vec3(0.0f);
+
+    Sphere() = default;
+    Sphere(float r, glm::vec3 pos, glm::vec3 vel = glm::vec3(0.0f))
+        : radius(r), position(pos), velocity(vel)
+    {
+    }
 };
 
 } // namespace engine::physics

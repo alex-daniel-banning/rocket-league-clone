@@ -10,5 +10,6 @@ class Box
     glm::vec3 size;
     glm::vec3 position;
     glm::vec3 velocity;
+    // TODO rotation
 };
 } // namespace engine::physics

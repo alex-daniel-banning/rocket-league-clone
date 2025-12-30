@@ -1,11 +1,8 @@
-Setup testing suite
-
-Test pre-commit hook
-    Once at a clean spot (clean branch), make a new branch to test this
+2. Sphere-OBB for ball vs car
+    Have demo repeat every 3 seconds
+        Store initial conditions/state in match?
 
 Collisions
-    2. Sphere-OBB for ball vs car
-        https://gamedev.stackexchange.com/questions/163873/separating-axis-theorem-obb-vs-sphere
     3. SAT for car vs car
     4. Optimization (spatial partitioning)
 
@@ -50,3 +47,5 @@ Backlog:
     Shader wrapper class to catch unset uniforms
     Implement debug visualization for rendering
     Add logging system (including OpenGL API call tracing)
+    Test pre-commit hook
+

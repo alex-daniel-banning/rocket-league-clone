@@ -98,16 +98,29 @@ Renderer::Renderer(const float screenWidth, const float screenHeight)
 void Renderer::drawBox(const engine::physics::Box &box, engine::render::Shader &shader,
                        const Camera &camera)
 {
-    glm::mat4 model = makeModelMatrix(box);
-    glm::mat4 view  = camera.GetViewMatrix();
-    glm::mat4 projection =
-        glm::perspective(camera.projection.fov, screenWidth / screenHeight,
-                         camera.projection.nearPlane, camera.projection.farPlane);
-
-    shader.use();
+    glm::mat4 model = glm::mat4(1.0f);
+    glm::mat4 view;
+    view = camera.GetViewMatrix();
+    glm::mat4 projection;
+    projection = glm::perspective(camera.projection.fov, screenWidth / screenHeight,
+                                  camera.projection.nearPlane, camera.projection.farPlane);
+    model      = glm::translate(model, box.position);
+    model      = glm::scale(model, glm::vec3(box.size.x, box.size.y, box.size.z));
     shader.setMat4("model", model);
     shader.setMat4("view", view);
     shader.setMat4("projection", projection);
+    shader.setVec3("diffuseColor", glm::vec3(0.4f, 0.4f, 0.65f));
+    glBindVertexArray(cubeVAO);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+    glBindVertexArray(0);
+}
+
+void Renderer::drawBox(const engine::physics::Box &box, Shader &shader)
+{
+    glm::mat4 modelMatrix = glm::mat4(1.0f);
+    modelMatrix           = glm::translate(modelMatrix, box.position);
+    modelMatrix           = glm::scale(modelMatrix, glm::vec3(box.size));
+    shader.setMat4("model", modelMatrix);
     glBindVertexArray(cubeVAO);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     glBindVertexArray(0);
@@ -116,16 +129,19 @@ void Renderer::drawBox(const engine::physics::Box &box, engine::render::Shader &
 void Renderer::drawBoxWireframe(const engine::physics::Box &box, engine::render::Shader &shader,
                                 const Camera &camera)
 {
-    glm::mat4 model = makeModelMatrix(box);
-    glm::mat4 view  = camera.GetViewMatrix();
-    glm::mat4 projection =
-        glm::perspective(camera.projection.fov, screenWidth / screenHeight,
-                         camera.projection.nearPlane, camera.projection.farPlane);
-
+    glm::mat4 model = glm::mat4(1.0f);
+    glm::mat4 view;
+    view = camera.GetViewMatrix();
+    glm::mat4 projection;
+    projection = glm::perspective(camera.projection.fov, screenWidth / screenHeight,
+                                  camera.projection.nearPlane, camera.projection.farPlane);
+    model      = glm::translate(model, box.position);
+    model      = glm::scale(model, glm::vec3(box.size.x, box.size.y, box.size.z));
     shader.use();
     shader.setMat4("model", model);
     shader.setMat4("view", view);
     shader.setMat4("projection", projection);
+    shader.setVec3("diffuseColor", glm::vec3(0.0f, 1.0f, 0.0f));
 
     glLineWidth(2.0f);
     glEnable(GL_LINE_SMOOTH);
@@ -147,6 +163,17 @@ void Renderer::drawSphere(const engine::physics::Sphere &sphere, engine::render:
     shader.setMat4("model", model);
     shader.setMat4("view", view);
     // shader.setMat4("projection", projection);
+    glBindVertexArray(sphereVAO);
+    glDrawElements(GL_TRIANGLES, sphereIndexCount, GL_UNSIGNED_INT, 0);
+    glBindVertexArray(0);
+}
+
+void Renderer::drawSphere(const engine::physics::Sphere &sphere, Shader &shader)
+{
+    glm::mat4 modelMatrix = glm::mat4(1.0f);
+    modelMatrix           = glm::translate(modelMatrix, sphere.position);
+    modelMatrix           = glm::scale(modelMatrix, glm::vec3(sphere.radius));
+    shader.setMat4("model", modelMatrix);
     glBindVertexArray(sphereVAO);
     glDrawElements(GL_TRIANGLES, sphereIndexCount, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
@@ -182,11 +209,16 @@ void Renderer::drawModel(engine::render::Model &model, engine::render::Shader &s
     model.Draw(shader);
 }
 
+// this hasn't been tested that it works. Current known use case is for generating shadow map,
+// which is why we don't want the camera's projection. Haven't created a scene yet that has a
+// plane cast a shadow.
 void Renderer::drawPhysicsPlane(const physics::Plane &plane, Shader &shader)
 {
-    // this hasn't been tested that it works. Current known use case is for generating shadow map,
-    // which is why we don't want the camera's projection. Haven't created a scene yet that has a
-    // plane cast a shadow.
+    glm::mat4 modelMatrix = glm::mat4(1.0f);
+    modelMatrix           = glm::translate(modelMatrix, plane.getPosition());
+    modelMatrix           = modelMatrix * glm::mat4_cast(plane.getRotation());
+    modelMatrix           = glm::scale(modelMatrix, glm::vec3(1.0f));
+    shader.setMat4("model", modelMatrix);
     glBindVertexArray(planeVAO);
     glDrawArrays(GL_TRIANGLES, 0, 6);
     glBindVertexArray(0);
@@ -234,6 +266,7 @@ void Renderer::drawPhysicsPlaneNormal(const physics::Plane &plane, Shader &shade
     glBindVertexArray(0);
 }
 
+// TODO remove?
 glm::mat4 Renderer::makeModelMatrix(const engine::physics::Box &box)
 {
     return glm::scale(glm::mat4(1.0f), glm::vec3(box.size));
