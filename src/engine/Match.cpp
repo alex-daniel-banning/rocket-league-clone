@@ -1,5 +1,6 @@
 #include <engine/Match.hpp>
 #include <engine/physics/Collisions.hpp>
+#include <iostream>
 
 namespace engine
 {
@@ -20,14 +21,14 @@ void Match::handleCollisions()
 {
     for (physics::Plane wall : walls)
     {
-        if (physics::Collisions::collides(wall, ball))
-        {
-            physics::Collisions::handleElasticCollision(wall, ball);
-        }
+        physics::Collisions::handleElasticCollision(wall, ball);
     }
-    if (physics::Collisions::collides(ground, ball))
+    physics::Collisions::handleElasticCollision(ground, ball);
+
+    for (physics::Box box : boxes)
     {
-        physics::Collisions::handleElasticCollision(ground, ball);
+
+        physics::Collisions::handleElasticCollision(box, ball);
     }
 }
 

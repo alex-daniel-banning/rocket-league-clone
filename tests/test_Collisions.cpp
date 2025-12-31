@@ -52,11 +52,13 @@ TEST(CollisionTest, ElasticSphereCornerCollision)
     float planeLength = 10.0f;
     engine::physics::Plane plane1(planeLength, planeLength, color, glm::vec3(0.0f),
                                   glm::quat(glm::vec3(0.0f)));
-    TestUtil::AssertVec3Near(glm::vec3(0.0f, 1.0f, 0.0f), plane1.getNormal());
+    TestUtil::AssertVec3Near(glm::vec3(0.0f, 1.0f, 0.0f), plane1.getNormal(),
+                             "Unexpected normal for initialized plane.");
     engine::physics::Plane plane2(planeLength, planeLength, color,
                                   glm::vec3(0.0f, planeLength / 2, -planeLength / 2),
                                   glm::angleAxis(glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f)));
-    TestUtil::AssertVec3Near(glm::vec3(0.0f, 0.0f, 1.0f), plane2.getNormal());
+    TestUtil::AssertVec3Near(glm::vec3(0.0f, 0.0f, 1.0f), plane2.getNormal(),
+                             "Unexpected normal for initialized plane.");
 
     engine::physics::Sphere sphere;
     sphere.radius   = 1.0f;
@@ -66,7 +68,8 @@ TEST(CollisionTest, ElasticSphereCornerCollision)
     engine::physics::Collisions::handleElasticCollision(plane1, sphere);
     engine::physics::Collisions::handleElasticCollision(plane2, sphere);
 
-    TestUtil::ExpectVec3Near(glm::vec3(0.0f, 1.0f, 1.0f), sphere.velocity, 1e-5f);
+    TestUtil::ExpectVec3Near(glm::vec3(0.0f, 1.0f, 1.0f), sphere.velocity,
+                             "Sphere did not handle two collisions in one frame as expected.");
 }
 
 TEST(CollisionTest, ElasticSphereAssymetricalCornerCollision) {}
@@ -84,7 +87,8 @@ TEST(CollisionTest, NoVelocityColissionResolution)
     glm::quat planeRotation(glm::vec3(0.0f));
     engine::physics::Plane plane(planeLength, planeLength, color, planeInitialPosition,
                                  planeRotation);
-    TestUtil::AssertVec3Near(glm::vec3(0.0f, 1.0f, 0.0f), plane.getNormal());
+    TestUtil::AssertVec3Near(glm::vec3(0.0f, 1.0f, 0.0f), plane.getNormal(),
+                             "Unexpected normal for initialized plane.");
 
     engine::physics::Sphere sphere;
     sphere.radius   = 1.0f;
@@ -93,8 +97,10 @@ TEST(CollisionTest, NoVelocityColissionResolution)
 
     ASSERT_EQ(true, engine::physics::Collisions::collides(plane, sphere));
     engine::physics::Collisions::handleElasticCollision(plane, sphere);
-    TestUtil::ExpectVec3Near(glm::vec3(2.5f, sphere.radius, 2.5f), sphere.position);
-    EXPECT_EQ(glm::vec3(0.0f), sphere.velocity);
+    TestUtil::ExpectVec3Near(glm::vec3(2.5f, sphere.radius, 2.5f), sphere.position,
+                             "Sphere shouldn't overlap with plane when it isn't moving.");
+    EXPECT_EQ(glm::vec3(0.0f), sphere.velocity)
+        << "Sphere shouldn't be accelerated by zero-velocity overlap.";
 }
 
 TEST(CollisionTest, ParallelVelocityColissionResolution)
@@ -110,7 +116,8 @@ TEST(CollisionTest, ParallelVelocityColissionResolution)
     glm::quat planeRotation(glm::vec3(0.0f));
     engine::physics::Plane plane(planeLength, planeLength, color, planeInitialPosition,
                                  planeRotation);
-    TestUtil::AssertVec3Near(glm::vec3(0.0f, 1.0f, 0.0f), plane.getNormal());
+    TestUtil::AssertVec3Near(glm::vec3(0.0f, 1.0f, 0.0f), plane.getNormal(),
+                             "Unexpected normal for initialized plane.");
 
     engine::physics::Sphere sphere;
     sphere.radius   = 1.0f;
@@ -120,7 +127,85 @@ TEST(CollisionTest, ParallelVelocityColissionResolution)
     ASSERT_EQ(true, engine::physics::Collisions::collides(plane, sphere));
     engine::physics::Collisions::handleElasticCollision(plane, sphere);
     TestUtil::ExpectVec3Near(glm::vec3(2.5f, sphere.radius, 2.5f), sphere.position);
-    EXPECT_EQ(glm::vec3(0.0f, 0.0f, -1.0f), sphere.velocity);
+    EXPECT_EQ(glm::vec3(0.0f, 0.0f, -1.0f), sphere.velocity)
+        << "Overlap resultion shouldn't add velocity.";
+}
+
+TEST(CollisionTest, SphereVsBoxFace)
+{
+    {
+        glm::vec3 sphere_velocity_initial = glm::vec3(-1.0f, 0.0f, 0.0f);
+        engine::physics::Sphere sphereJustTouching(1.0f, glm::vec3(1.5f, 0.0f, 0.0f),
+                                                   sphere_velocity_initial);
+        engine::physics::Box box(glm::vec3(1.0f), glm::vec3(0.0f), glm::vec3(0.0f));
+        engine::physics::Collisions::handleElasticCollision(box, sphereJustTouching);
+        TestUtil::ExpectVec3Near(
+            sphere_velocity_initial, sphereJustTouching.velocity,
+            "Sphere that just touches the surface should not cause a collision.");
+    }
+    {
+        glm::vec3 sphere_velocity_initial = glm::vec3(-1.0f, 0.0f, 0.0f);
+        engine::physics::Sphere sphere_small_overlap(1.0f, glm::vec3(1.499f, 0.0f, 0.0f),
+                                                     sphere_velocity_initial);
+        engine::physics::Box box(glm::vec3(1.0f), glm::vec3(0.0f), glm::vec3(0.0f));
+        engine::physics::Collisions::handleElasticCollision(box, sphere_small_overlap);
+        TestUtil::ExpectVec3Near(-sphere_velocity_initial, sphere_small_overlap.velocity,
+                                 "Barely overlapping sphere should reflect back.");
+    }
+    {
+        glm::vec3 sphere_velocity_initial = glm::vec3(-1.0f, 0.0f, 0.0f);
+        glm::vec3 sphere_position_initial = glm::vec3(1.501f, 0.0f, 0.0f);
+        engine::physics::Sphere sphere_no_overlap(1.0f, sphere_position_initial,
+                                                  sphere_velocity_initial);
+        engine::physics::Box box(glm::vec3(1.0f), glm::vec3(0.0f), glm::vec3(0.0f));
+        engine::physics::Collisions::handleElasticCollision(box, sphere_no_overlap);
+        TestUtil::ExpectVec3Near(sphere_velocity_initial, sphere_no_overlap.velocity,
+                                 "Non-overlapping sphere should not change.");
+        TestUtil::ExpectVec3Near(sphere_position_initial, sphere_no_overlap.position,
+                                 "Non-overlapping sphere should not change.");
+    }
+}
+
+TEST(CollisionTest, SphereVsBoxEdge)
+{
+    glm::vec3 sphere_velocity_initial = glm::vec3(-1.0f, 0.0f, 0.0f);
+
+    float x                           = std::sqrt((0.5f * 0.5f) + (0.5f * 0.5f));
+    float y                           = std::sqrt((0.5f * 0.5f) + (0.5f * 0.5f));
+    glm::vec3 sphere_position_initial = glm::vec3(x, y, 0.0f);
+    engine::physics::Sphere sphere(1.0f, sphere_position_initial, sphere_velocity_initial);
+    engine::physics::Box box(glm::vec3(1.0f), glm::vec3(0.0f), glm::vec3(0.0f));
+
+    engine::physics::Collisions::handleElasticCollision(box, sphere);
+
+    float new_vel_x = -std::sqrt(0.0f);
+    float new_vel_y = std::sqrt(1.0f);
+    TestUtil::ExpectVec3Near(glm::vec3(new_vel_x, new_vel_y, 0.0f), sphere.velocity,
+                             "Collision is reflected across edge (45 degree collision normal).");
+}
+
+TEST(CollisionTest, SphereVsBoxEdgeOffset)
+{
+    float vel_initial_x               = -2.0f;
+    glm::vec3 sphere_velocity_initial = glm::vec3(vel_initial_x, 0.0f, 0.0f);
+
+    // Uses 30/60/90 triangle. 0.5 is offset of corner edge (edge is not at origin).
+    float x = (0.5f + 1.0f) - 0.01f;
+    float y = (0.5f + std::sqrt(3.0f)) - 0.01f;
+
+    float radius = 2.0f;
+
+    glm::vec3 sphere_position_initial = glm::vec3(x, y, 0.0f);
+    engine::physics::Sphere sphere(radius, sphere_position_initial, sphere_velocity_initial);
+    engine::physics::Box box(glm::vec3(1.0f), glm::vec3(0.0f), glm::vec3(0.0f));
+
+    engine::physics::Collisions::handleElasticCollision(box, sphere);
+
+    float new_vel_x = -1.0f;
+    float new_vel_y = std::sqrt(3.0f);
+    TestUtil::ExpectVec3Near(glm::vec3(new_vel_x, new_vel_y, 0.0f), sphere.velocity,
+                             "Collision is reflected across edge (60 degree collision normal).",
+                             1e-2);
 }
 
 // TODO tunneling resolution

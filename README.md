@@ -32,6 +32,11 @@ Run from the project root directory:
 ```bash
 ln -sf build/compile_commands.json .
 ```
+### Execute a single test
+Run from the build directory:
+```bash
+./tests --gtest_filter=TestSuiteName.TestName
+```
 
 ---
 

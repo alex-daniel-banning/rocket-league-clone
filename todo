@@ -1,5 +1,8 @@
 2. Sphere-OBB for ball vs car
-Put getters and setters in hpp. Compilation is faster when inline this way
+    See collision-handling-notes
+Vim - make diagnostic window non-floating/non-obstructing
+Remove unnecesary std::endl's
+Configure clang-format to enforce Google style guide
 
 Collisions
     3. SAT for car vs car

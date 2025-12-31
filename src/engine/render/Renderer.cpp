@@ -372,7 +372,7 @@ void Renderer::initSphere()
 
     unsigned int stacks = 16;
     unsigned int slices = 16;
-    float radius        = 0.5f;
+    float radius        = 1.0f;
 
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
