@@ -135,7 +135,7 @@ TEST(CollisionTest, SphereVsBoxFace)
 {
     {
         glm::vec3 sphere_velocity_initial = glm::vec3(-1.0f, 0.0f, 0.0f);
-        engine::physics::Sphere sphereJustTouching(1.0f, glm::vec3(1.5f, 0.0f, 0.0f),
+        engine::physics::Sphere sphereJustTouching(1.0f, 1.0f, glm::vec3(1.5f, 0.0f, 0.0f),
                                                    sphere_velocity_initial);
         engine::physics::Box box(glm::vec3(1.0f), glm::vec3(0.0f), glm::vec3(0.0f));
         engine::physics::Collisions::handleElasticCollision(box, sphereJustTouching);
@@ -145,7 +145,7 @@ TEST(CollisionTest, SphereVsBoxFace)
     }
     {
         glm::vec3 sphere_velocity_initial = glm::vec3(-1.0f, 0.0f, 0.0f);
-        engine::physics::Sphere sphere_small_overlap(1.0f, glm::vec3(1.499f, 0.0f, 0.0f),
+        engine::physics::Sphere sphere_small_overlap(1.0f, 1.0f, glm::vec3(1.499f, 0.0f, 0.0f),
                                                      sphere_velocity_initial);
         engine::physics::Box box(glm::vec3(1.0f), glm::vec3(0.0f), glm::vec3(0.0f));
         engine::physics::Collisions::handleElasticCollision(box, sphere_small_overlap);
@@ -155,7 +155,7 @@ TEST(CollisionTest, SphereVsBoxFace)
     {
         glm::vec3 sphere_velocity_initial = glm::vec3(-1.0f, 0.0f, 0.0f);
         glm::vec3 sphere_position_initial = glm::vec3(1.501f, 0.0f, 0.0f);
-        engine::physics::Sphere sphere_no_overlap(1.0f, sphere_position_initial,
+        engine::physics::Sphere sphere_no_overlap(1.0f, 1.0f, sphere_position_initial,
                                                   sphere_velocity_initial);
         engine::physics::Box box(glm::vec3(1.0f), glm::vec3(0.0f), glm::vec3(0.0f));
         engine::physics::Collisions::handleElasticCollision(box, sphere_no_overlap);
@@ -173,7 +173,7 @@ TEST(CollisionTest, SphereVsBoxEdge)
     float x                           = std::sqrt((0.5f * 0.5f) + (0.5f * 0.5f));
     float y                           = std::sqrt((0.5f * 0.5f) + (0.5f * 0.5f));
     glm::vec3 sphere_position_initial = glm::vec3(x, y, 0.0f);
-    engine::physics::Sphere sphere(1.0f, sphere_position_initial, sphere_velocity_initial);
+    engine::physics::Sphere sphere(1.0f, 1.0f, sphere_position_initial, sphere_velocity_initial);
     engine::physics::Box box(glm::vec3(1.0f), glm::vec3(0.0f), glm::vec3(0.0f));
 
     engine::physics::Collisions::handleElasticCollision(box, sphere);
@@ -196,7 +196,7 @@ TEST(CollisionTest, SphereVsBoxEdgeOffset)
     float radius = 2.0f;
 
     glm::vec3 sphere_position_initial = glm::vec3(x, y, 0.0f);
-    engine::physics::Sphere sphere(radius, sphere_position_initial, sphere_velocity_initial);
+    engine::physics::Sphere sphere(radius, 1.0f, sphere_position_initial, sphere_velocity_initial);
     engine::physics::Box box(glm::vec3(1.0f), glm::vec3(0.0f), glm::vec3(0.0f));
 
     engine::physics::Collisions::handleElasticCollision(box, sphere);
@@ -221,7 +221,7 @@ TEST(CollisionTest, SphereVsBoxCornerOffset)
             (0.5f + 1.0f) - 0.01f
     );
     // clang-format on
-    engine::physics::Sphere sphere(radius, sphere_pos, v0);
+    engine::physics::Sphere sphere(radius, 1.0f, sphere_pos, v0);
 
     glm::vec3 box_corner(0.5f);
     engine::physics::Box box(glm::vec3(1.0f), glm::vec3(0.0f), glm::vec3(0.0f));

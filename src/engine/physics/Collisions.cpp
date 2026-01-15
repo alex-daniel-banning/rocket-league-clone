@@ -31,7 +31,7 @@ void Collisions::handleElasticCollision(const Plane &plane, Sphere &sphere)
     sphere.velocity = vParallel - vPerpendicular;
 }
 
-void Collisions::handleElasticCollision(const Box &box, Sphere &sphere)
+void Collisions::handleElasticCollision(Box &box, Sphere &sphere)
 {
     glm::vec3 v_sphereCenterToBoxCenter = sphere.position - box.position;
 
@@ -57,10 +57,10 @@ void Collisions::handleElasticCollision(const Box &box, Sphere &sphere)
 
     // TODO, handle tunneling
     // TODO, penetration correction (do for planes too?)
-    glm::vec3 normal         = glm::normalize(v_box_surface_to_sphere_center);
-    glm::vec3 vPerpendicular = glm::dot(sphere.velocity, normal) * normal;
-    glm::vec3 vParallel      = sphere.velocity - vPerpendicular;
-    if (glm::length(vPerpendicular) < 0.0001f)
+    glm::vec3 normal                     = glm::normalize(v_box_surface_to_sphere_center);
+    glm::vec3 v_perpendicular_to_surface = glm::dot(sphere.velocity, normal) * normal;
+    glm::vec3 v_parallel_to_surface      = sphere.velocity - v_perpendicular_to_surface;
+    if (glm::length(v_perpendicular_to_surface) < 0.0001f)
     {
         // TODO - For this and the same thing for the plane function, if a sphere is going
         // pseudo-parallel into the surface, this will trigger repeatedly. Maybe it is better to set
@@ -69,7 +69,19 @@ void Collisions::handleElasticCollision(const Box &box, Sphere &sphere)
         sphere.position = closestPoint + (sphere.radius * normal);
         return;
     }
-    sphere.velocity = vParallel - vPerpendicular;
+
+    float vel_box_normal    = glm::dot(box.velocity, normal);    // v_box_normal
+    float vel_sphere_normal = glm::dot(sphere.velocity, normal); // v_sphere_normal
+    float vel_box_normal_prime =
+        (((box.mass - sphere.mass) * vel_box_normal) + (2 * sphere.mass * vel_sphere_normal)) /
+        (box.mass + sphere.mass);
+    float vel_sphere_normal_prime =
+        (((sphere.mass - box.mass) * vel_sphere_normal) + (2 * box.mass * vel_box_normal)) /
+        (box.mass + sphere.mass);
+    glm::vec3 vel_box_tangent    = box.velocity - (vel_box_normal * normal);
+    glm::vec3 vel_sphere_tangent = sphere.velocity - (vel_sphere_normal * normal);
+    box.velocity                 = vel_box_tangent + (vel_box_normal_prime * normal);
+    sphere.velocity              = vel_sphere_tangent + (vel_sphere_normal_prime * normal);
 }
 
 float Collisions::distanceSquared(const Plane &plane, Sphere sphere)

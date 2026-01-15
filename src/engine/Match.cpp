@@ -1,6 +1,6 @@
 #include <engine/Match.hpp>
 #include <engine/physics/Collisions.hpp>
-#include <iostream>
+#include "engine/physics/Box.hpp"
 
 namespace engine
 {
@@ -8,6 +8,10 @@ namespace engine
 void Match::tick(float deltaTime)
 {
     ball.position += deltaTime * ball.velocity;
+    for (physics::Box &box : boxes)
+    {
+        box.position += deltaTime * box.velocity;
+    }
     handleCollisions();
 }
 
@@ -25,7 +29,7 @@ void Match::handleCollisions()
     }
     physics::Collisions::handleElasticCollision(ground, ball);
 
-    for (physics::Box box : boxes)
+    for (physics::Box &box : boxes)
     {
 
         physics::Collisions::handleElasticCollision(box, ball);

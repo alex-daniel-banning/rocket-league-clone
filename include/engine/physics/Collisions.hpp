@@ -12,7 +12,7 @@ class Collisions
   public:
     static bool collides(const Plane &plane, Sphere sphere);
     static void handleElasticCollision(const Plane &plane, Sphere &sphere);
-    static void handleElasticCollision(const Box &box, Sphere &sphere);
+    static void handleElasticCollision(Box &box, Sphere &sphere);
     static float distanceSquared(const Plane &plane, Sphere sphere);
 };
 
