@@ -210,29 +210,30 @@ TEST(CollisionTest, SphereVsBoxEdgeOffset)
 
 TEST(CollisionTest, SphereVsBoxCornerOffset)
 {
-    float vel_initial_x               = -2.0f;
-    float vel_initial_z               = -2.0f;
-    glm::vec3 sphere_velocity_initial = glm::vec3(vel_initial_x, 0.0f, vel_initial_z);
+    float vel_initial_x = -2.0f;
+    float vel_initial_z = -2.0f;
+    glm::vec3 v0        = glm::vec3(vel_initial_x, 0.0f, vel_initial_z);
+    float radius        = std::sqrt(5.0f);
+    // clang-format off
+    glm::vec3 sphere_pos(
+            (0.5f + 1.0f) - 0.01f,
+            (0.5f + std::sqrt(3.0f)) - 0.01f,
+            (0.5f + 1.0f) - 0.01f
+    );
+    // clang-format on
+    engine::physics::Sphere sphere(radius, sphere_pos, v0);
 
-    float radius = std::sqrt(5.0f);
-
-    // Uses 30/60/90 triangle. 0.5 is offset of corner edge (edge is not at origin).
-    float x = (0.5f + 1.0f) - 0.01f;
-    float y = (0.5f + std::sqrt(3.0f)) - 0.01f;
-    float z = (0.5f + 1.0f) - 0.01f;
-
-    glm::vec3 sphere_position_initial = glm::vec3(x, y, z);
-    engine::physics::Sphere sphere(radius, sphere_position_initial, sphere_velocity_initial);
+    glm::vec3 box_corner(0.5f);
     engine::physics::Box box(glm::vec3(1.0f), glm::vec3(0.0f), glm::vec3(0.0f));
 
     engine::physics::Collisions::handleElasticCollision(box, sphere);
 
-    float new_vel_x = -1.0f;
-    float new_vel_y = std::sqrt(3.0f);
-    float new_vel_z = -1.0f;
+    // --- expected result (physics-derived) ---
+    glm::vec3 n         = glm::normalize(sphere_pos - box_corner);
+    glm::vec3 vExpected = v0 - 2.0f * glm::dot(v0, n) * n;
     TestUtil::ExpectVec3Near(
-        glm::vec3(new_vel_x, new_vel_y, new_vel_z), sphere.velocity,
-        "Collision is reflected across box corner (60 degree collision normal).", 1e-2);
+        vExpected, sphere.velocity,
+        "Collision is reflected across box corner (60 degree collision normal).", 1e-6);
 }
 
 // TODO tunneling resolution
