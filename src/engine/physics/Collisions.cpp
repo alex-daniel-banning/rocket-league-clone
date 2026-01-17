@@ -4,9 +4,16 @@
 namespace engine::physics
 {
 
+// TODO, pass in Contact struct
 bool Collisions::collides(const Plane &plane, Sphere sphere)
 {
     return Collisions::distanceSquared(plane, sphere) < sphere.radius * sphere.radius;
+};
+
+bool Collisions::computeContact(const Box &box, const Sphere &sphere, Contact &out)
+{
+    // do nothing right now
+    return false;
 };
 
 void Collisions::handleElasticCollision(const Plane &plane, Sphere &sphere)

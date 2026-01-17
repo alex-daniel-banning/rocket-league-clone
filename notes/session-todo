@@ -1,0 +1,9 @@
+- Tests adjust unit tests that are now failing
+    - Collisions should only test for direction now make them formula based if possible.
+- Create unit tests for momentum. Make them physic-formula-based, rather than value based.
+- Research angular response from collisions.
+################################################################################
+Refactor/separate collision detection and resolution
+    Add Contact struct (useful for angular collision resolution)
+    Break out detection tests
+    Remove category CollisionTest. Should specify resolution or detection

@@ -2,7 +2,43 @@
 #include <gtest/gtest.h>
 #include "TestUtil.hpp"
 
-TEST(CollisionTest, BasicCollisionDetection)
+namespace
+{
+// Struct for sphere vs box test case
+struct SphereBoxCase
+{
+    glm::vec3 sphere_pos;
+    glm::vec3 sphere_vel;
+    float sphere_radius;
+    float sphere_mass;
+    glm::vec3 contact_point_approx;
+    float box_mass;
+};
+
+glm::vec3 expectedVelocity(const glm::vec3 &v, float m_self, float m_other, const glm::vec3 &normal)
+{
+    return v - (2.0f * m_other / (m_self + m_other)) * glm::dot(v, normal) * normal;
+}
+
+// Minimal helper function to run a sphere vs box collision test
+void runSphereBoxCollisionTest(const SphereBoxCase &c)
+{
+    engine::physics::Sphere sphere(c.sphere_radius, c.sphere_mass, c.sphere_pos, c.sphere_vel);
+    engine::physics::Box box(glm::vec3(1.0f), glm::vec3(0.0f), glm::vec3(0.0f), c.box_mass);
+
+    engine::physics::Collisions::handleElasticCollision(box, sphere);
+
+    glm::vec3 n         = glm::normalize(c.sphere_pos - c.contact_point_approx);
+    glm::vec3 vExpected = expectedVelocity(c.sphere_vel, c.sphere_mass, c.box_mass, n);
+
+    TestUtil::ExpectVec3Near(vExpected, sphere.velocity,
+                             "Sphere velocity after collision should reflect correctly along "
+                             "normal, accounting for box mass.",
+                             1e-6);
+}
+} // namespace
+
+TEST(CollisionDetectionTest, BasicCollisionDetection)
 {
     glm::vec3 color(0.2f, 0.15f, 0.15f);
     float planeLength = 10.0f;
@@ -72,9 +108,7 @@ TEST(CollisionTest, ElasticSphereCornerCollision)
                              "Sphere did not handle two collisions in one frame as expected.");
 }
 
-TEST(CollisionTest, ElasticSphereAssymetricalCornerCollision) {}
-
-TEST(CollisionTest, NoVelocityColissionResolution)
+TEST(CollisionReslutionTest, NoVelocityCollisionResolution)
 {
     // Sphere is inside of sphere with 0 velocity
     // After collision, sphere should be telleported to "good side" (normal direction) of plane so
@@ -103,7 +137,7 @@ TEST(CollisionTest, NoVelocityColissionResolution)
         << "Sphere shouldn't be accelerated by zero-velocity overlap.";
 }
 
-TEST(CollisionTest, ParallelVelocityColissionResolution)
+TEST(CollisionResolutionTest, ParallelVelocityCollisionResolution)
 {
     // Sphere is inside of sphere with 0 velocity
     // After collision, sphere should be telleported to "good side" (normal direction) of plane so
@@ -131,7 +165,8 @@ TEST(CollisionTest, ParallelVelocityColissionResolution)
         << "Overlap resultion shouldn't add velocity.";
 }
 
-TEST(CollisionTest, SphereVsBoxFace)
+// TODO, I think if an early block fails, it won't execute the next
+TEST(CollisionDetectionTest, SphereVsBoxFace)
 {
     {
         glm::vec3 sphere_velocity_initial = glm::vec3(-1.0f, 0.0f, 0.0f);
@@ -144,12 +179,14 @@ TEST(CollisionTest, SphereVsBoxFace)
             "Sphere that just touches the surface should not cause a collision.");
     }
     {
+        // what is the goal of this test? Should it test momentum and collission normal
         glm::vec3 sphere_velocity_initial = glm::vec3(-1.0f, 0.0f, 0.0f);
         engine::physics::Sphere sphere_small_overlap(1.0f, 1.0f, glm::vec3(1.499f, 0.0f, 0.0f),
                                                      sphere_velocity_initial);
-        engine::physics::Box box(glm::vec3(1.0f), glm::vec3(0.0f), glm::vec3(0.0f));
+        engine::physics::Box box(glm::vec3(1.0f), glm::vec3(0.0f), glm::vec3(0.0f), 5.0f);
         engine::physics::Collisions::handleElasticCollision(box, sphere_small_overlap);
-        TestUtil::ExpectVec3Near(-sphere_velocity_initial, sphere_small_overlap.velocity,
+        TestUtil::ExpectVec3Near(-glm::normalize(sphere_velocity_initial),
+                                 glm::normalize(sphere_small_overlap.velocity),
                                  "Barely overlapping sphere should reflect back.");
     }
     {
@@ -166,74 +203,48 @@ TEST(CollisionTest, SphereVsBoxFace)
     }
 }
 
-TEST(CollisionTest, SphereVsBoxEdge)
+// Refactored test using the helper
+TEST(CollisionResolutionTest, SphereEdgeAndCornerCases)
 {
-    glm::vec3 sphere_velocity_initial = glm::vec3(-1.0f, 0.0f, 0.0f);
-
-    float x                           = std::sqrt((0.5f * 0.5f) + (0.5f * 0.5f));
-    float y                           = std::sqrt((0.5f * 0.5f) + (0.5f * 0.5f));
-    glm::vec3 sphere_position_initial = glm::vec3(x, y, 0.0f);
-    engine::physics::Sphere sphere(1.0f, 1.0f, sphere_position_initial, sphere_velocity_initial);
-    engine::physics::Box box(glm::vec3(1.0f), glm::vec3(0.0f), glm::vec3(0.0f));
-
-    engine::physics::Collisions::handleElasticCollision(box, sphere);
-
-    float new_vel_x = -std::sqrt(0.0f);
-    float new_vel_y = std::sqrt(1.0f);
-    TestUtil::ExpectVec3Near(glm::vec3(new_vel_x, new_vel_y, 0.0f), sphere.velocity,
-                             "Collision is reflected across edge (45 degree collision normal).");
-}
-
-TEST(CollisionTest, SphereVsBoxEdgeOffset)
-{
-    float vel_initial_x               = -2.0f;
-    glm::vec3 sphere_velocity_initial = glm::vec3(vel_initial_x, 0.0f, 0.0f);
-
-    // Uses 30/60/90 triangle. 0.5 is offset of corner edge (edge is not at origin).
-    float x = (0.5f + 1.0f) - 0.01f;
-    float y = (0.5f + std::sqrt(3.0f)) - 0.01f;
-
-    float radius = 2.0f;
-
-    glm::vec3 sphere_position_initial = glm::vec3(x, y, 0.0f);
-    engine::physics::Sphere sphere(radius, 1.0f, sphere_position_initial, sphere_velocity_initial);
-    engine::physics::Box box(glm::vec3(1.0f), glm::vec3(0.0f), glm::vec3(0.0f));
-
-    engine::physics::Collisions::handleElasticCollision(box, sphere);
-
-    float new_vel_x = -1.0f;
-    float new_vel_y = std::sqrt(3.0f);
-    TestUtil::ExpectVec3Near(glm::vec3(new_vel_x, new_vel_y, 0.0f), sphere.velocity,
-                             "Collision is reflected across edge (60 degree collision normal).",
-                             1e-2);
-}
-
-TEST(CollisionTest, SphereVsBoxCornerOffset)
-{
-    float vel_initial_x = -2.0f;
-    float vel_initial_z = -2.0f;
-    glm::vec3 v0        = glm::vec3(vel_initial_x, 0.0f, vel_initial_z);
-    float radius        = std::sqrt(5.0f);
     // clang-format off
-    glm::vec3 sphere_pos(
-            (0.5f + 1.0f) - 0.01f,
-            (0.5f + std::sqrt(3.0f)) - 0.01f,
-            (0.5f + 1.0f) - 0.01f
-    );
+    // --- Symmetrical edge collision ---
+    runSphereBoxCollisionTest({
+        glm::vec3(std::sqrt(0.5f*0.5f + 0.5f*0.5f), std::sqrt(0.5f*0.5f + 0.5f*0.5f), 0.0f),
+        glm::vec3(-1.0f, 0.0f, 0.0f),
+        1.0f, 1.0f,
+        glm::vec3(0.5f, 0.5f, 0.0f),
+        50.0f
+    });
+
+    // --- Offset edge collision (30/60/90 triangle) ---
+    runSphereBoxCollisionTest({
+        glm::vec3((0.5f + 1.0f) - 0.01f, (0.5f + std::sqrt(3.0f)) - 0.01f, 0.0f),
+        glm::vec3(-2.0f, 0.0f, 0.0f),
+        2.0f, 1.0f,
+        glm::vec3(0.5f, 0.5f, 0.0f),
+        50.0f
+    });
+
+    // --- Symmetrical corner collision ---
+    runSphereBoxCollisionTest({
+        glm::vec3((0.5f + 1.0f) - 0.01f, (0.5f + std::sqrt(3.0f)) - 0.01f, (0.5f + 1.0f) - 0.01f),
+        glm::vec3(-2.0f, 0.0f, -2.0f),
+        std::sqrt(5.0f), 1.0f,
+        glm::vec3(0.5f, 0.5f, 0.5f),
+        50.0f
+    });
+
+    // --- Offset corner collision (30/60/90 triangle) ---
+    runSphereBoxCollisionTest({
+        glm::vec3((0.5f + 1.0f) - 0.01f, (0.5f + std::sqrt(3.0f)) - 0.01f, (0.5f + 1.0f) - 0.01f),
+        glm::vec3(-2.0f, 0.0f, -2.0f),
+        std::sqrt(5.0f), 1.0f,
+        glm::vec3(0.5f),
+        50.0f
+    });
+
+    // --- Add more cases as needed ---
     // clang-format on
-    engine::physics::Sphere sphere(radius, 1.0f, sphere_pos, v0);
-
-    glm::vec3 box_corner(0.5f);
-    engine::physics::Box box(glm::vec3(1.0f), glm::vec3(0.0f), glm::vec3(0.0f));
-
-    engine::physics::Collisions::handleElasticCollision(box, sphere);
-
-    // --- expected result (physics-derived) ---
-    glm::vec3 n         = glm::normalize(sphere_pos - box_corner);
-    glm::vec3 vExpected = v0 - 2.0f * glm::dot(v0, n) * n;
-    TestUtil::ExpectVec3Near(
-        vExpected, sphere.velocity,
-        "Collision is reflected across box corner (60 degree collision normal).", 1e-6);
 }
 
 // TODO tunneling resolution

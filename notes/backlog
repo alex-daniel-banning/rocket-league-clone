@@ -17,8 +17,6 @@ Brainstorming:
 Next mini project options:
     Collisions/Physics
         Rigid-body basis:
-            Position
-            Velocity
             Acceleration
             Forces
         Gravity
