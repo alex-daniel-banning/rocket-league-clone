@@ -1,6 +1,7 @@
 #include <engine/Match.hpp>
+#include <engine/physics/Box.hpp>
 #include <engine/physics/Collisions.hpp>
-#include "engine/physics/Box.hpp"
+#include <engine/physics/Contact.hpp>
 
 namespace engine
 {
@@ -31,8 +32,11 @@ void Match::handleCollisions()
 
     for (physics::Box &box : boxes)
     {
-
-        physics::Collisions::handleElasticCollision(box, ball);
+        physics::Contact contact;
+        if (physics::Collisions::computeContact(box, ball, contact))
+        {
+            physics::Collisions::resolveElasticCollision(box, ball, contact);
+        }
     }
 }
 

@@ -13,6 +13,7 @@ struct SphereBoxCase
     float sphere_mass;
     glm::vec3 contact_point_approx;
     float box_mass;
+    std::string label;
 };
 
 glm::vec3 expectedVelocity(const glm::vec3 &v, float m_self, float m_other, const glm::vec3 &normal)
@@ -26,15 +27,16 @@ void runSphereBoxCollisionTest(const SphereBoxCase &c)
     engine::physics::Sphere sphere(c.sphere_radius, c.sphere_mass, c.sphere_pos, c.sphere_vel);
     engine::physics::Box box(glm::vec3(1.0f), glm::vec3(0.0f), glm::vec3(0.0f), c.box_mass);
 
-    engine::physics::Collisions::handleElasticCollision(box, sphere);
+    engine::physics::Contact contact;
+    ASSERT_TRUE(engine::physics::Collisions::computeContact(box, sphere, contact))
+        << "Did not detect collision as expected.";
+    engine::physics::Collisions::resolveElasticCollision(box, sphere, contact);
 
     glm::vec3 n         = glm::normalize(c.sphere_pos - c.contact_point_approx);
     glm::vec3 vExpected = expectedVelocity(c.sphere_vel, c.sphere_mass, c.box_mass, n);
 
-    TestUtil::ExpectVec3Near(vExpected, sphere.velocity,
-                             "Sphere velocity after collision should reflect correctly along "
-                             "normal, accounting for box mass.",
-                             1e-6);
+    std::string msg = "Failure for Sphere v. Box collision resolution. TEST CASE -> " + c.label;
+    TestUtil::ExpectVec3Near(vExpected, sphere.velocity, msg, 1e-6);
 }
 } // namespace
 
@@ -165,7 +167,6 @@ TEST(CollisionResolutionTest, ParallelVelocityCollisionResolution)
         << "Overlap resultion shouldn't add velocity.";
 }
 
-// TODO, I think if an early block fails, it won't execute the next
 TEST(CollisionDetectionTest, SphereVsBoxFace)
 {
     {
@@ -173,21 +174,20 @@ TEST(CollisionDetectionTest, SphereVsBoxFace)
         engine::physics::Sphere sphereJustTouching(1.0f, 1.0f, glm::vec3(1.5f, 0.0f, 0.0f),
                                                    sphere_velocity_initial);
         engine::physics::Box box(glm::vec3(1.0f), glm::vec3(0.0f), glm::vec3(0.0f));
-        engine::physics::Collisions::handleElasticCollision(box, sphereJustTouching);
-        TestUtil::ExpectVec3Near(
-            sphere_velocity_initial, sphereJustTouching.velocity,
-            "Sphere that just touches the surface should not cause a collision.");
+
+        engine::physics::Contact contact;
+        EXPECT_FALSE(engine::physics::Collisions::computeContact(box, sphereJustTouching, contact))
+            << "Sphere that just touches the surface should not register as a collision.";
     }
     {
-        // what is the goal of this test? Should it test momentum and collission normal
         glm::vec3 sphere_velocity_initial = glm::vec3(-1.0f, 0.0f, 0.0f);
         engine::physics::Sphere sphere_small_overlap(1.0f, 1.0f, glm::vec3(1.499f, 0.0f, 0.0f),
                                                      sphere_velocity_initial);
         engine::physics::Box box(glm::vec3(1.0f), glm::vec3(0.0f), glm::vec3(0.0f), 5.0f);
-        engine::physics::Collisions::handleElasticCollision(box, sphere_small_overlap);
-        TestUtil::ExpectVec3Near(-glm::normalize(sphere_velocity_initial),
-                                 glm::normalize(sphere_small_overlap.velocity),
-                                 "Barely overlapping sphere should reflect back.");
+
+        engine::physics::Contact contact;
+        EXPECT_TRUE(engine::physics::Collisions::computeContact(box, sphere_small_overlap, contact))
+            << "Barely overlapping sphere should register as a collision.";
     }
     {
         glm::vec3 sphere_velocity_initial = glm::vec3(-1.0f, 0.0f, 0.0f);
@@ -195,52 +195,59 @@ TEST(CollisionDetectionTest, SphereVsBoxFace)
         engine::physics::Sphere sphere_no_overlap(1.0f, 1.0f, sphere_position_initial,
                                                   sphere_velocity_initial);
         engine::physics::Box box(glm::vec3(1.0f), glm::vec3(0.0f), glm::vec3(0.0f));
-        engine::physics::Collisions::handleElasticCollision(box, sphere_no_overlap);
-        TestUtil::ExpectVec3Near(sphere_velocity_initial, sphere_no_overlap.velocity,
-                                 "Non-overlapping sphere should not change.");
-        TestUtil::ExpectVec3Near(sphere_position_initial, sphere_no_overlap.position,
-                                 "Non-overlapping sphere should not change.");
+
+        engine::physics::Contact contact;
+        EXPECT_FALSE(engine::physics::Collisions::computeContact(box, sphere_no_overlap, contact))
+            << "Non-overlapping sphere should not register a collision.";
     }
 }
 
-// Refactored test using the helper
 TEST(CollisionResolutionTest, SphereEdgeAndCornerCases)
 {
     // clang-format off
-    // --- Symmetrical edge collision ---
+    runSphereBoxCollisionTest({
+        glm::vec3(1.499, 0.0f, 0.0f),
+        glm::vec3(-1.0f, 0.0f, 0.0f),
+        1.0f, 1.0f,
+        glm::vec3(0.0f),
+        1.0f,
+        "Face collision"
+    });
+
     runSphereBoxCollisionTest({
         glm::vec3(std::sqrt(0.5f*0.5f + 0.5f*0.5f), std::sqrt(0.5f*0.5f + 0.5f*0.5f), 0.0f),
         glm::vec3(-1.0f, 0.0f, 0.0f),
         1.0f, 1.0f,
         glm::vec3(0.5f, 0.5f, 0.0f),
-        50.0f
+        50.0f,
+        "Symmetrical edge collision"
     });
 
-    // --- Offset edge collision (30/60/90 triangle) ---
     runSphereBoxCollisionTest({
         glm::vec3((0.5f + 1.0f) - 0.01f, (0.5f + std::sqrt(3.0f)) - 0.01f, 0.0f),
         glm::vec3(-2.0f, 0.0f, 0.0f),
         2.0f, 1.0f,
         glm::vec3(0.5f, 0.5f, 0.0f),
-        50.0f
+        50.0f,
+        "Offset edge collision (30/60/90 triangle)"
     });
 
-    // --- Symmetrical corner collision ---
     runSphereBoxCollisionTest({
         glm::vec3((0.5f + 1.0f) - 0.01f, (0.5f + std::sqrt(3.0f)) - 0.01f, (0.5f + 1.0f) - 0.01f),
         glm::vec3(-2.0f, 0.0f, -2.0f),
         std::sqrt(5.0f), 1.0f,
         glm::vec3(0.5f, 0.5f, 0.5f),
-        50.0f
+        50.0f,
+        "Symmetrical corner collision"
     });
 
-    // --- Offset corner collision (30/60/90 triangle) ---
     runSphereBoxCollisionTest({
         glm::vec3((0.5f + 1.0f) - 0.01f, (0.5f + std::sqrt(3.0f)) - 0.01f, (0.5f + 1.0f) - 0.01f),
         glm::vec3(-2.0f, 0.0f, -2.0f),
         std::sqrt(5.0f), 1.0f,
         glm::vec3(0.5f),
-        50.0f
+        50.0f,
+        "Offset corner collision (30/60/90 triangle)"
     });
 
     // --- Add more cases as needed ---

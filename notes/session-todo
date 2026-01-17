@@ -6,4 +6,5 @@
 Refactor/separate collision detection and resolution
     Add Contact struct (useful for angular collision resolution)
     Break out detection tests
-    Remove category CollisionTest. Should specify resolution or detection
+    Does collision detection work if box is rotated?
+        See TODO in handleElasticCollision
