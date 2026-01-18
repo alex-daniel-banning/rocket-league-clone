@@ -38,9 +38,14 @@ bool Collisions::computeContact(const Box &box, const Sphere &sphere, Contact &o
 
     glm::vec3 closestPoint = box.position;
     // TODO, rotation -> each axis should be multiplied by the box's rotation
-    std::array<glm::vec3, 3> obbAxes = {glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f),
-                                        glm::vec3(0.0f, 0.0f, 1.0f)};
-    std::array<float, 3> halves      = {box.size.x / 2, box.size.y / 2, box.size.z / 2};
+    // clang-format off
+    std::array<glm::vec3, 3> obbAxes = {
+        box.rotation * glm::vec3(1.0f, 0.0f, 0.0f),
+        box.rotation * glm::vec3(0.0f, 1.0f, 0.0f),
+        box.rotation * glm::vec3(0.0f, 0.0f, 1.0f)
+    };
+    // clang-format on
+    std::array<float, 3> halves = {box.size.x / 2, box.size.y / 2, box.size.z / 2};
     for (unsigned int i = 0; i < 3; i++)
     {
         float distance = glm::dot(v_sphereCenterToBoxCenter, obbAxes[i]);

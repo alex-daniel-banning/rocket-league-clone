@@ -4,7 +4,4 @@
 - Research angular response from collisions.
 ################################################################################
 Refactor/separate collision detection and resolution
-    Add Contact struct (useful for angular collision resolution)
-    Break out detection tests
-    Does collision detection work if box is rotated?
-        See TODO in handleElasticCollision
+    Test box velocity after collision in addition to sphere velocity
