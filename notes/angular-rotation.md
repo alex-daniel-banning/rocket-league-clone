@@ -1,0 +1,49 @@
+High Level
+
+1. Represent the box with rotational properties
+    - [x] rotation represented (quaternion)
+    - [x] angular velocity (vec3)
+    - [ ] inertia tensor in local space (name = I_local) (mat3)
+        ![Inertia tensor formula](img/inertia-tensor.png)
+    - [ ] inverse inertia tensor in local space (name = I_local_inv) for easier calculations
+
+2. Compute collision impulse at contact
+    - [ ] compute relative velocity at contact point
+        relative_velocity = v_sphere - (v_box + omega_box X r)
+        where
+            r is the vector from the box center to contact point
+            omega (W) is the angular velocity
+            X is the cross product
+    - [ ] compute the impulse scalar
+        ![Impulse scalar formula](https://imgur.com/a/e8ENefk)
+        ![Impulse scalar formula](img/angular-impulse-scalar-formula.png)
+        where
+            e is the coeeficient of restitution
+            m_s, m_b = sphere and box mass
+            n = contact normal pointing from box to sphere
+            I_b-1 = inverse inertia tensor of box in world space
+    - [ ] compute the impulse vector
+        J = dot(j, n)
+        where
+            j is the impulse scalar
+            J is the impulse vector
+3. Apply linear and angular impulse
+    - [ ] sphere
+        vel_sphere += J/mass_sphere
+    - [ ] box (linear)
+        vel_box += -J/mass_box
+    - [ ] box (angular)
+        vel_angular_box += I_world_inv * cross(r, -J)
+        where
+            I_world_inv is inverse inertia tensor in world space
+4. Update box rotation
+    - [x] q_new = normalize(q + (0.5*deltaTime*q*w_quat)))
+        where
+            w_quat = omega_quat = (0, w_x, w_y, w_z)
+5. Additional notes
+    - [ ] convert local inertia tensor to world space before use
+        glm::mat3 R = glm::toMat3(box.rotation); // quaternion → rotation matrix
+        glm::mat3 I_world_inv = R * box.I_local_inv * glm::transpose(R);
+    - [ ] make sure the collision detection point "r" is relative to the center of mass
+    - [ ] use a small timestep for rotation integration to avoid instability
+

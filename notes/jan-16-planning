@@ -4,7 +4,8 @@ Here are the list of things that are small/don't require deep work, that I can w
 Not-programming, but bothersome
 - Troubleshoot computer being slow on boot. Possibly fresh install (last resort)
 - Mouse sensitivity
-- Cursor shows in neovim window
+- make sure solaar (mouse software) is saving/persisting dpi correctly
+- make note of flameshot screenshot software somewhere (command is "flameshot gui")
 
 Programming, non-deep-work (week days)
 - Vim - make diagnostic window non-floating/non-obstructing

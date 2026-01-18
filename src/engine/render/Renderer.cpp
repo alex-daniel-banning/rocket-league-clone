@@ -105,6 +105,7 @@ void Renderer::drawBox(const engine::physics::Box &box, engine::render::Shader &
     projection = glm::perspective(camera.projection.fov, screenWidth / screenHeight,
                                   camera.projection.nearPlane, camera.projection.farPlane);
     model      = glm::translate(model, box.position);
+    model      = model * glm::toMat4(box.rotation);
     model      = glm::scale(model, glm::vec3(box.size.x, box.size.y, box.size.z));
     shader.setMat4("model", model);
     shader.setMat4("view", view);
@@ -119,6 +120,7 @@ void Renderer::drawBox(const engine::physics::Box &box, Shader &shader)
 {
     glm::mat4 modelMatrix = glm::mat4(1.0f);
     modelMatrix           = glm::translate(modelMatrix, box.position);
+    modelMatrix           = modelMatrix * glm::toMat4(box.rotation);
     modelMatrix           = glm::scale(modelMatrix, glm::vec3(box.size));
     shader.setMat4("model", modelMatrix);
     glBindVertexArray(cubeVAO);
@@ -136,6 +138,7 @@ void Renderer::drawBoxWireframe(const engine::physics::Box &box, engine::render:
     projection = glm::perspective(camera.projection.fov, screenWidth / screenHeight,
                                   camera.projection.nearPlane, camera.projection.farPlane);
     model      = glm::translate(model, box.position);
+    model      = model * glm::toMat4(box.rotation);
     model      = glm::scale(model, glm::vec3(box.size.x, box.size.y, box.size.z));
     shader.use();
     shader.setMat4("model", model);
