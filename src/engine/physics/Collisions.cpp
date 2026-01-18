@@ -68,6 +68,41 @@ bool Collisions::computeContact(const Box &box, const Sphere &sphere, Contact &o
 
 void Collisions::resolveElasticCollision(Box &box, Sphere &sphere, Contact contact)
 {
+
+    // new
+    // This is all from the perspective of the sphere
+    glm::vec3 omega       = box.angular_velocity;
+    glm::vec3 r           = contact.point - box.position;
+    glm::vec3 v_rel       = sphere.velocity - (box.velocity + glm::cross(omega, r));
+    glm::vec3 n           = contact.normal;
+    glm::mat3 rot         = glm::toMat3(box.rotation);
+    glm::mat3 i_world_inv = rot * box.inertia_tensor * glm::transpose(rot);
+    // 1. Relative velocity along normal
+    float rel_vel_along_normal = glm::dot(v_rel, n);
+
+    // 2. Linear mass component
+    float mass_component = (1.0f / sphere.mass) + (1.0f / box.mass);
+
+    // 3. Angular mass component
+    glm::vec3 r_cross_n          = glm::cross(r, n);
+    glm::vec3 angular_contrib    = glm::cross(i_world_inv * r_cross_n, r);
+    float angular_mass_component = glm::dot(n, angular_contrib);
+
+    // 4. Total effective mass along normal
+    float effective_mass = mass_component + angular_mass_component;
+
+    // 5. Impulse scalar (perfectly elastic)
+    float impulse_scalar = -2.0f * rel_vel_along_normal / effective_mass;
+    // clang-format off
+    // TODO cleanup
+    //float impulse_scalar = (-2 * glm::dot(v_rel, n))
+    //                        /
+    //                        ((1.0f/sphere.mass) + (1.0f/box.mass) + glm::dot(n, glm::cross(i_world_inv * glm::cross(r,n),r)));
+    // clang-format on
+
+    glm::vec3 impulse_vector = impulse_scalar * n;
+    // new
+
     // TODO, handle tunneling
     // TODO, penetration correction (do for planes too?)
     glm::vec3 v_perpendicular_to_surface =

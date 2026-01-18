@@ -3,18 +3,18 @@ High Level
 1. Represent the box with rotational properties
     - [x] rotation represented (quaternion)
     - [x] angular velocity (vec3)
-    - [ ] inertia tensor in local space (name = I_local) (mat3)
+    - [x] inertia tensor in local space (name = I_local) (mat3)
         ![Inertia tensor formula](img/inertia-tensor.png)
-    - [ ] inverse inertia tensor in local space (name = I_local_inv) for easier calculations
+    - [x] inverse inertia tensor in local space (name = I_local_inv) for easier calculations
 
 2. Compute collision impulse at contact
-    - [ ] compute relative velocity at contact point
+    - [x] compute relative velocity at contact point
         relative_velocity = v_sphere - (v_box + omega_box X r)
         where
             r is the vector from the box center to contact point
             omega (W) is the angular velocity
             X is the cross product
-    - [ ] compute the impulse scalar
+    - [x] compute the impulse scalar
         ![Impulse scalar formula](https://imgur.com/a/e8ENefk)
         ![Impulse scalar formula](img/angular-impulse-scalar-formula.png)
         where
@@ -22,7 +22,7 @@ High Level
             m_s, m_b = sphere and box mass
             n = contact normal pointing from box to sphere
             I_b-1 = inverse inertia tensor of box in world space
-    - [ ] compute the impulse vector
+    - [x] compute the impulse vector
         J = dot(j, n)
         where
             j is the impulse scalar
