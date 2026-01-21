@@ -1,3 +1,4 @@
+#include <Print.hpp>
 #include <engine/physics/Collisions.hpp>
 #include <iostream>
 
@@ -68,17 +69,36 @@ bool Collisions::computeContact(const Box &box, const Sphere &sphere, Contact &o
 
 void Collisions::resolveElasticCollision(Box &box, Sphere &sphere, Contact contact)
 {
+    // TODO, handle tunneling
+    // glm::vec3 v_perpendicular_to_surface =
+    //    glm::dot(sphere.velocity, contact.normal) * contact.normal;
+    // glm::vec3 v_parallel_to_surface = sphere.velocity - v_perpendicular_to_surface;
+    // if (glm::length(v_perpendicular_to_surface) < 0.0001f)
+    //{
+    //    // TODO - For this and the same thing for the plane function, if a sphere is going
+    //    // pseudo-parallel into the surface, this will trigger repeatedly. Maybe it is better to
+    //    set
+    //    // the perpendicular velocity of the sphere to 0. This logic is probably different for
+    //    // sphere v. static plane and sphere v. non-static box.
+    //    sphere.position = contact.point + (sphere.radius * contact.normal);
+    //    return;
+    //}
 
     // new
     // This is all from the perspective of the sphere
+
     glm::vec3 omega       = box.angular_velocity;
     glm::vec3 r           = contact.point - box.position;
     glm::vec3 v_rel       = sphere.velocity - (box.velocity + glm::cross(omega, r));
     glm::vec3 n           = contact.normal;
     glm::mat3 rot         = glm::toMat3(box.rotation);
-    glm::mat3 i_world_inv = rot * box.inertia_tensor * glm::transpose(rot);
+    glm::mat3 i_world_inv = rot * box.inertia_tensor_inv * glm::transpose(rot);
     // 1. Relative velocity along normal
     float rel_vel_along_normal = glm::dot(v_rel, n);
+
+    // TODO turn into assert?
+    if (rel_vel_along_normal > 0.0f)
+        return;
 
     // 2. Linear mass component
     float mass_component = (1.0f / sphere.mass) + (1.0f / box.mass);
@@ -92,7 +112,9 @@ void Collisions::resolveElasticCollision(Box &box, Sphere &sphere, Contact conta
     float effective_mass = mass_component + angular_mass_component;
 
     // 5. Impulse scalar (perfectly elastic)
-    float impulse_scalar = -2.0f * rel_vel_along_normal / effective_mass;
+
+    float e              = 1.0f; // coefficient of restitution
+    float impulse_scalar = -(1 + e) * rel_vel_along_normal / effective_mass;
     // clang-format off
     // TODO cleanup
     //float impulse_scalar = (-2 * glm::dot(v_rel, n))
@@ -101,22 +123,37 @@ void Collisions::resolveElasticCollision(Box &box, Sphere &sphere, Contact conta
     // clang-format on
 
     glm::vec3 impulse_vector = impulse_scalar * n;
-    // new
 
-    // TODO, handle tunneling
-    // TODO, penetration correction (do for planes too?)
-    glm::vec3 v_perpendicular_to_surface =
-        glm::dot(sphere.velocity, contact.normal) * contact.normal;
-    glm::vec3 v_parallel_to_surface = sphere.velocity - v_perpendicular_to_surface;
-    if (glm::length(v_perpendicular_to_surface) < 0.0001f)
+    // Apply the impulse
+    sphere.velocity += impulse_vector / sphere.mass;
+    box.velocity -= impulse_vector / box.mass;
+    box.angular_velocity += i_world_inv * glm::cross(r, -impulse_vector);
+
+    std::cout << "\nDEBUG:";
+    std::cout << "\n  Impulse magnitude: " << impulse_scalar;
+    std::cout << "\n  Lever arm length: " << glm::length(r);
+    std::cout << "\n  Box inertia tensor diagonal: ";
+    Print::vec3(
+        glm::vec3(box.inertia_tensor[0][0], box.inertia_tensor[1][1], box.inertia_tensor[2][2]));
+    std::cout << "\n  Torque magnitude: " << glm::length(glm::cross(r, impulse_vector));
+    std::cout << "\n  Angular velocity change: "
+              << glm::length(i_world_inv * glm::cross(r, -impulse_vector));
+    // assert(false);
+
+    // Penetration correction
+    // TODO this should have a unit test
+    if (contact.penetration > 0.0f)
     {
-        // TODO - For this and the same thing for the plane function, if a sphere is going
-        // pseudo-parallel into the surface, this will trigger repeatedly. Maybe it is better to set
-        // the perpendicular velocity of the sphere to 0. This logic is probably different for
-        // sphere v. static plane and sphere v. non-static box.
-        sphere.position = contact.point + (sphere.radius * contact.normal);
-        return;
+        // Push sphere out along normal
+        float total_inv_mass    = (1.0f / sphere.mass) + (1.0f / box.mass);
+        float sphere_correction = (contact.penetration / total_inv_mass) * (1.0f / sphere.mass);
+        float box_correction    = (contact.penetration / total_inv_mass) * (1.0f / box.mass);
+        sphere.position += contact.normal * sphere_correction;
+        box.position -= contact.normal * box_correction;
     }
+
+    return;
+    // new
 
     float vel_box_normal    = glm::dot(box.velocity, contact.normal);    // v_box_normal
     float vel_sphere_normal = glm::dot(sphere.velocity, contact.normal); // v_sphere_normal
