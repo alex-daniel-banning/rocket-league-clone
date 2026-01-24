@@ -5,51 +5,85 @@
 #include <engine/render/Camera.hpp>
 #include <engine/render/Renderer.hpp>
 
+#include <iostream>
+
 namespace engine::render
 {
-static constexpr float cubeVertices[] = {
-    -0.5f, -0.5f, 0.5f,  0.0f,  0.0f,  1.0f,  0.5f,  -0.5f, 0.5f,
-    0.0f,  0.0f,  1.0f,  0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+// clang-format off
+static constexpr float cubeVertices[] = 
+{
+    // Positions.......   Normals...........
+    -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+     0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+     0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+     0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+    -0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+    -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+     0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+     0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+     0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+    -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+    -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+    -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+    -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+    -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+    -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+    -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+     0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+     0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+     0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+     0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+     0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+     0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+    -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
+    -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+     0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+     0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+     0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
+    -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+     0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+    -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+     0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+     0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f
+};
 
-    0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  -0.5f, 0.5f,  0.5f,
-    0.0f,  0.0f,  1.0f,  -0.5f, -0.5f, 0.5f,  0.0f,  0.0f,  1.0f,
-
-    -0.5f, -0.5f, -0.5f, 0.0f,  0.0f,  -1.0f, 0.5f,  0.5f,  -0.5f,
-    0.0f,  0.0f,  -1.0f, 0.5f,  -0.5f, -0.5f, 0.0f,  0.0f,  -1.0f,
-
-    0.5f,  0.5f,  -0.5f, 0.0f,  0.0f,  -1.0f, -0.5f, -0.5f, -0.5f,
-    0.0f,  0.0f,  -1.0f, -0.5f, 0.5f,  -0.5f, 0.0f,  0.0f,  -1.0f,
-
-    -0.5f, -0.5f, -0.5f, -1.0f, 0.0f,  0.0f,  -0.5f, -0.5f, 0.5f,
-    -1.0f, 0.0f,  0.0f,  -0.5f, 0.5f,  0.5f,  -1.0f, 0.0f,  0.0f,
-
-    -0.5f, 0.5f,  0.5f,  -1.0f, 0.0f,  0.0f,  -0.5f, 0.5f,  -0.5f,
-    -1.0f, 0.0f,  0.0f,  -0.5f, -0.5f, -0.5f, -1.0f, 0.0f,  0.0f,
-
-    0.5f,  -0.5f, -0.5f, 1.0f,  0.0f,  0.0f,  0.5f,  0.5f,  0.5f,
-    1.0f,  0.0f,  0.0f,  0.5f,  -0.5f, 0.5f,  1.0f,  0.0f,  0.0f,
-
-    0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  0.5f,  -0.5f, -0.5f,
-    1.0f,  0.0f,  0.0f,  0.5f,  0.5f,  -0.5f, 1.0f,  0.0f,  0.0f,
-
-    -0.5f, 0.5f,  -0.5f, 0.0f,  1.0f,  0.0f,  -0.5f, 0.5f,  0.5f,
-    0.0f,  1.0f,  0.0f,  0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-
-    0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.5f,  0.5f,  -0.5f,
-    0.0f,  1.0f,  0.0f,  -0.5f, 0.5f,  -0.5f, 0.0f,  1.0f,  0.0f,
-
-    -0.5f, -0.5f, -0.5f, 0.0f,  -1.0f, 0.0f,  0.5f,  -0.5f, 0.5f,
-    0.0f,  -1.0f, 0.0f,  -0.5f, -0.5f, 0.5f,  0.0f,  -1.0f, 0.0f,
-
-    0.5f,  -0.5f, 0.5f,  0.0f,  -1.0f, 0.0f,  -0.5f, -0.5f, -0.5f,
-    0.0f,  -1.0f, 0.0f,  0.5f,  -0.5f, -0.5f, 0.0f,  -1.0f, 0.0f};
+static constexpr float planeVertices[] = 
+{
+    // Positions.......   Normals...........
+    -0.5f,  0.0f, -0.5f,  0.0f,  1.0f,  0.0f,
+     0.5f,  0.0f, -0.5f,  0.0f,  1.0f,  0.0f,
+     0.5f,  0.0f,  0.5f,  0.0f,  1.0f,  0.0f,
+     0.5f,  0.0f,  0.5f,  0.0f,  1.0f,  0.0f,
+    -0.5f,  0.0f,  0.5f,  0.0f,  1.0f,  0.0f,
+    -0.5f,  0.0f, -0.5f,  0.0f,  1.0f,  0.0f,
+};
 
 static const float cubeWireVertices[8][3] = {
-    {-0.5f, -0.5f, -0.5f}, {0.5f, -0.5f, -0.5f}, {0.5f, 0.5f, -0.5f}, {-0.5f, 0.5f, -0.5f},
-    {-0.5f, -0.5f, 0.5f},  {0.5f, -0.5f, 0.5f},  {0.5f, 0.5f, 0.5f},  {-0.5f, 0.5f, 0.5f}};
+    {-0.5f, -0.5f, -0.5f},
+    { 0.5f, -0.5f, -0.5f},
+    { 0.5f,  0.5f, -0.5f},
+    {-0.5f,  0.5f, -0.5f},
+    {-0.5f, -0.5f,  0.5f},
+    { 0.5f, -0.5f,  0.5f},
+    { 0.5f,  0.5f,  0.5f},
+    {-0.5f,  0.5f,  0.5f}
+};
 
-static constexpr unsigned int cubeWireIndices[] = {0, 1, 1, 2, 2, 3, 3, 0, 4, 5, 5, 6,
-                                                   6, 7, 7, 4, 0, 4, 1, 5, 2, 6, 3, 7};
+static constexpr unsigned int cubeWireIndices[] = {
+    0, 1, 1,
+    2, 2, 3,
+    3, 0, 4,
+    5, 5, 6,
+    6, 7, 7,
+    4, 0, 4,
+    1, 5, 2,
+    6, 3, 7
+};
+// clang-format on
 Renderer::Renderer(const float screenWidth, const float screenHeight)
 {
     this->screenWidth  = screenWidth;
@@ -57,20 +91,38 @@ Renderer::Renderer(const float screenWidth, const float screenHeight)
     initCube();
     initWireCube();
     initSphere();
+    initPlane();
+    initLine();
 }
 
 void Renderer::drawBox(const engine::physics::Box &box, engine::render::Shader &shader,
                        const Camera &camera)
 {
-    glm::mat4 model = makeModelMatrix(box);
-    glm::mat4 view  = camera.GetViewMatrix();
+    glm::mat4 model = glm::mat4(1.0f);
+    glm::mat4 view;
+    view = camera.GetViewMatrix();
     glm::mat4 projection;
-    projection = getProjection(screenWidth / screenHeight);
-
-    shader.use();
+    projection = glm::perspective(camera.projection.fov, screenWidth / screenHeight,
+                                  camera.projection.nearPlane, camera.projection.farPlane);
+    model      = glm::translate(model, box.position);
+    model      = model * glm::toMat4(box.rotation);
+    model      = glm::scale(model, glm::vec3(box.size.x, box.size.y, box.size.z));
     shader.setMat4("model", model);
     shader.setMat4("view", view);
     shader.setMat4("projection", projection);
+    shader.setVec3("diffuseColor", glm::vec3(0.4f, 0.4f, 0.65f));
+    glBindVertexArray(cubeVAO);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+    glBindVertexArray(0);
+}
+
+void Renderer::drawBox(const engine::physics::Box &box, Shader &shader)
+{
+    glm::mat4 modelMatrix = glm::mat4(1.0f);
+    modelMatrix           = glm::translate(modelMatrix, box.position);
+    modelMatrix           = modelMatrix * glm::toMat4(box.rotation);
+    modelMatrix           = glm::scale(modelMatrix, glm::vec3(box.size));
+    shader.setMat4("model", modelMatrix);
     glBindVertexArray(cubeVAO);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     glBindVertexArray(0);
@@ -79,14 +131,20 @@ void Renderer::drawBox(const engine::physics::Box &box, engine::render::Shader &
 void Renderer::drawBoxWireframe(const engine::physics::Box &box, engine::render::Shader &shader,
                                 const Camera &camera)
 {
-    glm::mat4 model      = makeModelMatrix(box);
-    glm::mat4 view       = camera.GetViewMatrix();
-    glm::mat4 projection = getProjection(screenWidth / screenHeight);
-
+    glm::mat4 model = glm::mat4(1.0f);
+    glm::mat4 view;
+    view = camera.GetViewMatrix();
+    glm::mat4 projection;
+    projection = glm::perspective(camera.projection.fov, screenWidth / screenHeight,
+                                  camera.projection.nearPlane, camera.projection.farPlane);
+    model      = glm::translate(model, box.position);
+    model      = model * glm::toMat4(box.rotation);
+    model      = glm::scale(model, glm::vec3(box.size.x, box.size.y, box.size.z));
     shader.use();
     shader.setMat4("model", model);
     shader.setMat4("view", view);
     shader.setMat4("projection", projection);
+    shader.setVec3("diffuseColor", glm::vec3(0.0f, 1.0f, 0.0f));
 
     glLineWidth(2.0f);
     glEnable(GL_LINE_SMOOTH);
@@ -100,13 +158,25 @@ void Renderer::drawSphere(const engine::physics::Sphere &sphere, engine::render:
 {
     glm::mat4 model = makeModelMatrix(sphere);
     glm::mat4 view  = camera.GetViewMatrix();
-    glm::mat4 projection;
-    projection = getProjection(screenWidth / screenHeight);
+    glm::mat4 projection =
+        glm::perspective(camera.projection.fov, screenWidth / screenHeight,
+                         camera.projection.nearPlane, camera.projection.farPlane);
 
     shader.use();
     shader.setMat4("model", model);
     shader.setMat4("view", view);
-    shader.setMat4("projection", projection);
+    // shader.setMat4("projection", projection);
+    glBindVertexArray(sphereVAO);
+    glDrawElements(GL_TRIANGLES, sphereIndexCount, GL_UNSIGNED_INT, 0);
+    glBindVertexArray(0);
+}
+
+void Renderer::drawSphere(const engine::physics::Sphere &sphere, Shader &shader)
+{
+    glm::mat4 modelMatrix = glm::mat4(1.0f);
+    modelMatrix           = glm::translate(modelMatrix, sphere.position);
+    modelMatrix           = glm::scale(modelMatrix, glm::vec3(sphere.radius));
+    shader.setMat4("model", modelMatrix);
     glBindVertexArray(sphereVAO);
     glDrawElements(GL_TRIANGLES, sphereIndexCount, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
@@ -142,16 +212,64 @@ void Renderer::drawModel(engine::render::Model &model, engine::render::Shader &s
     model.Draw(shader);
 }
 
+// this hasn't been tested that it works. Current known use case is for generating shadow map,
+// which is why we don't want the camera's projection. Haven't created a scene yet that has a
+// plane cast a shadow.
 void Renderer::drawPhysicsPlane(const physics::Plane &plane, Shader &shader)
 {
-    plane.getMesh().Draw(shader);
+    glm::mat4 modelMatrix = glm::mat4(1.0f);
+    modelMatrix           = glm::translate(modelMatrix, plane.getPosition());
+    modelMatrix           = modelMatrix * glm::mat4_cast(plane.getRotation());
+    modelMatrix           = glm::scale(modelMatrix, glm::vec3(1.0f));
+    shader.setMat4("model", modelMatrix);
+    glBindVertexArray(planeVAO);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+    glBindVertexArray(0);
 }
 
-glm::mat4 Renderer::getProjection(float aspect, float fov)
+void Renderer::drawPhysicsPlane(const physics::Plane &plane, Shader &shader, const Camera &camera)
 {
-    return glm::perspective(glm::radians(fov), aspect, 0.1f, 100.0f);
+    glm::mat4 modelMatrix = glm::mat4(1.0f);
+    glm::mat4 view;
+    view = camera.GetViewMatrix();
+    glm::mat4 projection;
+    projection = glm::perspective(camera.projection.fov, screenWidth / screenHeight,
+                                  camera.projection.nearPlane, camera.projection.farPlane);
+
+    modelMatrix = glm::translate(modelMatrix, plane.getPosition());
+    modelMatrix = modelMatrix * glm::mat4_cast(plane.getRotation());
+    modelMatrix = glm::scale(modelMatrix, glm::vec3(plane.getXLength(), 1.0f, plane.getZLength()));
+    shader.setMat4("model", modelMatrix);
+    shader.setMat4("view", view);
+    shader.setMat4("projection", projection);
+    shader.setVec3("diffuseColor", plane.color);
+    glBindVertexArray(planeVAO);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+    glBindVertexArray(0);
 }
 
+void Renderer::drawPhysicsPlaneNormal(const physics::Plane &plane, Shader &shader,
+                                      const Camera &camera)
+{
+    glm::mat4 modelMatrix = glm::mat4(1.0f);
+    glm::mat4 view;
+    view = camera.GetViewMatrix();
+    glm::mat4 projection;
+    projection = glm::perspective(camera.projection.fov, screenWidth / screenHeight,
+                                  camera.projection.nearPlane, camera.projection.farPlane);
+
+    modelMatrix = glm::translate(modelMatrix, plane.getPosition());
+    modelMatrix = modelMatrix * glm::mat4_cast(plane.getRotation());
+    modelMatrix = glm::scale(modelMatrix, glm::vec3(1.0f));
+    shader.setMat4("model", modelMatrix);
+    shader.setMat4("view", view);
+    shader.setMat4("projection", projection);
+    glBindVertexArray(lineVAO);
+    glDrawArrays(GL_LINES, 0, 2);
+    glBindVertexArray(0);
+}
+
+// TODO remove?
 glm::mat4 Renderer::makeModelMatrix(const engine::physics::Box &box)
 {
     return glm::scale(glm::mat4(1.0f), glm::vec3(box.size));
@@ -186,6 +304,46 @@ void Renderer::initCube()
     glBindVertexArray(0);
 }
 
+void Renderer::initPlane()
+{
+    glGenVertexArrays(1, &planeVAO);
+    glGenBuffers(1, &planeVBO);
+
+    glBindVertexArray(planeVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, planeVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(planeVertices), planeVertices, GL_STATIC_DRAW);
+
+    // Positions
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)0);
+    glEnableVertexAttribArray(0);
+
+    // Normals
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+}
+
+void Renderer::initLine()
+{
+    glm::vec3 start(0.0f, 0.0f, 0.0f);
+    glm::vec3 end(0.0f, 1.0f, 0.0f);
+    glm::vec3 lineVertices[2] = {start, end};
+    glGenVertexArrays(1, &lineVAO);
+    glGenBuffers(1, &lineVBO);
+
+    glBindVertexArray(lineVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, lineVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(lineVertices), lineVertices, GL_STATIC_DRAW);
+
+    // Positions
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void *)0);
+
+    glBindVertexArray(0);
+}
+
 void Renderer::initWireCube()
 {
     glGenVertexArrays(1, &cubeWireVAO);
@@ -217,7 +375,7 @@ void Renderer::initSphere()
 
     unsigned int stacks = 16;
     unsigned int slices = 16;
-    float radius        = 0.5f;
+    float radius        = 1.0f;
 
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;

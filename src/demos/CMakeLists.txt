@@ -2,7 +2,9 @@
 set(ALL_DEMO_NAMES "" CACHE INTERNAL "List of all demo executable names")
 
 set(DEMO_SOURCES
-    rendering/ortho_shadows.cpp
+    #rendering/ortho_shadows.cpp
+    collisions/SphereVPlaneCollisionDemo.cpp
+    collisions/sphere-box-obb/SphereVBoxOBBDemo.cpp
 )
 
 foreach(DEMO_SRC ${DEMO_SOURCES})

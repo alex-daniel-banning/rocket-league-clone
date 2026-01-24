@@ -1,0 +1,14 @@
+Tomorrow I have a deep work session.
+Here are the list of things that are small/don't require deep work, that I can work on some other time
+
+Not-programming, but bothersome
+- Mouse sensitivity
+- make sure solaar (mouse software) is saving/persisting dpi correctly
+- make note of flameshot screenshot software somewhere (command is "flameshot gui")
+
+Programming, non-deep-work
+- Adjust tests for angular collisions
+- Vim - make diagnostic window non-floating/non-obstructing
+- Remove unnecesary std::endl's
+- Configure clang-format to enforce Google style guide
+- Github integrations (build/test)

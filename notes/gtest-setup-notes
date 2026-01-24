@@ -1,0 +1,9 @@
+Option A: Using a package manager (what I did)
+sudo apt install libgtest-dev
+cd /usr/src/gtest
+sudo cmake .
+sudo make
+sudo cp lib/*.a /usr/lib
+
+Option B: Include GTest as part of your project (Might have some advantages. Good to be aware of)
+git clone https://github.com/google/googletest.git

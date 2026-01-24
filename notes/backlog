@@ -1,11 +1,18 @@
-Finalize shadow rendering demo
-    Create tag when complete
+3. SAT for car vs car
+Vim - make diagnostic window non-floating/non-obstructing
+Remove unnecesary std::endl's
+Configure clang-format to enforce Google style guide
 
+Collisions
+    4. Optimization (spatial partitioning)
+
+Collisions advanced:
+    Look into various solutions to tunneling problem (ball going so fast it goes through wall)
+
+Brainstorming:
 Next mini project options:
     Collisions/Physics
         Rigid-body basis:
-            Position
-            Velocity
             Acceleration
             Forces
         Gravity
@@ -35,3 +42,8 @@ Backlog:
         Wireframe/Debug render with basic frag shader (bright green, perhaps)
     Add coordinates at top left of screen for debugging
     When camera movement is controlled by mouse, it's apparent that the mouse position jolts the camera when starting the program
+    Shader wrapper class to catch unset uniforms
+    Implement debug visualization for rendering
+    Add logging system (including OpenGL API call tracing)
+    Test pre-commit hook
+
