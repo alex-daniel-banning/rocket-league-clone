@@ -24,6 +24,8 @@ class Match
     void reset();
 
   private:
+    static constexpr float FIXED_DT = 1.0f / 120.0f;
+    float accumulator               = 0.0f;
     const physics::Sphere initialBall;
     const std::vector<physics::Box> initialBoxes;
     physics::Sphere ball;

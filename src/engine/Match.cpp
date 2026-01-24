@@ -9,16 +9,32 @@ namespace engine
 
 void Match::tick(float deltaTime)
 {
-    ball.position += deltaTime * ball.velocity;
-    for (physics::Box &box : boxes)
+    accumulator += deltaTime;
+    while (accumulator >= FIXED_DT)
     {
-        box.position += deltaTime * box.velocity;
+        // Define how much damping PER SECOND
+        const float LINEAR_DAMPING_PER_SEC  = 0.98f;
+        const float ANGULAR_DAMPING_PER_SEC = 0.95f;
 
-        glm::quat q  = box.rotation;
-        glm::vec3 w  = box.angular_velocity;
-        box.rotation = glm::normalize(q + (0.5f * deltaTime * q * glm::quat(0, w.x, w.y, w.z)));
+        // Convert to per-frame damping
+        float linear_damp  = std::pow(LINEAR_DAMPING_PER_SEC, FIXED_DT);
+        float angular_damp = std::pow(ANGULAR_DAMPING_PER_SEC, FIXED_DT);
+
+        ball.position += FIXED_DT * ball.velocity;
+        // damping
+        ball.velocity *= linear_damp;
+        for (physics::Box &box : boxes)
+        {
+            box.position += FIXED_DT * box.velocity;
+            glm::quat q  = box.rotation;
+            glm::vec3 w  = box.angular_velocity;
+            box.rotation = glm::normalize(q + (0.5f * FIXED_DT * q * glm::quat(0, w.x, w.y, w.z)));
+            box.velocity *= linear_damp;
+            box.angular_velocity *= angular_damp;
+        }
+        handleCollisions();
+        accumulator -= FIXED_DT;
     }
-    handleCollisions();
 }
 
 void Match::reset()

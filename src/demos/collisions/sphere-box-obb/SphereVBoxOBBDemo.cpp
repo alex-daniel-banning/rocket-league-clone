@@ -134,8 +134,8 @@ int main()
 
     engine::Match match(engine::physics::Sphere(
                                             1.0f,
-                                            1.0f,
-                                            glm::vec3(10.0f, 5.5f + 0.8f, 0.0f),
+                                            10.0f,
+                                            glm::vec3(10.0f, 4.5f, 0.0f),
                                             glm::vec3(-5.0f, 0.0f, 0.0f)),
                         engine::physics::Plane(groundSize, groundSize),
                         walls,
@@ -143,9 +143,9 @@ int main()
                                             glm::vec3(5.0f),
                                             glm::vec3(0.0f, 3.0f, 0.0f),
                                             glm::vec3(0.0f),
-                                            3.0f,
+                                            30.0f,
                                             glm::quat(),
-                                            glm::vec3(1.0f, 0.0f, 0.0f)
+                                            glm::vec3(0.0f, 0.0f, 0.0f)
                                             )});
     // clang-format on
 

@@ -32,10 +32,14 @@ target_link_libraries(engine PRIVATE assimp::assimp)
 enable_testing()
 
 # Create test executable
+set(TEST_SRC tests/src)
 add_executable(tests 
-    tests/test_Plane.cpp
-    tests/test_Collisions.cpp
-    tests/TestUtil.cpp)
+    ${TEST_SRC}/plane_orientation_test.cpp
+    ${TEST_SRC}/test_util.cpp
+    ${TEST_SRC}/collision_tests/conservation_laws_test.cpp
+    ${TEST_SRC}/collision_tests/sphere_vs_box_test.cpp
+    ${TEST_SRC}/collision_tests/sphere_vs_plane_test.cpp)
+
 target_link_libraries(tests PRIVATE engine gtest gtest_main)
 target_include_directories(tests PRIVATE
     ${CMAKE_SOURCE_DIR}/include

@@ -14,6 +14,8 @@ class Collisions
     static bool collides(const Plane &plane, Sphere sphere);
     static bool computeContact(const Box &box, const Sphere &sphere, Contact &out);
     static void handleElasticCollision(const Plane &plane, Sphere &sphere);
+    static void resolveCollision(Box &box, Sphere &sphere, Contact contact,
+                                 float coefficient_of_restitution);
     static void resolveElasticCollision(Box &box, Sphere &sphere, Contact contact);
     static float distanceSquared(const Plane &plane, Sphere sphere);
 };
