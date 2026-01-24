@@ -1,15 +1,15 @@
-#include "TestUtil.hpp"
+#include "test_util.hpp"
 #include <glm/vec3.hpp>
 #include <gtest/gtest.h>
 
 // Boolean version - for conditional checks
-bool TestUtil::Vec3Near(const glm::vec3 &expected, const glm::vec3 &actual, float eps)
+bool test_util::Vec3Near(const glm::vec3 &expected, const glm::vec3 &actual, float eps)
 {
     return std::abs(expected.x - actual.x) <= eps && std::abs(expected.y - actual.y) <= eps &&
            std::abs(expected.z - actual.z) <= eps;
 }
 
-void TestUtil::ExpectVec3Near(const glm::vec3 &expected, const glm::vec3 &actual, std::string msg,
+void test_util::ExpectVec3Near(const glm::vec3 &expected, const glm::vec3 &actual, std::string msg,
                               float eps)
 {
     auto formatVec = [](const glm::vec3 &v)
@@ -32,7 +32,7 @@ void TestUtil::ExpectVec3Near(const glm::vec3 &expected, const glm::vec3 &actual
     }
 }
 
-void TestUtil::AssertVec3Near(const glm::vec3 &expected, const glm::vec3 &actual, std::string msg,
+void test_util::AssertVec3Near(const glm::vec3 &expected, const glm::vec3 &actual, std::string msg,
                               float eps)
 {
     auto formatVec = [](const glm::vec3 &v)
