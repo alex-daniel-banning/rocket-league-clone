@@ -7,5 +7,6 @@
 
 [x] Github integrations (build/test)
 [x] Vim - make diagnostic window non-floating/non-obstructing
-[ ] Configure clang-format to enforce Google style guide
+[x] (Won't do) Configure clang-format to enforce Google style guide
 [ ] Research SAT for car vs car collisions
+    https://www.youtube.com/watch?v=EB6NY5sGd08

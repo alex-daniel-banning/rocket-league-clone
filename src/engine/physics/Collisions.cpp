@@ -1,3 +1,4 @@
+#include <Print.hpp>
 #include <engine/physics/Collisions.hpp>
 
 namespace engine::physics
@@ -31,6 +32,18 @@ void Collisions::handleElasticCollision(const Plane &plane, Sphere &sphere)
     sphere.velocity = vParallel - vPerpendicular;
 }
 
+float Collisions::distanceSquared(const Plane &plane, Sphere sphere)
+{
+    // find closes point on the aabb to the sphere center
+    glm::vec3 closest;
+    closest.x = glm::clamp(sphere.position.x, plane.getMin().x, plane.getMax().x);
+    closest.y = glm::clamp(sphere.position.y, plane.getMin().y, plane.getMax().y);
+    closest.z = glm::clamp(sphere.position.z, plane.getMin().z, plane.getMax().z);
+
+    float distanceSquared = glm::dot(closest - sphere.position, closest - sphere.position);
+    return distanceSquared;
+};
+
 bool Collisions::computeContact(const Box &box, const Sphere &sphere, Contact &out)
 {
     glm::vec3 v_sphereCenterToBoxCenter = sphere.position - box.position;
@@ -62,11 +75,6 @@ bool Collisions::computeContact(const Box &box, const Sphere &sphere, Contact &o
     out.point       = closestPoint;
     return true;
 };
-
-void Collisions::resolveElasticCollision(Box &box, Sphere &sphere, Contact contact)
-{
-    resolveCollision(box, sphere, contact, 1.0f);
-}
 
 void Collisions::resolveCollision(Box &box, Sphere &sphere, Contact contact,
                                   float coefficient_of_restitution)
@@ -121,16 +129,121 @@ void Collisions::resolveCollision(Box &box, Sphere &sphere, Contact contact,
     return;
 }
 
-float Collisions::distanceSquared(const Plane &plane, Sphere sphere)
+void Collisions::resolveElasticCollision(Box &box, Sphere &sphere, Contact contact)
 {
-    // find closes point on the aabb to the sphere center
-    glm::vec3 closest;
-    closest.x = glm::clamp(sphere.position.x, plane.getMin().x, plane.getMax().x);
-    closest.y = glm::clamp(sphere.position.y, plane.getMin().y, plane.getMax().y);
-    closest.z = glm::clamp(sphere.position.z, plane.getMin().z, plane.getMax().z);
+    resolveCollision(box, sphere, contact, 1.0f);
+}
 
-    float distanceSquared = glm::dot(closest - sphere.position, closest - sphere.position);
-    return distanceSquared;
-};
+bool Collisions::computeContact(const Box &boxA, const Box &boxB, Contact &out)
+{
+    const float epsilon       = 1e-6f;
+    float minimum_penetration = std::numeric_limits<float>::max();
+    glm::vec3 penetration_axis;
+
+    // Extract axes from both boxes
+    const std::array<glm::vec3, 3> axesA = getAxesFromQuaternion(boxA.rotation);
+    const std::array<glm::vec3, 3> axesB = getAxesFromQuaternion(boxB.rotation);
+
+    std::vector<glm::vec3> axes_to_test;
+    axes_to_test.reserve(15);
+    axes_to_test.insert(axes_to_test.end(), axesA.begin(), axesA.end());
+    axes_to_test.insert(axes_to_test.end(), axesB.begin(), axesB.end());
+    for (const glm::vec3 edgeA : axesA)
+    {
+        for (const glm::vec3 edgeB : axesB)
+        {
+            glm::vec3 axis = glm::cross(edgeA, edgeB);
+            if (glm::length(axis) >= epsilon)
+                axes_to_test.push_back(glm::normalize(axis));
+        }
+    }
+
+    for (glm::vec3 axis : axes_to_test)
+    {
+        float overlap = calculate_overlap(axis, boxA, boxB, axesA, axesB);
+        if (overlap < 0)
+            return false;
+        if (overlap < minimum_penetration)
+        {
+            minimum_penetration = overlap;
+            penetration_axis    = axis;
+            // Ensure axis points from A to B
+            if (glm::dot(boxB.position - boxA.position, axis) < 0)
+                penetration_axis = -axis;
+        }
+    }
+
+    // Find support point on boxB in direction of penetration normal
+    glm::vec3 supportB                      = boxB.position;
+    const std::array<float, 3> halfExtentsB = {boxB.size.x * 0.5f, boxB.size.y * 0.5f,
+                                               boxB.size.z * 0.5f};
+    for (int i = 0; i < 3; i++)
+    {
+        float projection = glm::dot(axesB[i], penetration_axis);
+        supportB += axesB[i] * halfExtentsB[i] * (projection > 0 ? 1.0f : -1.0f);
+    }
+
+    // Find support point on boxA in opposite direction
+    glm::vec3 supportA                      = boxA.position;
+    const std::array<float, 3> halfExtentsA = {boxA.size.x * 0.5f, boxA.size.y * 0.5f,
+                                               boxA.size.z * 0.5f};
+    for (int i = 0; i < 3; i++)
+    {
+        float projection = glm::dot(axesA[i], penetration_axis);
+        supportA += axesA[i] * halfExtentsA[i] * (projection > 0 ? 1.0f : -1.0f);
+    }
+
+    out.penetration = minimum_penetration;
+    out.normal      = penetration_axis;
+    out.point       = (supportA + supportB) * 0.5f;
+    return true;
+}
+
+std::array<glm::vec3, 3> Collisions::getAxesFromQuaternion(glm::quat q)
+{ // clang-format off
+    // Right axis (local X)
+    glm::vec3 right = glm::vec3(
+            1 - 2 * (q.y * q.y + q.z * q.z),
+            2 * (q.x * q.y + q.w * q.z),
+            2 * (q.x * q.z - q.w * q.y)
+    );
+
+    // Up axis (local Y)
+    glm::vec3 up = glm::vec3(
+            2 * (q.x * q.y - q.w * q.z),
+            1 - 2 * (q.x * q.x + q.z * q.z),
+            2 * (q.y * q.z + q.w * q.x)
+    );
+
+    // Forward axis (local Z)
+    glm::vec3 forward = glm::vec3(
+            2 * (q.x * q.z + q.w * q.y),
+            2 * (q.y * q.z - q.w * q.x),
+            1 - 2 * (q.x * q.x + q.y * q.y)
+    );
+
+    return { right, up, forward };
+} // clang-format on
+
+float Collisions::calculate_overlap(glm::vec3 axis, const Box &boxA, const Box &boxB,
+                                    const std::array<glm::vec3, 3> axesA,
+                                    const std::array<glm::vec3, 3> axesB)
+{ // clang-format off
+    // Project box centers onto axis
+    float projA = glm::dot(boxA.position, axis);
+    float projB = glm::dot(boxB.position, axis);
+
+    // Calculate extents (half-widths of projections)
+    float rA = std::abs(glm::dot(axesA[0], axis)) * boxA.size.x * 0.5f +
+               std::abs(glm::dot(axesA[1], axis)) * boxA.size.y * 0.5f +
+               std::abs(glm::dot(axesA[2], axis)) * boxA.size.z * 0.5f;
+
+    float rB = std::abs(glm::dot(axesB[0], axis)) * boxB.size.x * 0.5f +
+               std::abs(glm::dot(axesB[1], axis)) * boxB.size.y * 0.5f +
+               std::abs(glm::dot(axesB[2], axis)) * boxB.size.z * 0.5f;
+
+    float distance = std::abs(projA - projB);
+    return (rA + rB) - distance;
+} // clang-format on
 
 } // namespace engine::physics
