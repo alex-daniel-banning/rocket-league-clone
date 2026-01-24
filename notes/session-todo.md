@@ -5,7 +5,7 @@
     [x] Breakout tests into different files?
     [x] unused test fixtures
 
-[ ] Github integrations (build/test)
-[ ] Vim - make diagnostic window non-floating/non-obstructing
+[x] Github integrations (build/test)
+[x] Vim - make diagnostic window non-floating/non-obstructing
 [ ] Configure clang-format to enforce Google style guide
 [ ] Research SAT for car vs car collisions
