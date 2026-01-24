@@ -33,10 +33,11 @@ enable_testing()
 
 # Create test executable
 add_executable(tests 
+    tests/test_main.cpp
     tests/test_Plane.cpp
     tests/test_Collisions.cpp
     tests/TestUtil.cpp)
-target_link_libraries(tests PRIVATE engine gtest gtest_main)
+target_link_libraries(tests PRIVATE engine gtest)
 target_include_directories(tests PRIVATE
     ${CMAKE_SOURCE_DIR}/include
     ${CMAKE_SOURCE_DIR}/tests/include)
