@@ -3,7 +3,7 @@
 [ ] RESOLUTION - Implement similar set of unit tests to sphere v box, for box v box
 [ ] Verify with demo
 [ ] Implement box v plane collisions
-[ ] clang-tidy and clang-format cohesion
+[x] clang-tidy and clang-format cohesion
     # .clang-format
     BasedOnStyle: Google
     
