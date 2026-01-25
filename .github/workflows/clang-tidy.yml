@@ -9,7 +9,13 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt update
-          sudo apt install -y clang-tidy cmake
+          sudo apt install -y \
+            clang-tidy \
+            cmake \
+            libglfw3-dev \
+            libgl1-mesa-dev \
+            libassimp-dev \
+            libgtest-dev
       
       - name: Generate compile commands
         run: cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -B build
