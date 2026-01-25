@@ -161,8 +161,11 @@ bool Collisions::computeContact(const Box &boxA, const Box &boxB, Contact &out)
     for (glm::vec3 axis : axes_to_test)
     {
         float overlap = calculate_overlap(axis, boxA, boxB, axesA, axesB);
-        if (overlap < 0)
+
+        // If there's an axis with no overlap, it means the boxes are separated.
+        if (overlap <= 0)
             return false;
+
         if (overlap < minimum_penetration)
         {
             minimum_penetration = overlap;
