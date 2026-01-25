@@ -12,6 +12,7 @@ jobs:
           sudo apt install -y \
             clang-tidy \
             cmake \
+            jq \
             libglfw3-dev \
             libgl1-mesa-dev \
             libassimp-dev \
@@ -22,5 +23,6 @@ jobs:
       
       - name: Run clang-tidy
         run: |
-          find src/ tests/ include/ \( -name '*.cpp' -o -name '*.hpp' \) \
-            -not -path "include/third_party/*" | xargs clang-tidy -p build
+          jq -r '.[].file' build/compile_commands.json | \
+            grep -E '\.(cpp|hpp)$' | \
+            xargs clang-tidy -p build
