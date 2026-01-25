@@ -78,6 +78,8 @@
       value: lower_case
     - key: readability-identifier-naming.PrivateMemberSuffix
       value: '_'
+    - key: readability-identifier-naming.ParameterCase
+      value: lower_case
     - key:          bugprone-assert-side-effect.AssertMacros
       value:        assert,DCHECK
     - key:          bugprone-dangling-handle.HandleClasses
