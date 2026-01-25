@@ -25,4 +25,4 @@ jobs:
         run: |
           jq -r '.[].file' build/compile_commands.json | \
             grep -E '\.(cpp|hpp)$' | \
-            xargs clang-tidy -p build
+            xargs clang-tidy -p build --warnings-as-errors='*'
