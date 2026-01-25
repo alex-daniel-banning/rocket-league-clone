@@ -1,0 +1,20 @@
+name: clang-tidy
+on: [pull_request]
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y clang-tidy cmake
+      
+      - name: Generate compile commands
+        run: cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -B build
+      
+      - name: Run clang-tidy
+        run: |
+          find src/ tests/ include/ \( -name '*.cpp' -o -name '*.hpp' \) \
+            -not -path "include/third_party/*" | xargs clang-tidy -p build

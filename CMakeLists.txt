@@ -15,7 +15,7 @@ add_library(engine STATIC
     src/engine/physics/Plane.cpp
 )
 
-target_include_directories(engine PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include /usr/include)
+target_include_directories(engine PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/include/third_party /usr/include)
 
 add_subdirectory(src/demos)
 
