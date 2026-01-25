@@ -1,13 +1,7 @@
 # Minimal clang-format for C++/OpenGL projects
 
-BasedOnStyle: LLVM
-IndentWidth: 4
-ColumnLimit: 100
-UseTab: Never
-BreakBeforeBraces: Allman
-AlignConsecutiveAssignments: true
-SortIncludes: true
-IncludeBlocks: Preserve   # Keep include blocks separated
+Language: Cpp
+BasedOnStyle: Google
 
 # Ensure glad.h stays at the top
 IncludeCategories:
