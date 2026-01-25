@@ -31,4 +31,6 @@ jobs:
         run: |
           { jq -r '.[].file' build/compile_commands.json | grep '\.cpp$'; \
             find include tests -name '*.hpp' ! -path 'include/third_party/*'; } | \
-            xargs clang-tidy -p build --warnings-as-errors='*'
+            xargs clang-tidy -p build \
+            --header-filter='^(?!.*/usr/).*$' \
+            --warnings-as-errors='*'
