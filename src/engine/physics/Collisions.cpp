@@ -193,6 +193,59 @@ bool Collisions::computeContact(const Box& boxA, const Box& boxB,
   out.point = (supportA + supportB) * 0.5f;
   return true;
 }
+void Collisions::ResolveCollision(Box& box_a, Box& box_b, Contact contact,
+                                  float coefficient_of_restitution) {
+  // TODO, handle tunneling
+  const float kSeparationSlop = 1e-3f;
+
+  // This is all from the perspective of the sphere
+  glm::vec3 omega = box.angular_velocity;
+  glm::vec3 r = contact.point - box.position;
+  glm::vec3 v_rel = sphere.velocity - (box.velocity + glm::cross(omega, r));
+  glm::vec3 n = contact.normal;
+  glm::mat3 rot = glm::toMat3(box.rotation);
+  glm::mat3 i_world_inv = rot * box.inertia_tensor_inv * glm::transpose(rot);
+  float rel_vel_along_normal = glm::dot(v_rel, n);
+
+  // We should never have a situation where a sphere impacts a box, while also
+  // moving farther from it. If we end up running into this, figure out what's
+  // leading to it and how to handle it.
+  assert(rel_vel_along_normal <= 0.0f);
+
+  // Linear mass component
+  float mass_component = (1.0f / sphere.mass) + (1.0f / box.mass);
+
+  // Angular mass component
+  glm::vec3 r_cross_n = glm::cross(r, n);
+  glm::vec3 angular_contrib = glm::cross(i_world_inv * r_cross_n, r);
+  float angular_mass_component = glm::dot(n, angular_contrib);
+
+  // Total effective mass along normal
+  float effective_mass = mass_component + angular_mass_component;
+
+  float impulse_scalar =
+      -(1 + coefficient_of_restitution) * rel_vel_along_normal / effective_mass;
+  glm::vec3 impulse_vector = impulse_scalar * n;
+
+  // Apply the impulse
+  sphere.velocity += impulse_vector / sphere.mass;
+  box.velocity -= impulse_vector / box.mass;
+  box.angular_velocity += i_world_inv * glm::cross(r, -impulse_vector);
+
+  // Penetration correction
+  if (contact.penetration > 0.0f) {
+    // Separate the two along normal
+    float total_correction = contact.penetration + kSeparationSlop;
+    float total_inv_mass = (1.0f / sphere.mass) + (1.0f / box.mass);
+    float sphere_correction =
+        (total_correction / total_inv_mass) * (1.0f / sphere.mass);
+    float box_correction =
+        (total_correction / total_inv_mass) * (1.0f / box.mass);
+    sphere.position += contact.normal * sphere_correction;
+    box.position -= contact.normal * box_correction;
+  }
+  return;
+}
 
 std::array<glm::vec3, 3> Collisions::getAxesFromQuaternion(
     glm::quat q) {  // clang-format off

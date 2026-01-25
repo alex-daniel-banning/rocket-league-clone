@@ -21,6 +21,8 @@ class Collisions {
                                       Contact contact);
 
   static bool computeContact(const Box& boxA, const Box& boxB, Contact& out);
+  static void ResolveCollision(Box& box_a, Box& box_b, Contact contact,
+                               float coefficient_of_restitution);
 
  private:
   static std::array<glm::vec3, 3> getAxesFromQuaternion(glm::quat q);
