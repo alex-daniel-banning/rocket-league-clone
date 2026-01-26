@@ -15,25 +15,26 @@ struct Box {
   glm::mat3 inertia_tensor_inv;
 
   Box() {
-    inertia_tensor = computeInertia(size, mass);
-    inertia_tensor_inv = computeInertiaInverse(inertia_tensor);
+    inertia_tensor = ComputeInertia(size, mass);
+    inertia_tensor_inv = ComputeInertiaInverse(inertia_tensor);
   }
 
-  Box(glm::vec3 si, glm::vec3 pos = glm::vec3(0.0f),
-      glm::vec3 vel = glm::vec3(0.0f), float m = 1.0f,
-      glm::quat r = glm::quat(glm::vec3(0.0f)), glm::vec3 w = glm::vec3())
+  explicit Box(glm::vec3 si, glm::vec3 pos = glm::vec3(0.0f),
+               glm::vec3 vel = glm::vec3(0.0f), float m = 1.0f,
+               glm::quat r = glm::quat(glm::vec3(0.0f)),
+               glm::vec3 w = glm::vec3())
       : size(si),
         position(pos),
         velocity(vel),
         mass(m),
         rotation(r),
         angular_velocity(w) {
-    inertia_tensor = computeInertia(size, mass);
-    inertia_tensor_inv = computeInertiaInverse(inertia_tensor);
+    inertia_tensor = ComputeInertia(size, mass);
+    inertia_tensor_inv = ComputeInertiaInverse(inertia_tensor);
   }
 
  private:
-  static glm::mat3 computeInertia(const glm::vec3 &size, float mass) {
+  static glm::mat3 ComputeInertia(const glm::vec3& size, float mass) {
     float w = size.x, h = size.y, d = size.z;
     glm::mat3 i(0.0f);
     i[0][0] = (1.0f / 12.0f) * mass * (h * h + d * d);
@@ -42,7 +43,7 @@ struct Box {
     return i;
   }
 
-  static glm::mat3 computeInertiaInverse(const glm::mat3 &i) {
+  static glm::mat3 ComputeInertiaInverse(const glm::mat3& i) {
     glm::mat3 i_inv(0.0f);
     i_inv[0][0] = 1.0f / i[0][0];
     i_inv[1][1] = 1.0f / i[1][1];

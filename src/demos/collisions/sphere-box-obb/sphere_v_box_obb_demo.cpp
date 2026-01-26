@@ -4,13 +4,13 @@
 #include <GLFW/glfw3.h>
 
 #include <cmath>
-#include <engine/Match.hpp>
-#include <engine/PathManager.hpp>
-#include <engine/physics/Box.hpp>
-#include <engine/physics/Plane.hpp>
-#include <engine/render/Camera.hpp>
-#include <engine/render/Renderer.hpp>
-#include <engine/render/Shader.hpp>
+#include <engine/match.hpp>
+#include <engine/path_manager.hpp>
+#include <engine/physics/box.hpp>
+#include <engine/physics/plane.hpp>
+#include <engine/render/camera.hpp>
+#include <engine/render/renderer.hpp>
+#include <engine/render/shader.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -94,22 +94,22 @@ int main() {
   glEnable(GL_DEPTH_TEST);
   engine::render::Camera camera(glm::vec3(25.0f, 10.0f, 25.0f),
                                 glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, 0.0f);
-  camera.lookAt(glm::vec3(0.0f, 5.0f, 0.0f));
-  camera.projection.farPlane = 300.0f;
+  camera.LookAt(glm::vec3(0.0f, 5.0f, 0.0f));
+  camera.projection.far_plane = 300.0f;
   glfwSetWindowUserPointer(window, &camera);
 
   setupShadowBuffer();
 
   glm::vec3 lightPos(0.0f, 40.0f, 0.0f);
   engine::render::Shader simpleDepthShader(
-      engine::PathManager::globalAsset("shaders/simple_depth_shader.vert")
+      engine::PathManager::GlobalAsset("shaders/simple_depth_shader.vert")
           .c_str(),
-      engine::PathManager::globalAsset("shaders/empty_shader.frag").c_str());
+      engine::PathManager::GlobalAsset("shaders/empty_shader.frag").c_str());
 
   // create regular shader
   engine::render::Shader modelLoadingShader(
-      engine::PathManager::globalAsset("shaders/model_loading.vert").c_str(),
-      engine::PathManager::globalAsset("shaders/model_loading.frag").c_str());
+      engine::PathManager::GlobalAsset("shaders/model_loading.vert").c_str(),
+      engine::PathManager::GlobalAsset("shaders/model_loading.frag").c_str());
 
   engine::render::Renderer renderer(screenWidth, screenHeight);
 
@@ -145,8 +145,8 @@ int main() {
                             glm::vec3(0.0f, 0.0f, 0.0f))});
 
   engine::render::Shader lineShader(
-      engine::PathManager::globalAsset("shaders/lineShader.vert").c_str(),
-      engine::PathManager::globalAsset("shaders/lineShader.frag").c_str());
+      engine::PathManager::GlobalAsset("shaders/lineShader.vert").c_str(),
+      engine::PathManager::GlobalAsset("shaders/lineShader.frag").c_str());
 
   float demoStart = glfwGetTime();
   // Main loop
@@ -154,12 +154,12 @@ int main() {
     float currentFrame = glfwGetTime();
     if (currentFrame - demoStart > 3.0) {
       demoStart = glfwGetTime();
-      match.reset();
+      match.Reset();
     }
     deltaTime = currentFrame - lastFrame;
     lastFrame = currentFrame;
     processInput(window, camera);
-    match.tick(deltaTime);
+    match.Tick(deltaTime);
 
     // render
     // ------
@@ -186,14 +186,14 @@ int main() {
     lightView = glm::lookAt(lightPos, glm::vec3(0.0f), upVector);
 
     lightSpaceMatrix = lightProjection * lightView;
-    simpleDepthShader.use();
-    simpleDepthShader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
+    simpleDepthShader.Use();
+    simpleDepthShader.SetMat4("lightSpaceMatrix", lightSpaceMatrix);
 
-    simpleDepthShader.use();
-    renderer.drawPhysicsPlane(match.getGround(), simpleDepthShader);
-    renderer.drawSphere(match.getBall(), simpleDepthShader);
-    for (engine::physics::Box box : match.getBoxes()) {
-      renderer.drawBox(box, simpleDepthShader);
+    simpleDepthShader.Use();
+    renderer.DrawPhysicsPlane(match.GetGround(), simpleDepthShader);
+    renderer.DrawSphere(match.GetBall(), simpleDepthShader);
+    for (engine::physics::Box box : match.GetBoxes()) {
+      renderer.DrawBox(box, simpleDepthShader);
     }
 
     GL_CHECK();
@@ -205,35 +205,35 @@ int main() {
     glViewport(0, 0, mode->width, mode->height);
 
     // Render Floor Model
-    modelLoadingShader.use();
-    modelLoadingShader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
-    modelLoadingShader.setInt("shadowMap", 8);
+    modelLoadingShader.Use();
+    modelLoadingShader.SetMat4("lightSpaceMatrix", lightSpaceMatrix);
+    modelLoadingShader.SetInt("shadowMap", 8);
     glActiveTexture(
         GL_TEXTURE8);  // todo set to 8 so it doesn't conflict with model
                        // texture index, need a better long term solution
     glBindTexture(GL_TEXTURE_2D, depthMap);
-    modelLoadingShader.setBool("useTexture", false);
-    modelLoadingShader.setVec3("lightColor", glm::vec3(1.0f));
-    modelLoadingShader.setVec3("lightPos", lightPos);
-    modelLoadingShader.setVec3("viewPos", camera.Position);
-    renderer.drawPhysicsPlane(match.getGround(), modelLoadingShader, camera);
-    for (engine::physics::Plane wall : match.getWalls()) {
-      renderer.drawPhysicsPlane(wall, modelLoadingShader, camera);
+    modelLoadingShader.SetBool("useTexture", false);
+    modelLoadingShader.SetVec3("lightColor", glm::vec3(1.0f));
+    modelLoadingShader.SetVec3("lightPos", lightPos);
+    modelLoadingShader.SetVec3("viewPos", camera.position);
+    renderer.DrawPhysicsPlane(match.GetGround(), modelLoadingShader, camera);
+    for (engine::physics::Plane wall : match.GetWalls()) {
+      renderer.DrawPhysicsPlane(wall, modelLoadingShader, camera);
     }
-    modelLoadingShader.setVec3("diffuseColor", glm::vec3(0.0f, 0.5f, 0.3f));
-    renderer.drawSphere(match.getBall(), modelLoadingShader, camera);
-    for (engine::physics::Box box : match.getBoxes()) {
-      renderer.drawBox(box, modelLoadingShader, camera);
+    modelLoadingShader.SetVec3("diffuseColor", glm::vec3(0.0f, 0.5f, 0.3f));
+    renderer.DrawSphere(match.GetBall(), modelLoadingShader, camera);
+    for (engine::physics::Box box : match.GetBoxes()) {
+      renderer.DrawBox(box, modelLoadingShader, camera);
     }
 
     // debug rendering
-    lineShader.use();
-    for (engine::physics::Plane wall : match.getWalls()) {
-      renderer.drawPhysicsPlaneNormal(wall, lineShader, camera);
+    lineShader.Use();
+    for (engine::physics::Plane wall : match.GetWalls()) {
+      renderer.DrawPhysicsPlaneNormal(wall, lineShader, camera);
     }
-    renderer.drawPhysicsPlaneNormal(match.getGround(), lineShader, camera);
-    for (engine::physics::Box box : match.getBoxes()) {
-      renderer.drawBoxWireframe(box, modelLoadingShader, camera);
+    renderer.DrawPhysicsPlaneNormal(match.GetGround(), lineShader, camera);
+    for (engine::physics::Box box : match.GetBoxes()) {
+      renderer.DrawBoxWireframe(box, modelLoadingShader, camera);
     }
 
     glfwSwapBuffers(window);
@@ -268,35 +268,35 @@ void processInput(GLFWwindow* window, engine::render::Camera& camera) {
   if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
     glfwSetWindowShouldClose(window, true);
 
-  const float cameraSpeed = camera.MovementSpeed * deltaTime;
+  const float cameraSpeed = camera.movement_speed * deltaTime;
   glm::vec3 forward =
-      glm::normalize(glm::vec3(camera.Front.x, 0.0f, camera.Front.z));
+      glm::normalize(glm::vec3(camera.front.x, 0.0f, camera.front.z));
 
   if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-    camera.Position += cameraSpeed * forward;
+    camera.position += cameraSpeed * forward;
   if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-    camera.Position -= cameraSpeed * forward;
+    camera.position -= cameraSpeed * forward;
   if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-    camera.Position -=
-        glm::normalize(glm::cross(camera.Front, camera.Up)) * cameraSpeed;
+    camera.position -=
+        glm::normalize(glm::cross(camera.front, camera.up)) * cameraSpeed;
   if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-    camera.Position +=
-        glm::normalize(glm::cross(camera.Front, camera.Up)) * cameraSpeed;
+    camera.position +=
+        glm::normalize(glm::cross(camera.front, camera.up)) * cameraSpeed;
   if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
-    camera.Position += glm::vec3(0.0f, 1.0f, 0.0f) * cameraSpeed;
+    camera.position += glm::vec3(0.0f, 1.0f, 0.0f) * cameraSpeed;
   if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
-    camera.Position -= glm::vec3(0.0f, 1.0f, 0.0f) * cameraSpeed;
+    camera.position -= glm::vec3(0.0f, 1.0f, 0.0f) * cameraSpeed;
 
   // make sure that when camera.Pitch is out of bounds, screen doesn't get
   // flipped
-  if (camera.Pitch > 89.0f) camera.Pitch = 89.0f;
-  if (camera.Pitch < -89.0f) camera.Pitch = -89.0f;
+  if (camera.pitch > 89.0f) camera.pitch = 89.0f;
+  if (camera.pitch < -89.0f) camera.pitch = -89.0f;
 
   glm::vec3 front;
-  front.x = cos(glm::radians(camera.Yaw)) * cos(glm::radians(camera.Pitch));
-  front.y = sin(glm::radians(camera.Pitch));
-  front.z = sin(glm::radians(camera.Yaw)) * cos(glm::radians(camera.Pitch));
-  camera.Front = glm::normalize(front);
+  front.x = cos(glm::radians(camera.yaw)) * cos(glm::radians(camera.pitch));
+  front.y = sin(glm::radians(camera.pitch));
+  front.z = sin(glm::radians(camera.yaw)) * cos(glm::radians(camera.pitch));
+  camera.front = glm::normalize(front);
 }
 
 void mouse_callback(GLFWwindow* window, double xposIn, double yposIn) {

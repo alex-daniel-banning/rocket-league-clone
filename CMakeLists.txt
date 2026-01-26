@@ -5,14 +5,14 @@ project(rocket-league-clone)
 add_library(engine STATIC
     src/engine/glad.c
     src/engine/stb_image.cpp
-    src/engine/Match.cpp
-    src/engine/physics/Collisions.cpp
-    src/engine/render/Camera.cpp
-    src/engine/render/Shader.cpp
-    src/engine/render/Mesh.cpp
-    src/engine/render/Model.cpp
-    src/engine/render/Renderer.cpp
-    src/engine/physics/Plane.cpp
+    src/engine/match.cpp
+    src/engine/physics/collisions.cpp
+    src/engine/render/camera.cpp
+    src/engine/render/shader.cpp
+    src/engine/render/mesh.cpp
+    src/engine/render/model.cpp
+    src/engine/render/renderer.cpp
+    src/engine/physics/plane.cpp
 )
 
 target_include_directories(engine PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/include/third_party /usr/include)

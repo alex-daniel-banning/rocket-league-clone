@@ -4,17 +4,17 @@
 #include <gtest/gtest.h>
 
 // Boolean version - for conditional checks
-bool test_util::Vec3Near(const glm::vec3 &expected, const glm::vec3 &actual,
-                         float eps) {
+bool TestUtil::Vec3Near(const glm::vec3& expected, const glm::vec3& actual,
+                        float eps) {
   return std::abs(expected.x - actual.x) <= eps &&
          std::abs(expected.y - actual.y) <= eps &&
          std::abs(expected.z - actual.z) <= eps;
 }
 
-void test_util::ExpectVec3Near(const glm::vec3 &expected,
-                               const glm::vec3 &actual, std::string msg,
-                               float eps) {
-  auto formatVec = [](const glm::vec3 &v) {
+void TestUtil::ExpectVec3Near(const glm::vec3& expected,
+                              const glm::vec3& actual, std::string msg,
+                              float eps) {
+  auto format_vec = [](const glm::vec3& v) {
     std::ostringstream oss;
     oss << "(" << v.x << ", " << v.y << ", " << v.z << ")";
     return oss.str();
@@ -27,15 +27,15 @@ void test_util::ExpectVec3Near(const glm::vec3 &expected,
 
   if (!pass) {
     GTEST_FAIL() << msg << "\n"
-                 << "Expected: " << formatVec(expected) << "\n"
-                 << "Actual:   " << formatVec(actual);
+                 << "Expected: " << format_vec(expected) << "\n"
+                 << "Actual:   " << format_vec(actual);
   }
 }
 
-void test_util::AssertVec3Near(const glm::vec3 &expected,
-                               const glm::vec3 &actual, std::string msg,
-                               float eps) {
-  auto formatVec = [](const glm::vec3 &v) {
+void TestUtil::AssertVec3Near(const glm::vec3& expected,
+                              const glm::vec3& actual, std::string msg,
+                              float eps) {
+  auto format_vec = [](const glm::vec3& v) {
     std::ostringstream oss;
     oss << "(" << v.x << ", " << v.y << ", " << v.z << ")";
     return oss.str();
@@ -46,6 +46,6 @@ void test_util::AssertVec3Near(const glm::vec3 &expected,
   pass &= std::abs(expected.y - actual.y) <= eps;
   pass &= std::abs(expected.z - actual.z) <= eps;
 
-  ASSERT_TRUE(pass) << msg << "\nExpected: " << formatVec(expected)
-                    << "\nActual:   " << formatVec(actual);
+  ASSERT_TRUE(pass) << msg << "\nExpected: " << format_vec(expected)
+                    << "\nActual:   " << format_vec(actual);
 }

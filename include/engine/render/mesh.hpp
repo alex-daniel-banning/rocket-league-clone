@@ -1,6 +1,6 @@
 #pragma once
 
-#include <engine/render/Shader.hpp>
+#include <engine/render/shader.hpp>
 #include <glm/glm.hpp>
 #include <string>
 #include <vector>
@@ -8,9 +8,9 @@
 namespace engine::render {
 
 struct Vertex {
-  glm::vec3 Position;
-  glm::vec3 Normal;
-  glm::vec2 TexCoords;
+  glm::vec3 position;
+  glm::vec3 normal;
+  glm::vec2 tex_coords;
 };
 
 struct Texture {
@@ -33,12 +33,12 @@ class Mesh {
        std::vector<Texture> textures);
   Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices,
        glm::vec3 color);
-  void Draw(engine::render::Shader &shader) const;
+  void Draw(engine::render::Shader& shader) const;
 
  private:
   // render data
-  unsigned int VAO, VBO, EBO;
+  unsigned int vao_, vbo_, ebo_;
 
-  void setupMesh();
+  void SetupMesh();
 };
 }  // namespace engine::render

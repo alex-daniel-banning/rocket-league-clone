@@ -2,7 +2,7 @@
 #include <glm/vec3.hpp>
 #include <string>
 
-class test_util {
+class TestUtil {
  public:
   static bool Vec3Near(const glm::vec3& expected, const glm::vec3& actual,
                        float eps = 1e-5f);
