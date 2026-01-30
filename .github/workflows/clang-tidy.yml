@@ -29,7 +29,7 @@ jobs:
       
       - name: Run clang-tidy
         run: |
-          { jq -r '.[].file' build/compile_commands.json | grep '\.cpp$' | \
+            jq -r '.[].file' build/compile_commands.json | grep '\.cpp$' | \
             xargs clang-tidy -p build \
             --header-filter='^(?!.*/usr/).*$' \
             --warnings-as-errors='*'
