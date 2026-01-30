@@ -1,4 +1,5 @@
 #include <Print.hpp>
+#include <engine/physics/collision_type.hpp>
 #include <engine/physics/collisions.hpp>
 
 namespace engine::physics {
@@ -70,7 +71,7 @@ bool Collisions::ComputeContact(const Box& box, const Sphere& sphere,
   }
   out.normal = glm::normalize(v_box_surface_to_sphere_center);
   out.penetration = sphere.radius - std::sqrt(distance_squared);
-  out.point = closest_point;
+  out.points.push_back(closest_point);
   return true;
 };
 
@@ -79,9 +80,10 @@ void Collisions::ResolveCollision(Box& box, Sphere& sphere, Contact contact,
   // TODO, handle tunneling
   const float separation_slop = 1e-3f;
 
+  assert(contact.points.size() == 1);
   // This is all from the perspective of the sphere
   glm::vec3 omega = box.angular_velocity;
-  glm::vec3 r = contact.point - box.position;
+  glm::vec3 r = contact.points[0] - box.position;
   glm::vec3 v_rel = sphere.velocity - (box.velocity + glm::cross(omega, r));
   glm::vec3 n = contact.normal;
   glm::mat3 rot = glm::toMat3(box.rotation);
@@ -170,84 +172,119 @@ bool Collisions::ComputeContact(const Box& box_a, const Box& box_b,
     }
   }
 
-  // Find support point on boxB in direction of penetration normal
-  glm::vec3 support_b = box_b.position;
-  const std::array<float, 3> half_extents_b = {
-      box_b.size.x * 0.5f, box_b.size.y * 0.5f, box_b.size.z * 0.5f};
-  for (int i = 0; i < 3; i++) {
-    float projection = glm::dot(axes_b[i], penetration_axis);
-    support_b +=
-        axes_b[i] * half_extents_b[i] * (projection > 0 ? 1.0f : -1.0f);
-  }
+  // Determine collision type
+  CollisionType type = DetermineCollisionType(penetration_axis, axes_a, axes_b);
 
-  // Find support point on boxA in opposite direction
-  glm::vec3 support_a = box_a.position;
-  const std::array<float, 3> half_extents_a = {
-      box_a.size.x * 0.5f, box_a.size.y * 0.5f, box_a.size.z * 0.5f};
-  for (int i = 0; i < 3; i++) {
-    float projection = glm::dot(axes_a[i], penetration_axis);
-    support_a +=
-        axes_a[i] * half_extents_a[i] * (projection > 0 ? 1.0f : -1.0f);
-  }
+  if (type == CollisionType::FACE_FACE) {
+    // Use clipping to get multiple contact points (up to 4)
+    // TODO, make class ContactPoint
+    std::vector<glm::vec3> contact_points =
+        ClipFaceFace(box_a, box_b, penetration_axis, axes_a, axes_b);
+    out.points.insert(out.points.end(), contact_points.begin(),
+                      contact_points.end());
+  } else {
+    // Find support point on boxA in opposite direction
+    glm::vec3 support_a = box_a.position;
+    const std::array<float, 3> half_extents_a = {
+        box_a.size.x * 0.5f, box_a.size.y * 0.5f, box_a.size.z * 0.5f};
+    for (int i = 0; i < 3; i++) {
+      float projection = glm::dot(axes_a[i], penetration_axis);
+      support_a +=
+          axes_a[i] * half_extents_a[i] * (projection > 0 ? 1.0f : -1.0f);
+    }
 
-  out.penetration = minimum_penetration;
-  out.normal = penetration_axis;
-  out.point = (support_a + support_b) * 0.5f;
+    // Find support point on boxB in direction of penetration normal
+    glm::vec3 support_b = box_b.position;
+    const std::array<float, 3> half_extents_b = {
+        box_b.size.x * 0.5f, box_b.size.y * 0.5f, box_b.size.z * 0.5f};
+    for (int i = 0; i < 3; i++) {
+      float projection = glm::dot(axes_b[i], penetration_axis);
+      support_b +=
+          axes_b[i] * half_extents_b[i] * (projection > 0 ? 1.0f : -1.0f);
+    }
+    out.points.push_back((support_a + support_b) * 0.5f);
+    out.penetration = minimum_penetration;
+    out.normal = penetration_axis;
+  }
   return true;
 }
+
 void Collisions::ResolveCollision(Box& box_a, Box& box_b, Contact contact,
-                                  float coefficient_of_restitution) { /*
-   // TODO, handle tunneling
-   const float kSeparationSlop = 1e-3f;
+                                  float coefficient_of_restitution) {
+  // TODO, handle tunneling
+  const float separation_slop = 1e-3f;
 
-   // This is all from the perspective of the sphere
-   glm::vec3 omega = box.angular_velocity;
-   glm::vec3 r = contact.point - box.position;
-   glm::vec3 v_rel = sphere.velocity - (box.velocity + glm::cross(omega, r));
-   glm::vec3 n = contact.normal;
-   glm::mat3 rot = glm::toMat3(box.rotation);
-   glm::mat3 i_world_inv = rot * box.inertia_tensor_inv * glm::transpose(rot);
-   float rel_vel_along_normal = glm::dot(v_rel, n);
+  for (glm::vec3 contact_point : contact.points) {
+    // TODO, resolve collision when there are multiple contact points
+    // Contact point relative to each body's center of mass
+    glm::vec3 r_a = contact_point - box_a.position;
+    glm::vec3 r_b = contact_point - box_b.position;
 
-   // We should never have a situation where a sphere impacts a box, while also
-   // moving farther from it. If we end up running into this, figure out what's
-   // leading to it and how to handle it.
-   assert(rel_vel_along_normal <= 0.0f);
+    // Velocity at contact point for each body
+    glm::vec3 v_contact_a =
+        box_a.velocity + glm::cross(box_a.angular_velocity, r_a);
+    glm::vec3 v_contact_b =
+        box_b.velocity + glm::cross(box_b.angular_velocity, r_b);
+    glm::vec3 rel_vel = v_contact_a - v_contact_b;
 
-   // Linear mass component
-   float mass_component = (1.0f / sphere.mass) + (1.0f / box.mass);
+    // Transform inertia tensors to world space
+    glm::mat3 rot_a = glm::toMat3(box_a.rotation);
+    glm::mat3 rot_b = glm::toMat3(box_b.rotation);
+    glm::mat3 i_world_inv_a =
+        rot_a * box_a.inertia_tensor_inv * glm::transpose(rot_a);
+    glm::mat3 i_world_inv_b =
+        rot_b * box_b.inertia_tensor_inv * glm::transpose(rot_b);
 
-   // Angular mass component
-   glm::vec3 r_cross_n = glm::cross(r, n);
-   glm::vec3 angular_contrib = glm::cross(i_world_inv * r_cross_n, r);
-   float angular_mass_component = glm::dot(n, angular_contrib);
+    // Compute effective mass along collision normal
+    glm::vec3 r_cross_n_a = glm::cross(r_a, contact.normal);
+    glm::vec3 r_cross_n_b = glm::cross(r_b, contact.normal);
+    float m_eff =
+        (1 / box_a.mass) + (1 / box_b.mass) +
+        glm::dot(contact.normal, glm::cross(i_world_inv_a * r_cross_n_a, r_a)) +
+        glm::dot(contact.normal, glm::cross(i_world_inv_b * r_cross_n_b, r_b));
 
-   // Total effective mass along normal
-   float effective_mass = mass_component + angular_mass_component;
+    // Impulse magnitude
+    float v_n = glm::dot(rel_vel, contact.normal);
+    float j = -(1.0f + coefficient_of_restitution) * v_n / m_eff;
+    glm::vec3 impulse =
+        (j * contact.normal) / static_cast<float>(contact.points.size());
 
-   float impulse_scalar =
-       -(1 + coefficient_of_restitution) * rel_vel_along_normal /
-   effective_mass; glm::vec3 impulse_vector = impulse_scalar * n;
+    // Apply the impulse
+    box_a.velocity += impulse / box_a.mass;
+    box_b.velocity -= impulse / box_b.mass;
+    box_a.angular_velocity += i_world_inv_a * glm::cross(r_a, impulse);
+    box_b.angular_velocity += i_world_inv_b * glm::cross(r_b, impulse);
+  }
+  // Penetration correction
+  if (contact.penetration > 0.0f) {
+    // Separate the two along normal
+    float total_correction = contact.penetration + separation_slop;
+    float total_inv_mass = (1.0f / box_a.mass) + (1.0f / box_b.mass);
+    float box_a_correction =
+        (total_correction / total_inv_mass) * (1.0f / box_a.mass);
+    float box_b_correction =
+        (total_correction / total_inv_mass) * (1.0f / box_b.mass);
+    box_a.position -= contact.normal * box_a_correction;
+    box_b.position += contact.normal * box_b_correction;
+  }
+  return;
+}
 
-   // Apply the impulse
-   sphere.velocity += impulse_vector / sphere.mass;
-   box.velocity -= impulse_vector / box.mass;
-   box.angular_velocity += i_world_inv * glm::cross(r, -impulse_vector);
+CollisionType Collisions::DetermineCollisionType(
+    const glm::vec3 penetration_axis, const std::array<glm::vec3, 3>& axes_a,
+    const std::array<glm::vec3, 3>& axes_b) {
+  const float parallel_threshold = 0.999f;
 
-   // Penetration correction
-   if (contact.penetration > 0.0f) {
-     // Separate the two along normal
-     float total_correction = contact.penetration + kSeparationSlop;
-     float total_inv_mass = (1.0f / sphere.mass) + (1.0f / box.mass);
-     float sphere_correction =
-         (total_correction / total_inv_mass) * (1.0f / sphere.mass);
-     float box_correction =
-         (total_correction / total_inv_mass) * (1.0f / box.mass);
-     sphere.position += contact.normal * sphere_correction;
-     box.position -= contact.normal * box_correction;
-   }
-   return;
- */
+  // Check if axis is aligned with a face normal from either box
+  for (int i = 0; i < 3; i++) {
+    if (std::abs(glm::dot(penetration_axis, axes_a[i])) > parallel_threshold)
+      return CollisionType::FACE_FACE;
+    if (std::abs(glm::dot(penetration_axis, axes_b[i])) > parallel_threshold)
+      return CollisionType::FACE_FACE;
+  }
+  // TODO, what about corner/face? -> CORNER_FACE is a subset of FACE_FACE and
+  // behaves the same way
+  return CollisionType::EDGE_EDGE;
 }
 
 std::array<glm::vec3, 3> Collisions::GetAxesFromQuaternion(

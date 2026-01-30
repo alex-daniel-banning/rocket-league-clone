@@ -1,14 +1,7 @@
-3. SAT for car vs car
-Vim - make diagnostic window non-floating/non-obstructing
-Remove unnecesary std::endl's
-Configure clang-format to enforce Google style guide
-
 Collisions
-    4. Optimization (spatial partitioning)
+Box v Box collision resolution
 
-Collisions advanced:
-    Look into various solutions to tunneling problem (ball going so fast it goes through wall)
-
+################################################################################
 Brainstorming:
 Next mini project options:
     Collisions/Physics
@@ -19,11 +12,8 @@ Next mini project options:
         Friction:
             Basic static + dynamic
         Collisions:
-            AABB
-            Sphere
-            Are planes handled by AABB? Does it make sense to use planes for walls?
-            Static object (walls, floor, etc.)
-            Dynamic objects (ball, car)
+            Tunneling
+            Optimization (spatial partitioning)
         Mass?
         Center of mass?
         Rotation after impact?

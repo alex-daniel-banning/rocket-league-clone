@@ -162,7 +162,25 @@ TEST_F(BoxBoxDetection, BoxesCollideDueToScale) {
 }
 
 // RESOLUTION TEST CASES
-//
+
+TEST(BoxBoxRotation, OffCenterImpact_ProducesAngularVelocity) {
+  glm::vec3 box_a_initial_velocity = glm::vec3();
+  glm::vec3 box_b_initial_velocity = glm::vec3(-1.0f, 0.0f, 0.0f);
+  engine::physics::Box box_a(glm::vec3(1.0f), glm::vec3(0.0f),
+                             box_a_initial_velocity, 1.0f, glm::quat());
+  engine::physics::Box box_b(glm::vec3(1.0f), glm::vec3(0.999f),
+                             box_b_initial_velocity, 1.0f, glm::quat());
+  engine::physics::Contact contact;
+
+  ASSERT_TRUE(
+      engine::physics::Collisions::ComputeContact(box_a, box_b, contact));
+  engine::physics::Collisions::ResolveCollision(box_a, box_b, contact, 1.0f);
+
+  // exploration
+  std::cout << "\n\nContact position: ";
+  Print::Vec3(contact.points);
+}
+
 // For these, the contact point is ambiguous
 // TODO - Faces overlapping & parallel
 // TODO - Edges overlapping & parallel

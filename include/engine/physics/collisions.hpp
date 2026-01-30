@@ -3,6 +3,7 @@
 #include <engine/physics/Contact.hpp>
 #include <engine/physics/Sphere.hpp>
 #include <engine/physics/box.hpp>
+#include <engine/physics/collision_type.hpp>
 #include <engine/physics/plane.hpp>
 
 namespace engine::physics {
@@ -30,6 +31,9 @@ class Collisions {
                                 const Box& box_b,
                                 const std::array<glm::vec3, 3> axes_a,
                                 const std::array<glm::vec3, 3> axes_b);
+  static CollisionType DetermineCollisionType(
+      const glm::vec3 penetration_axis, const std::array<glm::vec3, 3>& axes_a,
+      const std::array<glm::vec3, 3>& axes_b);
 };
 
 }  // namespace engine::physics
