@@ -2,6 +2,8 @@
 #include <engine/physics/collisions.hpp>
 #include <gtest/gtest.h>
 
+#include "engine/physics/Contact.hpp"
+
 namespace {
 // Struct for sphere vs box detection test case
 struct BoxBoxDetectionCase {
@@ -139,22 +141,24 @@ TEST_F(BoxBoxDetection, BoxesCollideDueToScale) {
   glm::vec3 larger_scale(1.005f);
   engine::physics::Box box_a(glm::vec3(1.0f), glm::vec3(), glm::vec3(), 1.0f,
                              glm::quat());
-  engine::physics::Box box_b(
+  engine::physics::Box smaller_box(
       smaller_scale, glm::vec3(0.5f + std::sqrt(0.75f) + 0.001f, 0.0f, 0.0f),
+      glm::vec3(0.0f), 1.0f, GetDiagonalAlignedOrientation({1, 0, 0}));
+  engine::physics::Box larger_box(
+      larger_scale, glm::vec3(0.5f + std::sqrt(0.75f) + 0.001f, 0.0f, 0.0f),
       glm::vec3(0.0f), 1.0f, GetDiagonalAlignedOrientation({1, 0, 0}));
 
   engine::physics::Contact first_contact;
-  bool smaller_box_collided =
-      engine::physics::Collisions::ComputeContact(box_a, box_b, first_contact);
+  bool smaller_box_collided = engine::physics::Collisions::ComputeContact(
+      box_a, smaller_box, first_contact);
 
   EXPECT_FALSE(smaller_box_collided)
       << "Boxes not detecting scale-caused lack of collision. "
          "(Incorrectly detected shrunken box)";
 
-  box_b.size = larger_scale;
   engine::physics::Contact second_contact;
-  bool larger_box_collided =
-      engine::physics::Collisions::ComputeContact(box_a, box_b, second_contact);
+  bool larger_box_collided = engine::physics::Collisions::ComputeContact(
+      box_a, larger_box, second_contact);
 
   EXPECT_TRUE(larger_box_collided)
       << "Boxes not detecting scale-caused collision. (Did not detect enlarged "
@@ -168,7 +172,7 @@ TEST(BoxBoxRotation, OffCenterImpact_ProducesAngularVelocity) {
   glm::vec3 box_b_initial_velocity = glm::vec3(-1.0f, 0.0f, 0.0f);
   engine::physics::Box box_a(glm::vec3(1.0f), glm::vec3(0.0f),
                              box_a_initial_velocity, 1.0f, glm::quat());
-  engine::physics::Box box_b(glm::vec3(1.0f), glm::vec3(0.999f),
+  engine::physics::Box box_b(glm::vec3(1.0f), glm::vec3(0.999f, 0.5f, 0.0f),
                              box_b_initial_velocity, 1.0f, glm::quat());
   engine::physics::Contact contact;
 
@@ -176,9 +180,12 @@ TEST(BoxBoxRotation, OffCenterImpact_ProducesAngularVelocity) {
       engine::physics::Collisions::ComputeContact(box_a, box_b, contact));
   engine::physics::Collisions::ResolveCollision(box_a, box_b, contact, 1.0f);
 
-  // exploration
-  std::cout << "\n\nContact position: ";
-  Print::Vec3(contact.points);
+  // TODO, separate test for this?
+  ASSERT_EQ(contact.points.size(), 4);
+
+  EXPECT_TRUE(box_a.angular_velocity.z > box_a_initial_velocity.z)
+      << "Box angular velocity did not increase in the appropriate direction "
+         "after collision.";
 }
 
 // For these, the contact point is ambiguous

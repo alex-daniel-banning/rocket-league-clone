@@ -1,6 +1,7 @@
 [x] DETECTION - Implement similar set of unit tests to sphere v box, for box v box
 [ ] Implement box v box resolution
-    [ ] account for multiple contact points
+    [x] account for multiple contact points
+    [ ] write tests for multiple contact points
     [ ] account for all types of collisions
         [ ] FACE_FACE
         [ ] EDGE_EDGE

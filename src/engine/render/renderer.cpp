@@ -101,7 +101,8 @@ void Renderer::DrawBox(const engine::physics::Box& box,
       camera.projection.near_plane, camera.projection.far_plane);
   model = glm::translate(model, box.position);
   model = model * glm::toMat4(box.rotation);
-  model = glm::scale(model, glm::vec3(box.size.x, box.size.y, box.size.z));
+  model =
+      glm::scale(model, glm::vec3(box.Size().x, box.Size().y, box.Size().z));
   shader.SetMat4("model", model);
   shader.SetMat4("view", view);
   shader.SetMat4("projection", projection);
@@ -115,7 +116,7 @@ void Renderer::DrawBox(const engine::physics::Box& box, Shader& shader) {
   glm::mat4 model_matrix = glm::mat4(1.0f);
   model_matrix = glm::translate(model_matrix, box.position);
   model_matrix = model_matrix * glm::toMat4(box.rotation);
-  model_matrix = glm::scale(model_matrix, glm::vec3(box.size));
+  model_matrix = glm::scale(model_matrix, glm::vec3(box.Size()));
   shader.SetMat4("model", model_matrix);
   glBindVertexArray(cube_vao_);
   glDrawArrays(GL_TRIANGLES, 0, 36);
@@ -134,7 +135,8 @@ void Renderer::DrawBoxWireframe(const engine::physics::Box& box,
       camera.projection.near_plane, camera.projection.far_plane);
   model = glm::translate(model, box.position);
   model = model * glm::toMat4(box.rotation);
-  model = glm::scale(model, glm::vec3(box.size.x, box.size.y, box.size.z));
+  model =
+      glm::scale(model, glm::vec3(box.Size().x, box.Size().y, box.Size().z));
   shader.Use();
   shader.SetMat4("model", model);
   shader.SetMat4("view", view);
@@ -268,7 +270,7 @@ void Renderer::DrawPhysicsPlaneNormal(const physics::Plane& plane,
 
 // TODO remove?
 glm::mat4 Renderer::MakeModelMatrix(const engine::physics::Box& box) {
-  return glm::scale(glm::mat4(1.0f), glm::vec3(box.size));
+  return glm::scale(glm::mat4(1.0f), glm::vec3(box.Size()));
 }
 
 glm::mat4 Renderer::MakeModelMatrix(const engine::physics::Sphere& sphere) {

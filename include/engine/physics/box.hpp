@@ -5,7 +5,6 @@
 namespace engine::physics {
 
 struct Box {
-  glm::vec3 size = glm::vec3(1.0f);
   glm::vec3 position = glm::vec3(0.0f);
   glm::vec3 velocity = glm::vec3(0.0f);
   float mass = 1.0f;
@@ -14,8 +13,12 @@ struct Box {
   glm::mat3 inertia_tensor;
   glm::mat3 inertia_tensor_inv;
 
+ public:
+  const glm::vec3& Size() const { return size_; }
+  const glm::vec3& HalfExtents() const { return half_extents_; }
+
   Box() {
-    inertia_tensor = ComputeInertia(size, mass);
+    inertia_tensor = ComputeInertia(size_, mass);
     inertia_tensor_inv = ComputeInertiaInverse(inertia_tensor);
   }
 
@@ -23,17 +26,21 @@ struct Box {
                glm::vec3 vel = glm::vec3(0.0f), float m = 1.0f,
                glm::quat r = glm::quat(glm::vec3(0.0f)),
                glm::vec3 w = glm::vec3())
-      : size(si),
+      : size_(si),
+        half_extents_(si * 0.5f),
         position(pos),
         velocity(vel),
         mass(m),
         rotation(r),
         angular_velocity(w) {
-    inertia_tensor = ComputeInertia(size, mass);
+    inertia_tensor = ComputeInertia(size_, mass);
     inertia_tensor_inv = ComputeInertiaInverse(inertia_tensor);
   }
 
  private:
+  glm::vec3 size_ = glm::vec3(1.0f);
+  glm::vec3 half_extents_ = glm::vec3(0.5f);
+
   static glm::mat3 ComputeInertia(const glm::vec3& size, float mass) {
     float w = size.x, h = size.y, d = size.z;
     glm::mat3 i(0.0f);
