@@ -17,6 +17,7 @@ struct SphereBoxDetectionCase {
 void PrintTo(const SphereBoxDetectionCase& c, std::ostream* os) {
   *os << c.label;
 }
+
 }  // namespace
 
 // Parameterized test for sphere vs box collision detection

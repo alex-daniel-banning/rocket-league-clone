@@ -1,11 +1,12 @@
 #include "engine/physics/Contact.hpp"
 
-#include <engine/physics/collisions.hpp>
 #include <gtest/gtest.h>
 
+#include "engine/math.hpp"
 #include "engine/physics/box.hpp"
+#include "engine/physics/collisions.hpp"
 
-// TODO, add anonymous namespace?
+namespace {
 struct BoxBoxContactPointCase {
   glm::vec3 box_a_position;
   glm::quat box_a_rotation;
@@ -19,6 +20,20 @@ struct BoxBoxContactPointCase {
 void PrintTo(const BoxBoxContactPointCase& c, std::ostream* os) {
   *os << c.label;
 }
+
+std::string FormatPoints(const std::vector<glm::vec3>& points) {
+  std::ostringstream oss;
+  oss << "[";
+  for (size_t i = 0; i < points.size(); ++i) {
+    if (i > 0) oss << ", ";
+    oss << "(" << points[i].x << ", " << points[i].y << ", " << points[i].z
+        << ")";
+  }
+  oss << "]";
+  return oss.str();
+}
+
+}  // namespace
 
 class BoxBoxContactPoints
     : public ::testing::TestWithParam<BoxBoxContactPointCase> {};
@@ -44,13 +59,20 @@ TEST_P(BoxBoxContactPoints, _) {
   engine::physics::Contact contact;
   ASSERT_TRUE(
       engine::physics::Collisions::ComputeContact(box_a, box_b, contact));
-  ASSERT_EQ(contact.points.size(), c.expected_point_count) << c.label;
 
+  ASSERT_EQ(contact.points.size(), c.expected_point_count)
+      << c.label << "\nActual: " << FormatPoints(contact.points);
+
+  std::vector<glm::vec3> missing;
   for (const auto& expected : c.expected_points) {
-    EXPECT_TRUE(ContainsPoint(contact.points, expected))
-        << c.label << ": missing expected point (" << expected.x << ", "
-        << expected.y << ", " << expected.z << ")";
+    if (!ContainsPoint(contact.points, expected)) {
+      missing.push_back(expected);
+    }
   }
+
+  EXPECT_TRUE(missing.empty())
+      << c.label << "\nMissing: " << FormatPoints(missing)
+      << "\nActual: " << FormatPoints(contact.points);
 }
 
 INSTANTIATE_TEST_SUITE_P(
@@ -67,7 +89,59 @@ INSTANTIATE_TEST_SUITE_P(
                                                    {0.45f, 0.5f, -0.5f},
                                                    {0.45f, -0.5f, 0.5f},
                                                    {0.45f, -0.5f, -0.5f}},
-                               .label = "FaceFace_Returns4Points"}),
+                               .label = "FaceFace_Returns4Points"},
+
+        // Face/Face: partial overlap (box_b offset in Y)
+        // Should clip to 4 points of smaller rectangle
+        BoxBoxContactPointCase{
+            .box_a_position = glm::vec3(0.0f),
+            .box_a_rotation = glm::quat(),
+            .box_b_position = glm::vec3(0.9f, 0.3f, 0.0f),
+            .box_b_rotation = glm::quat(),
+            .expected_point_count = 4,
+            .expected_points = {{0.45f, 0.5f, 0.5f},
+                                {0.45f, 0.5f, -0.5f},
+                                {0.45f, -0.2f, 0.5f},
+                                {0.45f, -0.2f, -0.5f}},
+            .label = "FaceFacePartialOverlap_Returns4ClippedPoints"},
+
+        // Edge/Face: box_b rotated 45° around Z, edge contacts face
+        BoxBoxContactPointCase{
+            .box_a_position = glm::vec3(0.0f),
+            .box_a_rotation = glm::quat(),
+            .box_b_position = glm::vec3(0.5f + std::sqrt(0.5f) - 0.05f, 0.0f,
+                                        0.0f),
+            .box_b_rotation = engine::Math::GetRotationFromEulerAngles(
+                glm::vec3(0.0f, 0.0f, 45.0f)),
+            .expected_point_count = 2,
+            .expected_points = {{0.475f, 0.0f, 0.5f}, {0.475f, 0.0f, -0.5f}},
+            .label = "EdgeFace_Returns2Points"}),
+
+    /*
+  // Corner/Face: box_b diagonal-aligned, corner contacts face
+  BoxBoxContactPointCase{
+  .box_a_position = glm::vec3(0.0f),
+  .box_a_rotation = glm::quat(),
+  .box_b_position = glm::vec3(0.5f + std::sqrt(0.75f) - 0.05f, 0.0f,
+  0.0f),
+  .box_b_rotation = GetDiagonalAlignedOrientation({1, 0, 0}),
+  .expected_point_count = 1,
+  .expected_points = {{0.5f, 0.0f, 0.0f}},
+  .label = "CornerFace_Returns1Point"},
+
+  // Edge/Edge: both boxes rotated, edges meet
+  BoxBoxContactPointCase{
+  .box_a_position = glm::vec3(0.0f),
+  .box_a_rotation = GetRotationFromEulerAngles(glm::vec3(0.0f, 45.0f,
+                 0.0f)),
+  .box_b_position = glm::vec3(std::sqrt(0.5f) * 2.0f - 0.05f, 0.0f,
+  0.0f),
+  .box_b_rotation = GetRotationFromEulerAngles(glm::vec3(0.0f, 45.0f,
+                 0.0f)),
+  .expected_point_count = 2,
+  .expected_points = {{std::sqrt(0.5f) - 0.025f, 0.5f, 0.0f},
+  {std::sqrt(0.5f) - 0.025f, -0.5f, 0.0f}},
+  .label = "EdgeEdgeParallel_Returns2Points"}),*/
     [](const testing::TestParamInfo<BoxBoxContactPointCase>& info) {
       return info.param.label;
     });

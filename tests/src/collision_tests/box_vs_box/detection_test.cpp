@@ -1,4 +1,5 @@
 #include <Print.hpp>
+#include <engine/math.hpp>
 #include <engine/physics/collisions.hpp>
 #include <gtest/gtest.h>
 
@@ -16,11 +17,6 @@ struct BoxBoxDetectionCase {
 };
 
 void PrintTo(const BoxBoxDetectionCase& c, std::ostream* os) { *os << c.label; }
-
-glm::quat GetRotationFromEulerAngles(glm::vec3 euler) {
-  return glm::quat(glm::vec3(glm::radians(euler.x), glm::radians(euler.y),
-                             glm::radians(euler.z)));
-}
 
 glm::quat GetDiagonalAlignedOrientation(glm::vec3 axis) {
   glm::vec3 diagonal = glm::normalize(glm::vec3(1, 1, 1));
@@ -68,8 +64,8 @@ INSTANTIATE_TEST_SUITE_P(
             .box_a_rotation = glm::quat(),
             .box_b_position = glm::vec3(0.5f + std::sqrt(0.5f) + 0.001f, 0.0f,
                                         0.0f),
-            .box_b_rotation = GetRotationFromEulerAngles(glm::vec3(0.0f, 45.0f,
-                                                                   0.0f)),
+            .box_b_rotation = engine::Math::GetRotationFromEulerAngles(
+                glm::vec3(0.0f, 45.0f, 0.0f)),
             .expect_collision = false,
             .label = "EdgeSeparateFromFace_DoesNotCollide"},
         BoxBoxDetectionCase{
@@ -77,8 +73,8 @@ INSTANTIATE_TEST_SUITE_P(
             .box_a_rotation = glm::quat(),
             .box_b_position = glm::vec3(0.5f + std::sqrt(0.5f) - 0.001f, 0.0f,
                                         0.0f),
-            .box_b_rotation = GetRotationFromEulerAngles(glm::vec3(0.0f, 45.0f,
-                                                                   0.0f)),
+            .box_b_rotation = engine::Math::GetRotationFromEulerAngles(
+                glm::vec3(0.0f, 45.0f, 0.0f)),
             .expect_collision = true,
             .label = "EdgeOverlappingFace_DoesCollide"},
         BoxBoxDetectionCase{
@@ -97,11 +93,10 @@ INSTANTIATE_TEST_SUITE_P(
             .box_b_rotation = GetDiagonalAlignedOrientation({1, 0, 0}),
             .expect_collision = true,
             .label = "CornerOverlappingFace_DoesCollide"},
-        // below
         BoxBoxDetectionCase{
             .box_a_position = glm::vec3(0.0f),
-            .box_a_rotation = GetRotationFromEulerAngles(glm::vec3(0.0f, 45.0f,
-                                                                   0.0f)),
+            .box_a_rotation = engine::Math::GetRotationFromEulerAngles(
+                glm::vec3(0.0f, 45.0f, 0.0f)),
             .box_b_position = glm::vec3(
                 std::sqrt(0.5f) + std::sqrt(0.75f) - 0.001f, 0.0f, 0.0f),
             .box_b_rotation = GetDiagonalAlignedOrientation({1, 0, 0}),
@@ -109,8 +104,8 @@ INSTANTIATE_TEST_SUITE_P(
             .label = "CornerOverlappingEdge_DoesCollide"},
         BoxBoxDetectionCase{
             .box_a_position = glm::vec3(0.0f),
-            .box_a_rotation = GetRotationFromEulerAngles(glm::vec3(0.0f, 45.0f,
-                                                                   0.0f)),
+            .box_a_rotation = engine::Math::GetRotationFromEulerAngles(
+                glm::vec3(0.0f, 45.0f, 0.0f)),
             .box_b_position = glm::vec3(
                 std::sqrt(0.5f) + std::sqrt(0.75f) + 0.001f, 0.0f, 0.0f),
             .box_b_rotation = GetDiagonalAlignedOrientation({1, 0, 0}),
@@ -163,29 +158,6 @@ TEST_F(BoxBoxDetection, BoxesCollideDueToScale) {
   EXPECT_TRUE(larger_box_collided)
       << "Boxes not detecting scale-caused collision. (Did not detect enlarged "
          "box)";
-}
-
-// RESOLUTION TEST CASES
-
-TEST(BoxBoxRotation, OffCenterImpact_ProducesAngularVelocity) {
-  glm::vec3 box_a_initial_velocity = glm::vec3();
-  glm::vec3 box_b_initial_velocity = glm::vec3(-1.0f, 0.0f, 0.0f);
-  engine::physics::Box box_a(glm::vec3(1.0f), glm::vec3(0.0f),
-                             box_a_initial_velocity, 1.0f, glm::quat());
-  engine::physics::Box box_b(glm::vec3(1.0f), glm::vec3(0.999f, 0.5f, 0.0f),
-                             box_b_initial_velocity, 1.0f, glm::quat());
-  engine::physics::Contact contact;
-
-  ASSERT_TRUE(
-      engine::physics::Collisions::ComputeContact(box_a, box_b, contact));
-  engine::physics::Collisions::ResolveCollision(box_a, box_b, contact, 1.0f);
-
-  // TODO, separate test for this?
-  ASSERT_EQ(contact.points.size(), 4);
-
-  EXPECT_TRUE(box_a.angular_velocity.z > box_a_initial_velocity.z)
-      << "Box angular velocity did not increase in the appropriate direction "
-         "after collision.";
 }
 
 // For these, the contact point is ambiguous

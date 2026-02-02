@@ -37,7 +37,8 @@ add_executable(tests
     ${TEST_SRC}/plane_orientation_test.cpp
     ${TEST_SRC}/test_util.cpp
     ${TEST_SRC}/collision_tests/conservation_laws_test.cpp
-    ${TEST_SRC}/collision_tests/box_vs_box_test.cpp
+    ${TEST_SRC}/collision_tests/box_vs_box/detection_test.cpp
+    ${TEST_SRC}/collision_tests/box_vs_box/resolution_test.cpp
     ${TEST_SRC}/collision_tests/box_vs_box/contact_test.cpp
     ${TEST_SRC}/collision_tests/sphere_vs_box_test.cpp
     ${TEST_SRC}/collision_tests/sphere_vs_plane_test.cpp)
