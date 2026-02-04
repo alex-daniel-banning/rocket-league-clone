@@ -80,7 +80,7 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Values(
         // Face/Face: boxes aligned, overlapping on X axis
         // Contact face at x=0.5, full face overlap
-        BoxBoxContactPointCase{.box_a_position = glm::vec3(0.0f),
+        BoxBoxContactPointCase{.box_a_position = glm::vec3(0.0f, 0.0f, 0.0f),
                                .box_a_rotation = glm::quat(),
                                .box_b_position = glm::vec3(0.9f, 0.0f, 0.0f),
                                .box_b_rotation = glm::quat(),
@@ -90,6 +90,28 @@ INSTANTIATE_TEST_SUITE_P(
                                                    {0.45f, -0.5f, 0.5f},
                                                    {0.45f, -0.5f, -0.5f}},
                                .label = "FaceFace_Returns4Points"},
+        BoxBoxContactPointCase{
+            .box_a_position = glm::vec3(0.0f, 0.0f, 0.0f),
+            .box_a_rotation = glm::quat(),
+            .box_b_position = glm::vec3(0.9f, 0.0f, 0.0f),
+            .box_b_rotation = glm::angleAxis(glm::radians(90.0f),
+                                             glm::vec3(1, 0, 0)),
+            .expected_point_count = 4,
+            .expected_points = {{0.45f, 0.5f, 0.5f},
+                                {0.45f, 0.5f, -0.5f},
+                                {0.45f, -0.5f, 0.5f},
+                                {0.45f, -0.5f, -0.5f}},
+            .label = "FaceFace_Returns4Points_90Rotation"},
+        BoxBoxContactPointCase{.box_a_position = glm::vec3(0.0f, 0.0f, 0.0f),
+                               .box_a_rotation = glm::quat(),
+                               .box_b_position = glm::vec3(0.9f, 0.0f, 0.0f),
+                               .box_b_rotation = glm::quat(0, 0, 1, 0),
+                               .expected_point_count = 4,
+                               .expected_points = {{0.45f, 0.5f, 0.5f},
+                                                   {0.45f, 0.5f, -0.5f},
+                                                   {0.45f, -0.5f, 0.5f},
+                                                   {0.45f, -0.5f, -0.5f}},
+                               .label = "FaceFace_Returns4Points_180Rotation"},
 
         // Face/Face: partial overlap (box_b offset in Y)
         // Should clip to 4 points of smaller rectangle

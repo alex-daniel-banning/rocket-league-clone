@@ -239,7 +239,6 @@ bool Collisions::ComputeContact(const Box& box_a, const Box& box_b,
     }
   }
 
-  // Determine collision type
   CollisionType type = DetermineCollisionType(penetration_axis, axes_a, axes_b);
 
   std::vector<glm::vec3> contact_points;
@@ -425,26 +424,25 @@ CollisionType Collisions::DetermineCollisionType(
 }
 
 std::vector<glm::vec3> Collisions::ClipFaceFace(
-    const Box& box_a, const Box& box_b, glm::vec3 penetration_axis,
-    const std::array<glm::vec3, 3>& axes_a,
-    const std::array<glm::vec3, 3>& axes_b) {
-  // 1. Find which box_a axis is most aligned with penetration axis
+    const Box& box_ref, const Box& box_inc, glm::vec3 penetration_axis,
+    const std::array<glm::vec3, 3>& axes_ref,
+    const std::array<glm::vec3, 3>& axes_inc) {
+  // 1. Find which box_inc axis is most aligned with penetration axis
   int inc_idx = 0;
-  float inc_dot = glm::dot(axes_a[0], penetration_axis);
+  float inc_dot = glm::dot(axes_inc[0], penetration_axis);
   float max_abs = std::abs(inc_dot);
   for (int i = 1; i < 3; i++) {
-    float d = glm::dot(axes_a[i], penetration_axis);
+    float d = glm::dot(axes_inc[i], penetration_axis);
     if (std::abs(d) > max_abs) {
       max_abs = std::abs(d);
       inc_dot = d;
       inc_idx = i;
     }
   }
-  // After finding inc_dx, check, for a tie with second-best axis
-  // TODO rename
+  // After finding inc_idx, check, for a tie with second-best axis
   float inc_dots[3];
   for (int i = 0; i < 3; i++) {
-    inc_dots[i] = std::abs(glm::dot(axes_a[i], penetration_axis));
+    inc_dots[i] = std::abs(glm::dot(axes_inc[i], penetration_axis));
   }
   // Sort to find top two
   int first_inc = 0, second_inc = 1;
@@ -455,151 +453,68 @@ std::vector<glm::vec3> Collisions::ClipFaceFace(
   } else if (inc_dots[2] > inc_dots[second_inc]) {
     second_inc = 2;
   }
-  // debug
-  std::cout << "\ninc_dots[first] -> " << inc_dots[first_inc];
-  std::cout << "\ninc_dots[second] -> " << inc_dots[second_inc];
 
-  // 2. Find which box_b axis is most aligned with penetration axis
+  // 2. Find which box_ref axis is most aligned with penetration axis
   int ref_idx = 0;
-  float ref_dot = glm::dot(axes_b[0], penetration_axis);
-  float min_abs = std::abs(ref_dot);
+  float ref_dot = glm::dot(axes_ref[0], penetration_axis);
+  max_abs = std::abs(ref_dot);
   for (int i = 1; i < 3; i++) {
-    float d = glm::dot(axes_b[i], penetration_axis);
-    if (std::abs(d) > min_abs) {
-      min_abs = std::abs(d);
+    float d = glm::dot(axes_ref[i], penetration_axis);
+    if (std::abs(d) > max_abs) {
+      max_abs = std::abs(d);
       ref_dot = d;
       ref_idx = i;
     }
   }
-  // After finding inc_dx, check, for a tie with second-best axis
-  // TODO rename
-  float ref_dots[3];
-  for (int i = 0; i < 3; i++) {
-    ref_dots[i] = std::abs(glm::dot(axes_b[i], penetration_axis));
-  }
-  // Sort to find top two
-  int first_ref = 0, second_ref = 1;
-  if (ref_dots[1] > ref_dots[0]) std::swap(first_ref, second_ref);
-  if (ref_dots[2] > ref_dots[first_ref]) {
-    second_ref = first_ref;
-    first_ref = 2;
-  } else if (ref_dots[2] > ref_dots[second_ref]) {
-    second_ref = 2;
-  }
-  // debug
-  std::cout << "\nref_dots[first] -> " << ref_dots[first_ref];
-  std::cout << "\nref_dots[second] -> " << ref_dots[second_ref];
+  // 3. Build 4 corners of incident face
+  int tangent_1 = (inc_idx + 1) % 3;
+  int tangent_2 = (inc_idx + 2) % 3;
 
-  std::vector<glm::vec3> incident_verts;
-  std::vector<glm::vec3> contacts;
-  // TODO, refactor edge case out of ClipFaceFace?
-  const float epsilon = 0.001f;
-  if (std::abs(inc_dots[first_inc] - inc_dots[second_inc]) < epsilon) {
-    // Edge case: generate 2 vertices along the edge
+  // If the dot product of the inc_axis and penetration is negative, then the
+  // inc_axis is pointing in the correct direction and doesn't need to be
+  // corrected.
+  float inc_sign = (inc_dot > 0.0f) ? -1.0f : 1.0f;
+  glm::vec3 inc_center =
+      box_inc.position +
+      (inc_sign * box_inc.HalfExtents()[inc_idx] * axes_inc[inc_idx]);
 
-    // the axis not involved
-    int third = (first_inc != 0 && second_inc != 0)   ? 0
-                : (first_inc != 1 && second_inc != 1) ? 1
-                                                      : 2;
-    float sign1 =
-        glm::dot(axes_a[first_inc], penetration_axis) > 0 ? 1.0f : -1.0f;
-    float sign2 =
-        glm::dot(axes_a[second_inc], penetration_axis) > 0 ? 1.0f : -1.0f;
-
-    glm::vec3 edge_center =
-        box_a.position +
-        sign1 * box_a.HalfExtents()[first_inc] * axes_a[first_inc] +
-        sign2 * box_a.HalfExtents()[second_inc] * axes_a[second_inc];
-
-    incident_verts = {edge_center + box_a.HalfExtents()[third] * axes_a[third],
-                      edge_center - box_a.HalfExtents()[third] * axes_a[third]};
-  } else {
-    // debug
-    // std::cout << "\nbox_a axis index of most alignment: " << inc_idx;
-    // std::cout << "\nbox_a axis of most alignment: ";
-    // Print::Vec3(axes_a[inc_idx]);
-    // std::cout << "\nbox_a axis of most alignment dot product with
-    // penetration:
-    // "
-    //          << inc_dot << "\n";
-
-    // debug
-    // std::cout << "\nbox_b axis index of most alignment: " << ref_idx;
-    // std::cout << "\nbox_b axis of most alignment: ";
-    // Print::Vec3(axes_b[ref_idx]);
-    // std::cout << "\nbox_b axis of most alignment dot product with
-    // penetration:
-    // "
-    //          << ref_dot << "\n";
-
-    // 3. Build 4 corners of incident face
-    int tangent_1 = (inc_idx + 1) % 3;
-    int tangent_2 = (inc_idx + 2) % 3;
-
-    // Addition because penetration axis points from A to B
-    float inc_sign = inc_dot > 0 ? 1.0f : -1.0f;
-    glm::vec3 inc_center =
-        box_a.position +
-        (inc_sign * box_a.HalfExtents()[inc_idx] * axes_a[inc_idx]);
-
-    incident_verts = {
-        // clang-format off
-      inc_center + box_a.HalfExtents()[tangent_1] * axes_a[tangent_1] + box_a.HalfExtents()[tangent_2] * axes_a[tangent_2],
-      inc_center + box_a.HalfExtents()[tangent_1] * axes_a[tangent_1] - box_a.HalfExtents()[tangent_2] * axes_a[tangent_2],
-      inc_center - box_a.HalfExtents()[tangent_1] * axes_a[tangent_1] - box_a.HalfExtents()[tangent_2] * axes_a[tangent_2],
-      inc_center - box_a.HalfExtents()[tangent_1] * axes_a[tangent_1] + box_a.HalfExtents()[tangent_2] * axes_a[tangent_2]
+  std::vector<glm::vec3> incident_verts = {
+      // clang-format off
+      inc_center + box_inc.HalfExtents()[tangent_1] * axes_inc[tangent_1] + box_inc.HalfExtents()[tangent_2] * axes_inc[tangent_2],
+      inc_center + box_inc.HalfExtents()[tangent_1] * axes_inc[tangent_1] - box_inc.HalfExtents()[tangent_2] * axes_inc[tangent_2],
+      inc_center - box_inc.HalfExtents()[tangent_1] * axes_inc[tangent_1] - box_inc.HalfExtents()[tangent_2] * axes_inc[tangent_2],
+      inc_center - box_inc.HalfExtents()[tangent_1] * axes_inc[tangent_1] + box_inc.HalfExtents()[tangent_2] * axes_inc[tangent_2]
     };  // clang-format on
-    std::cout << "\nincident_verts before clipping: \n";
-    for (glm::vec3 v : incident_verts) {
-      Print::Vec3(v);
-    }
-    std::cout << "\n";
 
-    // 4. Clip against 4 side planes of reference face
-    int ref_tangent_1 = (ref_idx + 1) % 3;
-    int ref_tangent_2 = (ref_idx + 2) % 3;
-    float ref_sign = ref_dot > 0 ? -1.0f : 1.0f;
-    glm::vec3 ref_center =
-        box_b.position +
-        (ref_sign * box_b.HalfExtents()[ref_idx] * axes_b[ref_idx]);
+  // 4. Clip against 4 side planes of reference face
+  int ref_tangent_1 = (ref_idx + 1) % 3;
+  int ref_tangent_2 = (ref_idx + 2) % 3;
+  // If the dot product of the inc_axis and penetration is negative, then the
+  // inc_axis is pointing in the correct direction and doesn't need to be
+  // corrected.
+  float ref_sign = (ref_dot < 0.0f) ? -1.0f : 1.0f;
+  glm::vec3 ref_center =
+      box_ref.position +
+      (ref_sign * box_ref.HalfExtents()[ref_idx] * axes_ref[ref_idx]);
 
-    std::cout << "\nClipping polygon: \n";
-    for (auto v : incident_verts) {
-      Print::Vec3(v);
-    }
-    // clang-format off
+  // clang-format off
   // Clip against + tangent_1 plane
-  incident_verts = ClipPolygonAgainstPlane(incident_verts, ref_center + box_b.HalfExtents()[ref_tangent_1] * axes_b[ref_tangent_1], -axes_b[ref_tangent_1]);
+  incident_verts = ClipPolygonAgainstPlane(incident_verts, ref_center + box_ref.HalfExtents()[ref_tangent_1] * axes_ref[ref_tangent_1], -axes_ref[ref_tangent_1]);
   // Clip against - tangent_1 plane
-  incident_verts = ClipPolygonAgainstPlane(incident_verts, ref_center - box_b.HalfExtents()[ref_tangent_1] * axes_b[ref_tangent_1], axes_b[ref_tangent_1]);
+  incident_verts = ClipPolygonAgainstPlane(incident_verts, ref_center - box_ref.HalfExtents()[ref_tangent_1] * axes_ref[ref_tangent_1], axes_ref[ref_tangent_1]);
   // Clip against + tangent_2 plane
-  incident_verts = ClipPolygonAgainstPlane(incident_verts, ref_center + box_b.HalfExtents()[ref_tangent_2] * axes_b[ref_tangent_2], -axes_b[ref_tangent_2]);
+  incident_verts = ClipPolygonAgainstPlane(incident_verts, ref_center + box_ref.HalfExtents()[ref_tangent_2] * axes_ref[ref_tangent_2], -axes_ref[ref_tangent_2]);
   // Clip against - tangent_2 plane
-  incident_verts = ClipPolygonAgainstPlane(incident_verts, ref_center - box_b.HalfExtents()[ref_tangent_2] * axes_b[ref_tangent_2], axes_b[ref_tangent_2]);
-    // clang-format on
-    std::cout << "\nincident_verts after clipping: \n";
-    for (glm::vec3 v : incident_verts) {
-      Print::Vec3(v);
-    }
-    std::cout << "\n";
+  incident_verts = ClipPolygonAgainstPlane(incident_verts, ref_center - box_ref.HalfExtents()[ref_tangent_2] * axes_ref[ref_tangent_2], axes_ref[ref_tangent_2]);
+  // clang-format on
 
-    // Step 5. Keep only points behind/on reference face
-    glm::vec3 ref_normal = -axes_b[ref_idx];  // Points toward box_a
-    for (const auto& vertex : incident_verts) {
-      float distance = glm::dot(vertex - ref_center, ref_normal);
-      if (distance <= 0.0f) {  // Behind or on the plane
-        contacts.push_back(vertex);
-      }
+  // Step 5. Keep only points behind/on reference face
+  std::vector<glm::vec3> contacts;
+  for (const auto& inc_vert : incident_verts) {
+    float distance = glm::dot(inc_vert - ref_center, penetration_axis);
+    if (distance <= 0.0f) {
+      contacts.push_back(inc_vert);
     }
-    std::cout << "\nref_center: ";
-    Print::Vec3(ref_center);
-    std::cout << "\nref_normal: ";
-    Print::Vec3(ref_normal);
-    std::cout << "\ncontacts after pruning non-penetrating points: \n";
-    for (glm::vec3 p : contacts) {
-      Print::Vec3(p);
-    }
-    std::cout << "\n";
   }
   return contacts;
 }
@@ -615,14 +530,6 @@ std::vector<glm::vec3> Collisions::ClipEdgeToFace(
   AxisClassification axis_classification =
       ClassifyAxesByAlignment(axes_inc, penetration_axis);
 
-  std::cout << "\naxis_classification.max_aligned: ";
-  for (auto idx : axis_classification.max_aligned) {
-    Print::Vec3(axes_inc[idx]);
-  }
-  std::cout << "\naxis_classification.other: ";
-  for (auto idx : axis_classification.other) {
-    Print::Vec3(axes_inc[idx]);
-  }
   assert(axis_classification.other.size() == 1);
   int along_edge = axis_classification.other[0];
   int max_aligned_1 = axis_classification.max_aligned[0];
@@ -697,13 +604,7 @@ std::vector<glm::vec3> Collisions::ClipEdgeEdge(
 
 std::vector<glm::vec3> Collisions::ClipPolygonAgainstPlane(
     const std::vector<glm::vec3>& polygon, glm::vec3 plane_point,
-    glm::vec3 plane_normal) {
-  // debug
-  std::cout << "\nAgainst plane with point: ";
-  Print::Vec3(plane_point);
-  std::cout << "and normal: ";
-  Print::Vec3(plane_normal);
-
+    glm::vec3 plane_normal, float epsilon) {
   std::vector<glm::vec3> output;
   for (size_t i = 0; i < polygon.size(); i++) {
     glm::vec3 v1 = polygon[i];
@@ -712,31 +613,16 @@ std::vector<glm::vec3> Collisions::ClipPolygonAgainstPlane(
     float d1 = glm::dot(v1 - plane_point, plane_normal);
     float d2 = glm::dot(v2 - plane_point, plane_normal);
 
-    if (d1 >= 0) output.push_back(v1);  // v1 inside
+    if (d1 >= -epsilon) output.push_back(v1);  // v1 inside
 
-    if ((d1 < 0 && d2 >= 0) || (d1 >= 0 && d2 < 0)) {  // Edge crosses plane
-      std::cout << "Vertices to be used for interpolation: \nv1: ";
-      Print::Vec3(v1);
-      std::cout << "v2: ";
-      Print::Vec3(v2);
-
+    if ((d1 < -epsilon && d2 > epsilon) ||
+        (d1 > epsilon && d2 < -epsilon)) {  // Edge crosses plane
       float interpolation = d1 / (d1 - d2);
       glm::vec3 interpolated_vertex = v1 + interpolation * (v2 - v1);
-      std::cout << "Interpolated vertex: ";
-      Print::Vec3(interpolated_vertex);
       output.push_back(interpolated_vertex);
     }
   }
   return output;
 }
-
-// int Collisions::CalculateNumberOfSymmetricalEdges(
-//     const glm::vec3 penetration_axis, const std::array<glm::vec3, 3>& axes_a,
-//     const std::array<glm::vec3, 3>& axes_b) {
-//   int count = 0;
-//   if (HasSymmetricalAxis(axes_a, penetration_axis)) count++;
-//   if (HasSymmetricalAxis(axes_b, penetration_axis)) count++;
-//   return count;
-// }
 
 }  // namespace engine::physics

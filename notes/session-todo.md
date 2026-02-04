@@ -1,6 +1,8 @@
 [x] DETECTION - Implement similar set of unit tests to sphere v box, for box v box
 [ ] Implement box v box resolution
     [x] account for multiple contact points
+        [ ] See if there are other places where we compare against zero, and we could use an epsilon value
+        [ ] flipped axes via rotation don't mess things up (tested with rotation at 90 and 180 degrees)
     [ ] write tests for multiple contact points
     [ ] account for all types of collisions
         [ ] FACE_FACE
@@ -18,6 +20,9 @@ Random
     [ ] Make quicklist shrink to fix small number of results
     [ ] Enfore clean argument listing format
     [ ] How to git add . from inside nvim? Worth it?
+Backlog
+    [ ] Figure out what I want epsilon to be across code base
+        [ ] Possibly make it relative. Research this...
 
 
 box_a (incident)    box_b (reference)   Approach

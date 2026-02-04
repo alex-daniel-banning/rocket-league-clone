@@ -41,7 +41,7 @@ class Collisions {
       const std::array<glm::vec3, 3>& axes_b);
   static std::vector<glm::vec3> ClipPolygonAgainstPlane(
       const std::vector<glm::vec3>& polygon, glm::vec3 plane_point,
-      glm::vec3 plane_normal);
+      glm::vec3 plane_normal, const float epsilon = 0.001f);
   static std::vector<glm::vec3> ClipEdgeToFace(
       const Box& box_inc, const Box& box_ref, glm::vec3 penetration_axis,
       const std::array<glm::vec3, 3>& axes_inc,
