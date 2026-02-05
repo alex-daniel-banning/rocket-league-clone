@@ -1,13 +1,13 @@
 [x] DETECTION - Implement similar set of unit tests to sphere v box, for box v box
 [ ] Implement box v box resolution
     [x] account for multiple contact points
-        [ ] See if there are other places where we compare against zero, and we could use an epsilon value
-        [ ] flipped axes via rotation don't mess things up (tested with rotation at 90 and 180 degrees)
-    [ ] write tests for multiple contact points
-    [ ] account for all types of collisions
-        [ ] FACE_FACE
-        [ ] EDGE_EDGE
-        [ ] CORNER_FACE?
+        [x] See if there are other places where we compare against zero, and we could use an epsilon value
+        [x] flipped axes via rotation don't mess things up (tested with rotation at 90 and 180 degrees)
+    [x] write tests for multiple contact points
+    [x] account for all types of collisions
+        [x] FACE_FACE
+        [x] EDGE_EDGE
+        [x] CORNER_FACE?
 [ ] RESOLUTION - Implement similar set of unit tests to sphere v box, for box v box
     [ ] non-rotation tests
     [ ] rotation tests
