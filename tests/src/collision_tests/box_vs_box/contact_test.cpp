@@ -33,6 +33,11 @@ std::string FormatPoints(const std::vector<glm::vec3>& points) {
   return oss.str();
 }
 
+glm::quat GetDiagonalAlignedOrientation(glm::vec3 axis) {
+  glm::vec3 diagonal = glm::normalize(glm::vec3(1, 1, 1));
+  return glm::rotation(diagonal, axis);
+}
+
 }  // namespace
 
 class BoxBoxContactPoints
@@ -60,19 +65,19 @@ TEST_P(BoxBoxContactPoints, _) {
   ASSERT_TRUE(
       engine::physics::Collisions::ComputeContact(box_a, box_b, contact));
 
-  ASSERT_EQ(contact.points.size(), c.expected_point_count)
-      << c.label << "\nActual: " << FormatPoints(contact.points);
+  ASSERT_EQ(contact.points.size(), c.expected_point_count);
+
+  std::vector<glm::vec3> extra;
+  for (const auto& actual : contact.points)
+    if (!ContainsPoint(c.expected_points, actual)) extra.push_back(actual);
 
   std::vector<glm::vec3> missing;
-  for (const auto& expected : c.expected_points) {
-    if (!ContainsPoint(contact.points, expected)) {
-      missing.push_back(expected);
-    }
-  }
+  for (const auto& expected : c.expected_points)
+    if (!ContainsPoint(contact.points, expected)) missing.push_back(expected);
 
   EXPECT_TRUE(missing.empty())
-      << c.label << "\nMissing: " << FormatPoints(missing)
-      << "\nActual: " << FormatPoints(contact.points);
+      << c.label << "\nMissing: " << FormatPoints(missing);
+  EXPECT_TRUE(extra.empty()) << c.label << "\nExtra: " << FormatPoints(extra);
 }
 
 INSTANTIATE_TEST_SUITE_P(
@@ -137,33 +142,19 @@ INSTANTIATE_TEST_SUITE_P(
                 glm::vec3(0.0f, 0.0f, 45.0f)),
             .expected_point_count = 2,
             .expected_points = {{0.475f, 0.0f, 0.5f}, {0.475f, 0.0f, -0.5f}},
-            .label = "EdgeFace_Returns2Points"}),
+            .label = "EdgeFace_Returns2Points"},
 
-    /*
-  // Corner/Face: box_b diagonal-aligned, corner contacts face
-  BoxBoxContactPointCase{
-  .box_a_position = glm::vec3(0.0f),
-  .box_a_rotation = glm::quat(),
-  .box_b_position = glm::vec3(0.5f + std::sqrt(0.75f) - 0.05f, 0.0f,
-  0.0f),
-  .box_b_rotation = GetDiagonalAlignedOrientation({1, 0, 0}),
-  .expected_point_count = 1,
-  .expected_points = {{0.5f, 0.0f, 0.0f}},
-  .label = "CornerFace_Returns1Point"},
+        // Corner/Face: box_b diagonal-aligned, corner contacts face
+        BoxBoxContactPointCase{
+            .box_a_position = glm::vec3(0.0f),
+            .box_a_rotation = glm::quat(),
+            .box_b_position = glm::vec3(0.5f + std::sqrt(0.75f) - 0.05f, 0.0f,
+                                        0.0f),
+            .box_b_rotation = GetDiagonalAlignedOrientation({1, 0, 0}),
+            .expected_point_count = 1,
+            .expected_points = {{0.475f, 0.0f, 0.0f}},
+            .label = "CornerFace_Returns1Point"}),
 
-  // Edge/Edge: both boxes rotated, edges meet
-  BoxBoxContactPointCase{
-  .box_a_position = glm::vec3(0.0f),
-  .box_a_rotation = GetRotationFromEulerAngles(glm::vec3(0.0f, 45.0f,
-                 0.0f)),
-  .box_b_position = glm::vec3(std::sqrt(0.5f) * 2.0f - 0.05f, 0.0f,
-  0.0f),
-  .box_b_rotation = GetRotationFromEulerAngles(glm::vec3(0.0f, 45.0f,
-                 0.0f)),
-  .expected_point_count = 2,
-  .expected_points = {{std::sqrt(0.5f) - 0.025f, 0.5f, 0.0f},
-  {std::sqrt(0.5f) - 0.025f, -0.5f, 0.0f}},
-  .label = "EdgeEdgeParallel_Returns2Points"}),*/
     [](const testing::TestParamInfo<BoxBoxContactPointCase>& info) {
       return info.param.label;
     });

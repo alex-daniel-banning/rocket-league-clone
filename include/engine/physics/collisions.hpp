@@ -31,9 +31,6 @@ class Collisions {
                                 const Box& box_b,
                                 const std::array<glm::vec3, 3> axes_a,
                                 const std::array<glm::vec3, 3> axes_b);
-  static CollisionType DetermineCollisionType(
-      const glm::vec3 penetration_axis, const std::array<glm::vec3, 3>& axes_a,
-      const std::array<glm::vec3, 3>& axes_b);
   static std::vector<glm::vec3> ClipFaceFace(
       const Box& box_a, const Box& box_b,
       glm::vec3 penetration_axis,  // TODO make const?

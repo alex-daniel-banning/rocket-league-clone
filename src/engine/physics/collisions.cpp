@@ -1,4 +1,5 @@
 #include <Print.hpp>
+#include <algorithm>
 #include <engine/physics/collision_type.hpp>
 #include <engine/physics/collisions.hpp>
 
@@ -86,7 +87,7 @@ void Collisions::HandleElasticCollision(const Plane& plane, Sphere& sphere) {
       glm::dot(sphere.velocity, plane.GetNormal()) * plane.GetNormal();
   glm::vec3 v_parallel = sphere.velocity - v_perpendicular;
   // TODO, penetration correction
-  if (glm::length(v_perpendicular) < 0.0001f) {
+  if (glm::length(v_perpendicular) < 0.001f) {
     float distance_from_plane =
         glm::sqrt(Collisions::DistanceSquared(plane, sphere));
     glm::vec3 closest;
@@ -208,9 +209,11 @@ bool Collisions::ComputeContact(const Box& box_a, const Box& box_b,
   float penetration = std::numeric_limits<float>::max();
   glm::vec3 penetration_axis;
 
-  // Extract axes from both boxes
   const std::array<glm::vec3, 3> axes_a = GetAxesFromQuaternion(box_a.rotation);
   const std::array<glm::vec3, 3> axes_b = GetAxesFromQuaternion(box_b.rotation);
+
+  enum class AxisSource { FACE_A, FACE_B, EDGE_EDGE };
+  AxisSource axis_source;
 
   std::vector<glm::vec3> axes_to_test;
   axes_to_test.reserve(15);
@@ -224,54 +227,55 @@ bool Collisions::ComputeContact(const Box& box_a, const Box& box_b,
     }
   }
 
-  for (glm::vec3 axis : axes_to_test) {
-    float overlap = CalculateOverlap(axis, box_a, box_b, axes_a, axes_b);
-
-    // If there's an axis with no overlap, it means the boxes are separated.
+  for (size_t i = 0; i < axes_to_test.size(); i++) {
+    float overlap =
+        CalculateOverlap(axes_to_test[i], box_a, box_b, axes_a, axes_b);
     if (overlap <= 0) return false;
-
     if (overlap < penetration) {
       penetration = overlap;
-      penetration_axis = axis;
-      // Ensure axis points from A to B
-      if (glm::dot(box_b.position - box_a.position, axis) < 0)
+      penetration_axis = axes_to_test[i];
+      if (glm::dot(box_b.position - box_a.position, penetration_axis) < 0)
         penetration_axis = -penetration_axis;
+      if (i < 3)
+        axis_source = AxisSource::FACE_A;
+      else if (i < 6)
+        axis_source = AxisSource::FACE_B;
+      else
+        axis_source = AxisSource::EDGE_EDGE;
     }
   }
 
-  CollisionType type = DetermineCollisionType(penetration_axis, axes_a, axes_b);
-
   std::vector<glm::vec3> contact_points;
-  switch (type) {
-    case CollisionType::FACE_FACE:
+  if (axis_source == AxisSource::EDGE_EDGE) {
+    std::cout << "\nEDGE_EDGE\n";
+    contact_points =
+        ClipEdgeEdge(box_a, box_b, penetration_axis, axes_a, axes_b);
+  } else {
+    const auto& incident_axes =
+        (axis_source == AxisSource::FACE_A) ? axes_b : axes_a;
+    bool has_parallel = false;
+    for (const auto& axis : incident_axes) {
+      if (std::abs(glm::dot(axis, penetration_axis)) > 0.999f) {
+        has_parallel = true;
+        break;
+      }
+    }
+    if (has_parallel) {
+      std::cout << "\nFACE_FACE\n";
       contact_points =
           ClipFaceFace(box_a, box_b, penetration_axis, axes_a, axes_b);
-      break;
-    case CollisionType::EDGE_FACE:
+    } else {
+      std::cout << "\nCORNER_FACE\n";
       contact_points =
-          MirroredAxesCount(axes_a, penetration_axis) > 1
-              ? ClipEdgeToFace(box_a, box_b, penetration_axis, axes_a, axes_b)
-              : ClipEdgeToFace(box_b, box_a, penetration_axis, axes_b, axes_a);
-      break;
-    case CollisionType::EDGE_EDGE:
-      contact_points =
-          ClipEdgeEdge(box_a, box_b, penetration_axis, axes_a, axes_b);
-      break;
-    case CollisionType::CORNER_FACE:
-      contact_points =
-          MirroredAxesCount(axes_a, penetration_axis) == 3
-              ? ClipCornerToFace(box_a, box_b, penetration_axis, axes_a, axes_b)
+          (axis_source == AxisSource::FACE_A)
+              ? ClipCornerToFace(box_b, box_a, penetration_axis, axes_b, axes_a)
               : ClipCornerToFace(box_b, box_a, penetration_axis, axes_b,
                                  axes_a);
-      break;
-    case CollisionType::CORNER_EDGE:
-      // TODO
-      break;
-    case CollisionType::CORNER_CORNER:
-      // TODO
-      break;
+    }
   }
 
+  std::cout << "\ncontact_points.size(): " << contact_points.size() << "\n";
+  std::cout << "\npenetration: " << penetration << "\n";
   for (auto& p : contact_points) {
     p = p + (0.5f * penetration * penetration_axis);
   }
@@ -388,39 +392,6 @@ float Collisions::CalculateOverlap(glm::vec3 axis, const Box& box_a,
 
   float distance = std::abs(proj_a - proj_b);
   return (r_a + r_b) - distance;
-}
-
-CollisionType Collisions::DetermineCollisionType(
-    const glm::vec3 penetration_axis, const std::array<glm::vec3, 3>& axes_a,
-    const std::array<glm::vec3, 3>& axes_b) {
-  int mirrored_axes_count_a = MirroredAxesCount(axes_a, penetration_axis);
-  int mirrored_axes_count_b = MirroredAxesCount(axes_b, penetration_axis);
-  if (mirrored_axes_count_a == 0 && mirrored_axes_count_b == 0) {
-    return CollisionType::FACE_FACE;
-  }
-  if (mirrored_axes_count_a == 2 && mirrored_axes_count_b == 0 ||
-      mirrored_axes_count_a == 0 && mirrored_axes_count_b == 2) {
-    return CollisionType::EDGE_FACE;
-  }
-  if (mirrored_axes_count_a == 3 && mirrored_axes_count_b == 0 ||
-      mirrored_axes_count_a == 0 && mirrored_axes_count_b == 3) {
-    return CollisionType::CORNER_FACE;
-  }
-  if (mirrored_axes_count_a == 3 && mirrored_axes_count_b == 0 ||
-      mirrored_axes_count_a == 0 && mirrored_axes_count_b == 3) {
-    return CollisionType::CORNER_FACE;
-  }
-  if (mirrored_axes_count_a == 2 && mirrored_axes_count_b == 2) {
-    return CollisionType::EDGE_EDGE;
-  }
-  if (mirrored_axes_count_a == 3 && mirrored_axes_count_b == 2 ||
-      mirrored_axes_count_a == 2 && mirrored_axes_count_b == 3) {
-    return CollisionType::CORNER_EDGE;
-  }
-  if (mirrored_axes_count_a == 3 && mirrored_axes_count_b == 3) {
-    return CollisionType::CORNER_CORNER;
-  }
-  return CollisionType::FACE_FACE;
 }
 
 std::vector<glm::vec3> Collisions::ClipFaceFace(
