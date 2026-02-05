@@ -39,13 +39,6 @@ class Collisions {
   static std::vector<glm::vec3> ClipPolygonAgainstPlane(
       const std::vector<glm::vec3>& polygon, glm::vec3 plane_point,
       glm::vec3 plane_normal, const float epsilon = 0.001f);
-  static std::vector<glm::vec3> ClipEdgeToFace(
-      const Box& box_inc, const Box& box_ref, glm::vec3 penetration_axis,
-      const std::array<glm::vec3, 3>& axes_inc,
-      const std::array<glm::vec3, 3>& axes_ref);
-  // static int CalculateNumberOfSymmetricalEdges(
-  //     const glm::vec3 penetration_axis, const std::array<glm::vec3, 3>&
-  //     axes_a, const std::array<glm::vec3, 3>& axes_b);
   static std::vector<glm::vec3> ClipEdgeEdge(
       const Box& box_a, const Box& box_b, glm::vec3 penetration_axis,
       const std::array<glm::vec3, 3>& axes_a,

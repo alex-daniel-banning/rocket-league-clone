@@ -3,100 +3,26 @@
 #include <engine/physics/collision_type.hpp>
 #include <engine/physics/collisions.hpp>
 
-namespace {
-
-struct AxisClassification {
-  std::vector<int> max_aligned;
-  std::vector<int> other;
-};
-
-AxisClassification ClassifyAxesByAlignment(const std::array<glm::vec3, 3>& axes,
-                                           const glm::vec3& penetration_axis,
-                                           float epsilon = 0.001f) {
-  float dots[3];
-  for (int i = 0; i < 3; i++) {
-    dots[i] = std::abs(glm::dot(axes[i], penetration_axis));
-  }
-
-  float max_dot = std::max({dots[0], dots[1], dots[2]});
-
-  AxisClassification result;
-  for (int i = 0; i < 3; i++) {
-    if (std::abs(dots[i] - max_dot) < epsilon)
-      result.max_aligned.push_back(i);
-    else
-      result.other.push_back(i);
-  }
-  return result;
-}
-
-// Has axis that are perfectly mirrored across the penetration axis
-bool HasSymmetricalAxis(const std::array<glm::vec3, 3> axes,
-                        const glm::vec3& penetration_axis,
-                        float epsilon = 0.001f) {
-  return ClassifyAxesByAlignment(axes, penetration_axis, epsilon)
-             .max_aligned.size() > 1;
-}
-
-int MirroredAxesCount(const std::array<glm::vec3, 3> axes,
-                      const glm::vec3& penetration_axis,
-                      float epsilon = 0.001f) {
-  AxisClassification a =
-      ClassifyAxesByAlignment(axes, penetration_axis, epsilon);
-  return a.max_aligned.size() == 1 ? 0 : a.max_aligned.size();
-}
-
-void ClampSegmentToPlane(glm::vec3& v1, glm::vec3& v2,
-                         const glm::vec3& plane_point,
-                         const glm::vec3& plane_normal) {
-  float d1 = glm::dot(v1 - plane_point, plane_normal);
-  float d2 = glm::dot(v2 - plane_point, plane_normal);
-
-  glm::vec3 orig_v1 = v1;
-
-  // Clamp v1 to plane if outside
-  if (d1 < 0) {
-    float interpolation = d1 / (d1 - d2);
-    v1 = orig_v1 + interpolation * (v2 - orig_v1);
-  }
-
-  // Clamp v2 to plane if outside
-  if (d2 < 0) {
-    float interpolation = d2 / (d2 - d1);
-    v2 = v2 + interpolation * (orig_v1 - v2);
-  }
-
-  assert(v1 != v2);
-}
-
-}  // namespace
-
 namespace engine::physics {
 
 // TODO, pass in Contact struct
 bool Collisions::Collides(const Plane& plane, Sphere sphere) {
-  return Collisions::DistanceSquared(plane, sphere) <
-         sphere.radius * sphere.radius;
+  return Collisions::DistanceSquared(plane, sphere) < sphere.radius * sphere.radius;
 };
 
 void Collisions::HandleElasticCollision(const Plane& plane, Sphere& sphere) {
   if (!Collides(plane, sphere)) {
     return;
   }
-  glm::vec3 v_perpendicular =
-      glm::dot(sphere.velocity, plane.GetNormal()) * plane.GetNormal();
+  glm::vec3 v_perpendicular = glm::dot(sphere.velocity, plane.GetNormal()) * plane.GetNormal();
   glm::vec3 v_parallel = sphere.velocity - v_perpendicular;
   // TODO, penetration correction
   if (glm::length(v_perpendicular) < 0.001f) {
-    float distance_from_plane =
-        glm::sqrt(Collisions::DistanceSquared(plane, sphere));
+    float distance_from_plane = glm::sqrt(Collisions::DistanceSquared(plane, sphere));
     glm::vec3 closest;
-    closest.x =
-        glm::clamp(sphere.position.x, plane.GetMin().x, plane.GetMax().x);
-    closest.y =
-        glm::clamp(sphere.position.y, plane.GetMin().y, plane.GetMax().y);
-    closest.z =
-        glm::clamp(sphere.position.z, plane.GetMin().z, plane.GetMax().z);
+    closest.x = glm::clamp(sphere.position.x, plane.GetMin().x, plane.GetMax().x);
+    closest.y = glm::clamp(sphere.position.y, plane.GetMin().y, plane.GetMax().y);
+    closest.z = glm::clamp(sphere.position.z, plane.GetMin().z, plane.GetMax().z);
     sphere.position = closest + (sphere.radius * plane.GetNormal());
     return;
   }
@@ -110,30 +36,25 @@ float Collisions::DistanceSquared(const Plane& plane, Sphere sphere) {
   closest.y = glm::clamp(sphere.position.y, plane.GetMin().y, plane.GetMax().y);
   closest.z = glm::clamp(sphere.position.z, plane.GetMin().z, plane.GetMax().z);
 
-  float distance_squared =
-      glm::dot(closest - sphere.position, closest - sphere.position);
+  float distance_squared = glm::dot(closest - sphere.position, closest - sphere.position);
   return distance_squared;
 };
 
-bool Collisions::ComputeContact(const Box& box, const Sphere& sphere,
-                                Contact& out) {
+bool Collisions::ComputeContact(const Box& box, const Sphere& sphere, Contact& out) {
   glm::vec3 sphere_to_box = sphere.position - box.position;
 
   glm::vec3 closest_point = box.position;
-  std::array<glm::vec3, 3> obb_axes = {
-      box.rotation * glm::vec3(1.0f, 0.0f, 0.0f),
-      box.rotation * glm::vec3(0.0f, 1.0f, 0.0f),
-      box.rotation * glm::vec3(0.0f, 0.0f, 1.0f)};
-  std::array<float, 3> halves = {box.Size().x / 2, box.Size().y / 2,
-                                 box.Size().z / 2};
+  std::array<glm::vec3, 3> obb_axes = {box.rotation * glm::vec3(1.0f, 0.0f, 0.0f),
+                                       box.rotation * glm::vec3(0.0f, 1.0f, 0.0f),
+                                       box.rotation * glm::vec3(0.0f, 0.0f, 1.0f)};
+  std::array<float, 3> halves = {box.Size().x / 2, box.Size().y / 2, box.Size().z / 2};
   for (unsigned int i = 0; i < 3; i++) {
     float distance = glm::dot(sphere_to_box, obb_axes[i]);
     distance = glm::clamp(distance, -halves[i], halves[i]);
     closest_point = closest_point + (distance * obb_axes[i]);
   }
   glm::vec3 v_box_surface_to_sphere_center = sphere.position - closest_point;
-  float distance_squared =
-      glm::dot(v_box_surface_to_sphere_center, v_box_surface_to_sphere_center);
+  float distance_squared = glm::dot(v_box_surface_to_sphere_center, v_box_surface_to_sphere_center);
   bool collides = distance_squared < sphere.radius * sphere.radius;
   if (!collides) {
     return false;
@@ -144,8 +65,7 @@ bool Collisions::ComputeContact(const Box& box, const Sphere& sphere,
   return true;
 };
 
-void Collisions::ResolveCollision(Box& box, Sphere& sphere, Contact contact,
-                                  float coefficient_of_restitution) {
+void Collisions::ResolveCollision(Box& box, Sphere& sphere, Contact contact, float coefficient_of_restitution) {
   // TODO, handle tunneling
   const float separation_slop = 1e-3f;
 
@@ -174,8 +94,7 @@ void Collisions::ResolveCollision(Box& box, Sphere& sphere, Contact contact,
   // Total effective mass along normal
   float effective_mass = mass_component + angular_mass_component;
 
-  float impulse_scalar =
-      -(1 + coefficient_of_restitution) * rel_vel_along_normal / effective_mass;
+  float impulse_scalar = -(1 + coefficient_of_restitution) * rel_vel_along_normal / effective_mass;
   glm::vec3 impulse_vector = impulse_scalar * n;
 
   // Apply the impulse
@@ -188,23 +107,19 @@ void Collisions::ResolveCollision(Box& box, Sphere& sphere, Contact contact,
     // Separate the two along normal
     float total_correction = contact.penetration + separation_slop;
     float total_inv_mass = (1.0f / sphere.mass) + (1.0f / box.mass);
-    float sphere_correction =
-        (total_correction / total_inv_mass) * (1.0f / sphere.mass);
-    float box_correction =
-        (total_correction / total_inv_mass) * (1.0f / box.mass);
+    float sphere_correction = (total_correction / total_inv_mass) * (1.0f / sphere.mass);
+    float box_correction = (total_correction / total_inv_mass) * (1.0f / box.mass);
     sphere.position += contact.normal * sphere_correction;
     box.position -= contact.normal * box_correction;
   }
   return;
 }
 
-void Collisions::ResolveElasticCollision(Box& box, Sphere& sphere,
-                                         Contact contact) {
+void Collisions::ResolveElasticCollision(Box& box, Sphere& sphere, Contact contact) {
   ResolveCollision(box, sphere, contact, 1.0f);
 }
 
-bool Collisions::ComputeContact(const Box& box_a, const Box& box_b,
-                                Contact& out) {
+bool Collisions::ComputeContact(const Box& box_a, const Box& box_b, Contact& out) {
   const float epsilon = 1e-6f;
   float penetration = std::numeric_limits<float>::max();
   glm::vec3 penetration_axis;
@@ -222,20 +137,18 @@ bool Collisions::ComputeContact(const Box& box_a, const Box& box_b,
   for (const glm::vec3 edge_a : axes_a) {
     for (const glm::vec3 edge_b : axes_b) {
       glm::vec3 axis = glm::cross(edge_a, edge_b);
-      if (glm::length(axis) >= epsilon)
-        axes_to_test.push_back(glm::normalize(axis));
+      if (glm::length(axis) >= epsilon) axes_to_test.push_back(glm::normalize(axis));
     }
   }
 
   for (size_t i = 0; i < axes_to_test.size(); i++) {
-    float overlap =
-        CalculateOverlap(axes_to_test[i], box_a, box_b, axes_a, axes_b);
+    float overlap = CalculateOverlap(axes_to_test[i], box_a, box_b, axes_a, axes_b);
     if (overlap <= 0) return false;
+    // Bias edge-edge overlaps so face axes are preferred when close
     if (overlap < penetration) {
       penetration = overlap;
       penetration_axis = axes_to_test[i];
-      if (glm::dot(box_b.position - box_a.position, penetration_axis) < 0)
-        penetration_axis = -penetration_axis;
+      if (glm::dot(box_b.position - box_a.position, penetration_axis) < 0) penetration_axis = -penetration_axis;
       if (i < 3)
         axis_source = AxisSource::FACE_A;
       else if (i < 6)
@@ -247,48 +160,40 @@ bool Collisions::ComputeContact(const Box& box_a, const Box& box_b,
 
   std::vector<glm::vec3> contact_points;
   if (axis_source == AxisSource::EDGE_EDGE) {
-    std::cout << "\nEDGE_EDGE\n";
-    contact_points =
-        ClipEdgeEdge(box_a, box_b, penetration_axis, axes_a, axes_b);
+    contact_points = ClipEdgeEdge(box_a, box_b, penetration_axis, axes_a, axes_b);
   } else {
-    const auto& incident_axes =
-        (axis_source == AxisSource::FACE_A) ? axes_b : axes_a;
+    const auto& incident_axes = (axis_source == AxisSource::FACE_A) ? axes_b : axes_a;
     bool has_parallel = false;
+    bool has_perpendicular = false;
     for (const auto& axis : incident_axes) {
-      if (std::abs(glm::dot(axis, penetration_axis)) > 0.999f) {
-        has_parallel = true;
-        break;
-      }
+      float d = std::abs(glm::dot(axis, penetration_axis));
+      if (d > 0.999f) has_parallel = true;
+      if (d < 0.001f) has_perpendicular = true;
     }
     if (has_parallel) {
-      std::cout << "\nFACE_FACE\n";
-      contact_points =
-          ClipFaceFace(box_a, box_b, penetration_axis, axes_a, axes_b);
+      contact_points = ClipFaceFace(box_a, box_b, penetration_axis, axes_a, axes_b);
+    } else if (has_perpendicular) {
+      contact_points = (axis_source == AxisSource::FACE_A)
+                           ? ClipFaceFace(box_a, box_b, penetration_axis, axes_a, axes_b)
+                           : ClipFaceFace(box_b, box_a, penetration_axis, axes_b, axes_a);
     } else {
-      std::cout << "\nCORNER_FACE\n";
-      contact_points =
-          (axis_source == AxisSource::FACE_A)
-              ? ClipCornerToFace(box_b, box_a, penetration_axis, axes_b, axes_a)
-              : ClipCornerToFace(box_b, box_a, penetration_axis, axes_b,
-                                 axes_a);
+      contact_points = (axis_source == AxisSource::FACE_A)
+                           ? ClipCornerToFace(box_b, box_a, penetration_axis, axes_b, axes_a)
+                           : ClipCornerToFace(box_a, box_b, penetration_axis, axes_a, axes_b);
     }
   }
 
-  std::cout << "\ncontact_points.size(): " << contact_points.size() << "\n";
-  std::cout << "\npenetration: " << penetration << "\n";
   for (auto& p : contact_points) {
     p = p + (0.5f * penetration * penetration_axis);
   }
-  out.points.insert(out.points.end(), contact_points.begin(),
-                    contact_points.end());
+  out.points.insert(out.points.end(), contact_points.begin(), contact_points.end());
   out.normal = penetration_axis;
   out.penetration = penetration;
   assert(out.points.size() > 0);
   return true;
 }
 
-void Collisions::ResolveCollision(Box& box_a, Box& box_b, Contact contact,
-                                  float coefficient_of_restitution) {
+void Collisions::ResolveCollision(Box& box_a, Box& box_b, Contact contact, float coefficient_of_restitution) {
   // TODO, handle tunneling
   const float separation_slop = 1e-3f;
 
@@ -299,33 +204,27 @@ void Collisions::ResolveCollision(Box& box_a, Box& box_b, Contact contact,
     glm::vec3 r_b = point - box_b.position;
 
     // Velocity at contact point for each body
-    glm::vec3 v_contact_a =
-        box_a.velocity + glm::cross(box_a.angular_velocity, r_a);
-    glm::vec3 v_contact_b =
-        box_b.velocity + glm::cross(box_b.angular_velocity, r_b);
+    glm::vec3 v_contact_a = box_a.velocity + glm::cross(box_a.angular_velocity, r_a);
+    glm::vec3 v_contact_b = box_b.velocity + glm::cross(box_b.angular_velocity, r_b);
     glm::vec3 rel_vel = v_contact_a - v_contact_b;
 
     // Transform inertia tensors to world space
     glm::mat3 rot_a = glm::toMat3(box_a.rotation);
     glm::mat3 rot_b = glm::toMat3(box_b.rotation);
-    glm::mat3 i_world_inv_a =
-        rot_a * box_a.inertia_tensor_inv * glm::transpose(rot_a);
-    glm::mat3 i_world_inv_b =
-        rot_b * box_b.inertia_tensor_inv * glm::transpose(rot_b);
+    glm::mat3 i_world_inv_a = rot_a * box_a.inertia_tensor_inv * glm::transpose(rot_a);
+    glm::mat3 i_world_inv_b = rot_b * box_b.inertia_tensor_inv * glm::transpose(rot_b);
 
     // Compute effective mass along collision normal
     glm::vec3 r_cross_n_a = glm::cross(r_a, contact.normal);
     glm::vec3 r_cross_n_b = glm::cross(r_b, contact.normal);
-    float m_eff =
-        (1 / box_a.mass) + (1 / box_b.mass) +
-        glm::dot(contact.normal, glm::cross(i_world_inv_a * r_cross_n_a, r_a)) +
-        glm::dot(contact.normal, glm::cross(i_world_inv_b * r_cross_n_b, r_b));
+    float m_eff = (1 / box_a.mass) + (1 / box_b.mass) +
+                  glm::dot(contact.normal, glm::cross(i_world_inv_a * r_cross_n_a, r_a)) +
+                  glm::dot(contact.normal, glm::cross(i_world_inv_b * r_cross_n_b, r_b));
 
     // Impulse magnitude
     float v_n = glm::dot(rel_vel, contact.normal);
     float j = -(1.0f + coefficient_of_restitution) * v_n / m_eff;
-    glm::vec3 impulse =
-        (j * contact.normal) / static_cast<float>(contact.points.size());
+    glm::vec3 impulse = (j * contact.normal) / static_cast<float>(contact.points.size());
 
     // Apply the impulse
     box_a.velocity += impulse / box_a.mass;
@@ -338,18 +237,15 @@ void Collisions::ResolveCollision(Box& box_a, Box& box_b, Contact contact,
     // Separate the two along normal
     float total_correction = contact.penetration + separation_slop;
     float total_inv_mass = (1.0f / box_a.mass) + (1.0f / box_b.mass);
-    float box_a_correction =
-        (total_correction / total_inv_mass) * (1.0f / box_a.mass);
-    float box_b_correction =
-        (total_correction / total_inv_mass) * (1.0f / box_b.mass);
+    float box_a_correction = (total_correction / total_inv_mass) * (1.0f / box_a.mass);
+    float box_b_correction = (total_correction / total_inv_mass) * (1.0f / box_b.mass);
     box_a.position -= contact.normal * box_a_correction;
     box_b.position += contact.normal * box_b_correction;
   }
   return;
 }
 
-std::array<glm::vec3, 3> Collisions::GetAxesFromQuaternion(
-    glm::quat q) {  // clang-format off
+std::array<glm::vec3, 3> Collisions::GetAxesFromQuaternion(glm::quat q) {  // clang-format off
   // Right axis (local X)
   glm::vec3 right = glm::vec3(
     1 - 2 * (q.y * q.y + q.z * q.z),
@@ -373,10 +269,8 @@ std::array<glm::vec3, 3> Collisions::GetAxesFromQuaternion(
   return {glm::normalize(right), glm::normalize(up), glm::normalize(forward)};
 }  // clang-format on
 
-float Collisions::CalculateOverlap(glm::vec3 axis, const Box& box_a,
-                                   const Box& box_b,
-                                   const std::array<glm::vec3, 3> axes_a,
-                                   const std::array<glm::vec3, 3> axes_b) {
+float Collisions::CalculateOverlap(glm::vec3 axis, const Box& box_a, const Box& box_b,
+                                   const std::array<glm::vec3, 3> axes_a, const std::array<glm::vec3, 3> axes_b) {
   // Project box centers onto axis
   float proj_a = glm::dot(box_a.position, axis);
   float proj_b = glm::dot(box_b.position, axis);
@@ -394,10 +288,9 @@ float Collisions::CalculateOverlap(glm::vec3 axis, const Box& box_a,
   return (r_a + r_b) - distance;
 }
 
-std::vector<glm::vec3> Collisions::ClipFaceFace(
-    const Box& box_ref, const Box& box_inc, glm::vec3 penetration_axis,
-    const std::array<glm::vec3, 3>& axes_ref,
-    const std::array<glm::vec3, 3>& axes_inc) {
+std::vector<glm::vec3> Collisions::ClipFaceFace(const Box& box_ref, const Box& box_inc, glm::vec3 penetration_axis,
+                                                const std::array<glm::vec3, 3>& axes_ref,
+                                                const std::array<glm::vec3, 3>& axes_inc) {
   // 1. Find which box_inc axis is most aligned with penetration axis
   int inc_idx = 0;
   float inc_dot = glm::dot(axes_inc[0], penetration_axis);
@@ -445,9 +338,7 @@ std::vector<glm::vec3> Collisions::ClipFaceFace(
   // inc_axis is pointing in the correct direction and doesn't need to be
   // corrected.
   float inc_sign = (inc_dot > 0.0f) ? -1.0f : 1.0f;
-  glm::vec3 inc_center =
-      box_inc.position +
-      (inc_sign * box_inc.HalfExtents()[inc_idx] * axes_inc[inc_idx]);
+  glm::vec3 inc_center = box_inc.position + (inc_sign * box_inc.HalfExtents()[inc_idx] * axes_inc[inc_idx]);
 
   std::vector<glm::vec3> incident_verts = {
       // clang-format off
@@ -464,9 +355,7 @@ std::vector<glm::vec3> Collisions::ClipFaceFace(
   // inc_axis is pointing in the correct direction and doesn't need to be
   // corrected.
   float ref_sign = (ref_dot < 0.0f) ? -1.0f : 1.0f;
-  glm::vec3 ref_center =
-      box_ref.position +
-      (ref_sign * box_ref.HalfExtents()[ref_idx] * axes_ref[ref_idx]);
+  glm::vec3 ref_center = box_ref.position + (ref_sign * box_ref.HalfExtents()[ref_idx] * axes_ref[ref_idx]);
 
   // clang-format off
   // Clip against + tangent_1 plane
@@ -490,74 +379,10 @@ std::vector<glm::vec3> Collisions::ClipFaceFace(
   return contacts;
 }
 
-std::vector<glm::vec3> Collisions::ClipEdgeToFace(
-    const Box& box_inc, const Box& box_ref, const glm::vec3 penetration_axis,
-    const std::array<glm::vec3, 3>& axes_inc,
-    const std::array<glm::vec3, 3>& axes_ref) {
-  // Incident (inc) = box with the edges that are getting clipped
-  // Reference (ref) = box with the planes that do the clipping
-
-  glm::vec3 effective_penetration_axis = -penetration_axis;
-  AxisClassification axis_classification =
-      ClassifyAxesByAlignment(axes_inc, penetration_axis);
-
-  assert(axis_classification.other.size() == 1);
-  int along_edge = axis_classification.other[0];
-  int max_aligned_1 = axis_classification.max_aligned[0];
-  int max_aligned_2 = axis_classification.max_aligned[1];
-
-  float sign1 =
-      glm::dot(axes_inc[max_aligned_1], effective_penetration_axis) > 0 ? 1.0f
-                                                                        : -1.0f;
-  float sign2 =
-      glm::dot(axes_inc[max_aligned_2], effective_penetration_axis) > 0 ? 1.0f
-                                                                        : -1.0f;
-  glm::vec3 edge_center =
-      box_inc.position +
-      sign1 * box_inc.HalfExtents()[max_aligned_1] * axes_inc[max_aligned_1] +
-      sign2 * box_inc.HalfExtents()[max_aligned_2] * axes_inc[max_aligned_2];
-  glm::vec3 v1 =
-      edge_center + box_inc.HalfExtents()[along_edge] * axes_inc[along_edge];
-  glm::vec3 v2 =
-      edge_center - box_inc.HalfExtents()[along_edge] * axes_inc[along_edge];
-
-  // Clip against reference face's 4 side planes
-  // Find reference face normal (most aligned with penetration axis on box_ref)
-  int face_axis = 0;
-  float max_dot = 0;
-  for (int i = 0; i < 3; i++) {
-    float d = std::abs(glm::dot(axes_ref[i], effective_penetration_axis));
-    if (d > max_dot) {
-      max_dot = d;
-      face_axis = i;
-    }
-  }
-
-  // The other two axes define the side planes
-  int side1 = (face_axis + 1) % 3;
-  int side2 = (face_axis + 2) % 3;
-
-  // Clip against 4 side planes
-  glm::vec3 p1 = v1, p2 = v2;
-  ClampSegmentToPlane(
-      p1, p2, box_ref.position + box_ref.HalfExtents()[side1] * axes_ref[side1],
-      -axes_ref[side1]);
-  ClampSegmentToPlane(
-      p1, p2, box_ref.position - box_ref.HalfExtents()[side1] * axes_ref[side1],
-      axes_ref[side1]);
-  ClampSegmentToPlane(
-      p1, p2, box_ref.position + box_ref.HalfExtents()[side2] * axes_ref[side2],
-      -axes_ref[side2]);
-  ClampSegmentToPlane(
-      p1, p2, box_ref.position - box_ref.HalfExtents()[side2] * axes_ref[side2],
-      axes_ref[side2]);
-  return {p1, p2};
-}
-
-std::vector<glm::vec3> Collisions::ClipCornerToFace(
-    const Box& box_inc, const Box& box_ref, const glm::vec3 penetration_axis,
-    const std::array<glm::vec3, 3>& axes_inc,
-    const std::array<glm::vec3, 3>& axes_ref) {
+std::vector<glm::vec3> Collisions::ClipCornerToFace(const Box& box_inc, const Box& box_ref,
+                                                    const glm::vec3 penetration_axis,
+                                                    const std::array<glm::vec3, 3>& axes_inc,
+                                                    const std::array<glm::vec3, 3>& axes_ref) {
   glm::vec3 corner = box_inc.position;
   for (int i = 0; i < 3; i++) {
     float sign = glm::dot(axes_inc[i], -penetration_axis) > 0 ? 1.0f : -1.0f;
@@ -566,16 +391,80 @@ std::vector<glm::vec3> Collisions::ClipCornerToFace(
   return {corner};
 };
 
-std::vector<glm::vec3> Collisions::ClipEdgeEdge(
-    const Box& box_a, const Box& box_b, glm::vec3 penetration_axis,
-    const std::array<glm::vec3, 3>& axes_a,
-    const std::array<glm::vec3, 3>& axes_b) {
-  return {};
+// Edge-edge contact resolution using SAT (Separating Axis Theorem). When the minimum penetration axis is a cross
+// product of box edges, we find the closest points between the two responsible edge segments using the parametric
+// line-segment closest-point method (cf. Ericson, "Real-Time Collision Detection", §5.1.9).
+std::vector<glm::vec3> Collisions::ClipEdgeEdge(const Box& box_ref, const Box& box_inc, glm::vec3 penetration_axis,
+                                                const std::array<glm::vec3, 3>& axes_ref,
+                                                const std::array<glm::vec3, 3>& axes_inc) {
+  // Step 1: Find which pair of axes produced the penetration axis via cross product
+  int ref_edge_axis = -1, inc_edge_axis = -1;
+  float best_alignment = 0.f;
+  for (int i = 0; i < 3; i++) {
+    for (int j = 0; j < 3; j++) {
+      glm::vec3 cross = glm::cross(axes_ref[i], axes_inc[j]);
+      float cross_length = glm::length(cross);
+      if (cross_length < 1e-6f) continue;
+      glm::vec3 cross_normalized = cross / cross_length;
+      float alignment = std::abs(glm::dot(cross_normalized, penetration_axis));
+      if (alignment > best_alignment) {
+        best_alignment = alignment;
+        ref_edge_axis = i;
+        inc_edge_axis = j;
+      }
+    }
+  }
+
+  if (ref_edge_axis < 0) return {};
+
+  // Step 2: Find the specific edge segment on each box
+  //         Edge runs along the identified axis; pick signs on the other two axes
+  //         to get the edge closest to the other box
+  auto get_edge_segment = [](const Box& box, const std::array<glm::vec3, 3>& axes, int edge_axis_index,
+                             glm::vec3 direction_to_other) -> std::pair<glm::vec3, glm::vec3> {
+    glm::vec3 center = box.position;
+    glm::vec3 half_extents = box.HalfExtents();
+
+    glm::vec3 edge_midpoint = center;
+    for (int i = 0; i < 3; i++) {
+      if (i == edge_axis_index) continue;
+      float sign = (glm::dot(direction_to_other, axes[i]) > 0.f) ? 1.f : -1.f;
+      edge_midpoint += axes[i] * half_extents[i] * sign;
+    }
+
+    glm::vec3 edge_half_length = axes[edge_axis_index] * half_extents[edge_axis_index];
+    return {edge_midpoint - edge_half_length, edge_midpoint + edge_half_length};
+  };
+
+  glm::vec3 ref_to_inc_direction = box_inc.position - box_ref.position;
+  auto [ref_edge_start, ref_edge_end] = get_edge_segment(box_ref, axes_ref, ref_edge_axis, ref_to_inc_direction);
+  auto [inc_edge_start, inc_edge_end] = get_edge_segment(box_inc, axes_inc, inc_edge_axis, -ref_to_inc_direction);
+
+  // Step 3: Closest points between two line segments
+  glm::vec3 d1 = ref_edge_end - ref_edge_start;   // ref_edge_dir
+  glm::vec3 d2 = inc_edge_end - inc_edge_start;   // inc_edge_dir
+  glm::vec3 r = ref_edge_start - inc_edge_start;  // start offset
+
+  float a = glm::dot(d1, d1);  // a = d1·d1
+  float c = glm::dot(d2, d2);  // c = d2·d2
+  float b = glm::dot(d1, d2);  // b = d1·d2
+  float d = glm::dot(d1, r);   // d = d1·r
+  float e = glm::dot(d2, r);   // e = d2·r
+
+  float denominator = a * c - b * b;
+
+  float param_ref = glm::clamp((b * e - d * c) / denominator, 0.f, 1.f);
+  float param_inc = glm::clamp((b * param_ref + e) / c, 0.f, 1.f);
+
+  glm::vec3 closest_on_ref = ref_edge_start + d1 * param_ref;
+  glm::vec3 closest_on_inc = inc_edge_start + d2 * param_inc;
+
+  // Step 4: Contact point is the midpoint
+  return {(closest_on_ref + closest_on_inc) * 0.5f};
 }
 
-std::vector<glm::vec3> Collisions::ClipPolygonAgainstPlane(
-    const std::vector<glm::vec3>& polygon, glm::vec3 plane_point,
-    glm::vec3 plane_normal, float epsilon) {
+std::vector<glm::vec3> Collisions::ClipPolygonAgainstPlane(const std::vector<glm::vec3>& polygon, glm::vec3 plane_point,
+                                                           glm::vec3 plane_normal, float epsilon) {
   std::vector<glm::vec3> output;
   for (size_t i = 0; i < polygon.size(); i++) {
     glm::vec3 v1 = polygon[i];
@@ -586,8 +475,7 @@ std::vector<glm::vec3> Collisions::ClipPolygonAgainstPlane(
 
     if (d1 >= -epsilon) output.push_back(v1);  // v1 inside
 
-    if ((d1 < -epsilon && d2 > epsilon) ||
-        (d1 > epsilon && d2 < -epsilon)) {  // Edge crosses plane
+    if ((d1 < -epsilon && d2 > epsilon) || (d1 > epsilon && d2 < -epsilon)) {  // Edge crosses plane
       float interpolation = d1 / (d1 - d2);
       glm::vec3 interpolated_vertex = v1 + interpolation * (v2 - v1);
       output.push_back(interpolated_vertex);

@@ -24,14 +24,6 @@ Backlog
     [ ] Figure out what I want epsilon to be across code base
         [ ] Possibly make it relative. Research this...
 
-
-box_a (incident)    box_b (reference)   Approach
-face                face                4 verts, clip against 4 planes
-edge                face                2 verts, clip against 4 planes
-face                edge                swap roles, then 2 verts, clip against 4 planes
-edge                edge                edge-edge closest points
-
-
 Reference vs Incident object:
     reference = wall/surface
     incident = the thing hitting the wall

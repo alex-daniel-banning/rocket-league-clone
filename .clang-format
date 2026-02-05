@@ -3,6 +3,8 @@
 Language: Cpp
 BasedOnStyle: Google
 
+ColumnLimit: 120
+
 # Ensure glad.h stays at the top
 IncludeCategories:
   - Regex: '.*glad\.h'
