@@ -16,3 +16,6 @@ IncludeCategories:
   - Regex: '".*"'
     Priority: 4
 
+BreakBeforeBinaryOperators: None
+PenaltyBreakBeforeFirstCallParameter: 100
+PenaltyReturnTypeOnItsOwnLine: 1000

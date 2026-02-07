@@ -3,6 +3,23 @@
 #include <engine/physics/collision_type.hpp>
 #include <engine/physics/collisions.hpp>
 
+namespace {
+glm::vec3 CalculateCentroid(const std::vector<glm::vec3> points) {
+  assert(points.size() > 0);
+  if (points.size() == 1) return points[0];
+  float x = 0.0f, y = 0.0f, z = 0.0f;
+  for (auto& p : points) {
+    x += p.x;
+    y += p.y;
+    z += p.z;
+  }
+  x = x / points.size();
+  y = y / points.size();
+  z = z / points.size();
+  return glm::vec3(x, y, z);
+}
+};  // namespace
+
 namespace engine::physics {
 
 // TODO, pass in Contact struct
@@ -197,41 +214,39 @@ void Collisions::ResolveCollision(Box& box_a, Box& box_b, Contact contact, float
   // TODO, handle tunneling
   const float separation_slop = 1e-3f;
 
-  for (glm::vec3 point : contact.points) {
-    // TODO, resolve collision when there are multiple contact points
-    // Contact point relative to each body's center of mass
-    glm::vec3 r_a = point - box_a.position;
-    glm::vec3 r_b = point - box_b.position;
+  const glm::vec3 box_a_initial_velocity = box_a.velocity;
+  const glm::vec3 box_b_initial_velocity = box_b.velocity;
+  const glm::vec3 box_a_initial_angular_velocity = box_a.angular_velocity;
+  const glm::vec3 box_b_initial_angular_velocity = box_b.angular_velocity;
+  glm::vec3 impulse_centroid = CalculateCentroid(contact.points);
+  // Contact point relative to each body's center of mass
+  glm::vec3 r_a = impulse_centroid - box_a.position;
+  glm::vec3 r_b = impulse_centroid - box_b.position;
+  // Velocity at contact point for each body
+  glm::vec3 v_contact_a = box_a_initial_velocity + glm::cross(box_a_initial_angular_velocity, r_a);
+  glm::vec3 v_contact_b = box_b_initial_velocity + glm::cross(box_b_initial_angular_velocity, r_b);
+  glm::vec3 rel_vel = v_contact_a - v_contact_b;
+  // Transform inertia tensors to world space
+  glm::mat3 rot_a = glm::toMat3(box_a.rotation);
+  glm::mat3 rot_b = glm::toMat3(box_b.rotation);
+  glm::mat3 i_world_inv_a = rot_a * box_a.inertia_tensor_inv * glm::transpose(rot_a);
+  glm::mat3 i_world_inv_b = rot_b * box_b.inertia_tensor_inv * glm::transpose(rot_b);
+  // Compute effective mass along collision normal
+  glm::vec3 r_cross_n_a = glm::cross(r_a, contact.normal);
+  glm::vec3 r_cross_n_b = glm::cross(r_b, contact.normal);
+  float m_eff = (1 / box_a.mass) + (1 / box_b.mass) +
+                glm::dot(contact.normal, glm::cross(i_world_inv_a * r_cross_n_a, r_a)) +
+                glm::dot(contact.normal, glm::cross(i_world_inv_b * r_cross_n_b, r_b));
+  // Impulse magnitude
+  float v_n = glm::dot(rel_vel, contact.normal);
+  float j = -(1.0f + coefficient_of_restitution) * v_n / m_eff;
+  glm::vec3 impulse = j * contact.normal;
+  // Accumulate the impulse value
+  box_a.velocity += impulse / box_a.mass;
+  box_b.velocity -= impulse / box_b.mass;
+  box_a.angular_velocity += i_world_inv_a * glm::cross(r_a, impulse);
+  box_b.angular_velocity -= i_world_inv_b * glm::cross(r_b, impulse);
 
-    // Velocity at contact point for each body
-    glm::vec3 v_contact_a = box_a.velocity + glm::cross(box_a.angular_velocity, r_a);
-    glm::vec3 v_contact_b = box_b.velocity + glm::cross(box_b.angular_velocity, r_b);
-    glm::vec3 rel_vel = v_contact_a - v_contact_b;
-
-    // Transform inertia tensors to world space
-    glm::mat3 rot_a = glm::toMat3(box_a.rotation);
-    glm::mat3 rot_b = glm::toMat3(box_b.rotation);
-    glm::mat3 i_world_inv_a = rot_a * box_a.inertia_tensor_inv * glm::transpose(rot_a);
-    glm::mat3 i_world_inv_b = rot_b * box_b.inertia_tensor_inv * glm::transpose(rot_b);
-
-    // Compute effective mass along collision normal
-    glm::vec3 r_cross_n_a = glm::cross(r_a, contact.normal);
-    glm::vec3 r_cross_n_b = glm::cross(r_b, contact.normal);
-    float m_eff = (1 / box_a.mass) + (1 / box_b.mass) +
-                  glm::dot(contact.normal, glm::cross(i_world_inv_a * r_cross_n_a, r_a)) +
-                  glm::dot(contact.normal, glm::cross(i_world_inv_b * r_cross_n_b, r_b));
-
-    // Impulse magnitude
-    float v_n = glm::dot(rel_vel, contact.normal);
-    float j = -(1.0f + coefficient_of_restitution) * v_n / m_eff;
-    glm::vec3 impulse = (j * contact.normal) / static_cast<float>(contact.points.size());
-
-    // Apply the impulse
-    box_a.velocity += impulse / box_a.mass;
-    box_b.velocity -= impulse / box_b.mass;
-    box_a.angular_velocity += i_world_inv_a * glm::cross(r_a, impulse);
-    box_b.angular_velocity += i_world_inv_b * glm::cross(r_b, impulse);
-  }
   // Penetration correction
   if (contact.penetration > 0.0f) {
     // Separate the two along normal
@@ -340,8 +355,7 @@ std::vector<glm::vec3> Collisions::ClipFaceFace(const Box& box_ref, const Box& b
   float inc_sign = (inc_dot > 0.0f) ? -1.0f : 1.0f;
   glm::vec3 inc_center = box_inc.position + (inc_sign * box_inc.HalfExtents()[inc_idx] * axes_inc[inc_idx]);
 
-  std::vector<glm::vec3> incident_verts = {
-      // clang-format off
+  std::vector<glm::vec3> incident_verts = {// clang-format off
       inc_center + box_inc.HalfExtents()[tangent_1] * axes_inc[tangent_1] + box_inc.HalfExtents()[tangent_2] * axes_inc[tangent_2],
       inc_center + box_inc.HalfExtents()[tangent_1] * axes_inc[tangent_1] - box_inc.HalfExtents()[tangent_2] * axes_inc[tangent_2],
       inc_center - box_inc.HalfExtents()[tangent_1] * axes_inc[tangent_1] - box_inc.HalfExtents()[tangent_2] * axes_inc[tangent_2],
