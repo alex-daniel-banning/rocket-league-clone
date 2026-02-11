@@ -19,13 +19,13 @@
 #include <glm/gtx/string_cast.hpp>
 #include <iostream>
 
-#define GL_CHECK()                                                   \
-  do {                                                               \
-    GLenum err;                                                      \
-    while ((err = glGetError()) != GL_NO_ERROR) {                    \
-      std::cerr << "OpenGL error at " << __FILE__ << ":" << __LINE__ \
-                << " -> 0x" << std::hex << err << std::dec << '\n';  \
-    }                                                                \
+#define GL_CHECK()                                                                                              \
+  do {                                                                                                          \
+    GLenum err;                                                                                                 \
+    while ((err = glGetError()) != GL_NO_ERROR) {                                                               \
+      std::cerr << "OpenGL error at " << __FILE__ << ":" << __LINE__ << " -> 0x" << std::hex << err << std::dec \
+                << '\n';                                                                                        \
+    }                                                                                                           \
   } while (0)
 
 unsigned int LoadTexture(const char* path);
@@ -40,8 +40,7 @@ float delta_time = 0.0f;  // Time between current frame and last frame
 float last_frame = 0.0f;  // Time of last frame
 
 const unsigned int shadow_width = 1024, shadow_height = 1024;
-const float light_projection_near_plane = 1.0f,
-            light_projection_far_plane = 70.0f;
+const float light_projection_near_plane = 1.0f, light_projection_far_plane = 70.0f;
 unsigned int depth_map_fbo;
 unsigned int depth_map;
 void SetupShaderBuffer();
@@ -65,8 +64,7 @@ int main() {
   last_x = screen_width / 2.0f;
   last_y = screen_height / 2.0f;
 
-  GLFWwindow* window = glfwCreateWindow(screen_width, screen_height,
-                                        "Fullscreen Window", primary, nullptr);
+  GLFWwindow* window = glfwCreateWindow(screen_width, screen_height, "Fullscreen Window", primary, nullptr);
 
   if (!window) {
     std::cerr << "Failed to create GLFW window\n";
@@ -89,8 +87,7 @@ int main() {
   // Setup completed.
 
   glEnable(GL_DEPTH_TEST);
-  engine::render::Camera camera(glm::vec3(25.0f, 10.0f, 25.0f),
-                                glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, 0.0f);
+  engine::render::Camera camera(glm::vec3(25.0f, 10.0f, 25.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, 0.0f);
   camera.LookAt(glm::vec3(0.0f, 5.0f, 0.0f));
   camera.projection.far_plane = 300.0f;
   glfwSetWindowUserPointer(window, &camera);
@@ -99,14 +96,12 @@ int main() {
 
   glm::vec3 light_pos(0.0f, 40.0f, 0.0f);
   engine::render::Shader simple_depth_shader(
-      engine::PathManager::GlobalAsset("shaders/simple_depth_shader.vert")
-          .c_str(),
+      engine::PathManager::GlobalAsset("shaders/simple_depth_shader.vert").c_str(),
       engine::PathManager::GlobalAsset("shaders/empty_shader.frag").c_str());
 
   // create regular shader
-  engine::render::Shader model_loading_shader(
-      engine::PathManager::GlobalAsset("shaders/model_loading.vert").c_str(),
-      engine::PathManager::GlobalAsset("shaders/model_loading.frag").c_str());
+  engine::render::Shader model_loading_shader(engine::PathManager::GlobalAsset("shaders/model_loading.vert").c_str(),
+                                              engine::PathManager::GlobalAsset("shaders/model_loading.frag").c_str());
 
   engine::render::Renderer renderer(screen_width, screen_height);
 
@@ -116,34 +111,29 @@ int main() {
   // isn't behaving as expected.
   float wall_translation_size = ground_size / 2;
   std::vector<engine::physics::Plane> walls = {
-      engine::physics::Plane(
-          ground_size, ground_size, wall_color,
-          glm::vec3(wall_translation_size, wall_translation_size, 0.0f),
-          glm::angleAxis(glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f))),
-      engine::physics::Plane(
-          ground_size, ground_size, wall_color,
-          glm::vec3(-wall_translation_size, wall_translation_size, 0.0f),
-          glm::angleAxis(glm::radians(-90.0f), glm::vec3(0.0f, 0.0f, 1.0f))),
-      engine::physics::Plane(
-          ground_size, ground_size, wall_color,
-          glm::vec3(0.0f, wall_translation_size, wall_translation_size),
-          glm::angleAxis(glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f))),
-      engine::physics::Plane(
-          ground_size, ground_size, wall_color,
-          glm::vec3(0.0f, wall_translation_size, -wall_translation_size),
-          glm::angleAxis(glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f)))};
+      engine::physics::Plane(ground_size, ground_size, wall_color,
+                             glm::vec3(wall_translation_size, wall_translation_size, 0.0f),
+                             glm::angleAxis(glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f))),
+      engine::physics::Plane(ground_size, ground_size, wall_color,
+                             glm::vec3(-wall_translation_size, wall_translation_size, 0.0f),
+                             glm::angleAxis(glm::radians(-90.0f), glm::vec3(0.0f, 0.0f, 1.0f))),
+      engine::physics::Plane(ground_size, ground_size, wall_color,
+                             glm::vec3(0.0f, wall_translation_size, wall_translation_size),
+                             glm::angleAxis(glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f))),
+      engine::physics::Plane(ground_size, ground_size, wall_color,
+                             glm::vec3(0.0f, wall_translation_size, -wall_translation_size),
+                             glm::angleAxis(glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f)))};
 
-  engine::Match match(
-      engine::physics::Sphere(1.0f, 10.0f, glm::vec3(10.0f, 4.5f, 0.0f),
-                              glm::vec3(-5.0f, 0.0f, 0.0f)),
-      engine::physics::Plane(ground_size, ground_size), walls,
-      {engine::physics::Box(glm::vec3(5.0f), glm::vec3(0.0f, 3.0f, 0.0f),
-                            glm::vec3(0.0f), 30.0f, glm::quat(),
-                            glm::vec3(0.0f, 0.0f, 0.0f))});
+  engine::Match match = engine::Match::Builder()
+      .WithBall(engine::physics::Sphere(1.0f, 10.0f, glm::vec3(10.0f, 4.5f, 0.0f), glm::vec3(-5.0f, 0.0f, 0.0f)))
+      .WithGround(engine::physics::Plane(ground_size, ground_size))
+      .WithWalls(walls)
+      .WithBox(engine::physics::Box(glm::vec3(5.0f), glm::vec3(0.0f, 3.0f, 0.0f), glm::vec3(0.0f), 30.0f,
+                                    glm::quat(), glm::vec3(0.0f, 0.0f, 0.0f)))
+      .Build();
 
-  engine::render::Shader line_shader(
-      engine::PathManager::GlobalAsset("shaders/lineShader.vert").c_str(),
-      engine::PathManager::GlobalAsset("shaders/lineShader.frag").c_str());
+  engine::render::Shader line_shader(engine::PathManager::GlobalAsset("shaders/lineShader.vert").c_str(),
+                                     engine::PathManager::GlobalAsset("shaders/lineShader.frag").c_str());
 
   float demo_start = glfwGetTime();
   // Main loop
@@ -167,9 +157,8 @@ int main() {
     // --------------------------------------------------------------
     glm::mat4 light_projection, light_view;
     glm::mat4 light_space_matrix;
-    light_projection =
-        glm::ortho(-ground_size, ground_size, -ground_size, ground_size,
-                   light_projection_near_plane, light_projection_far_plane);
+    light_projection = glm::ortho(-ground_size, ground_size, -ground_size, ground_size, light_projection_near_plane,
+                                  light_projection_far_plane);
     glViewport(0, 0, shadow_width, shadow_height);
     glBindFramebuffer(GL_FRAMEBUFFER, depth_map_fbo);
     glClear(GL_DEPTH_BUFFER_BIT);
@@ -187,8 +176,12 @@ int main() {
     simple_depth_shader.SetMat4("lightSpaceMatrix", light_space_matrix);
 
     simple_depth_shader.Use();
-    renderer.DrawPhysicsPlane(match.GetGround(), simple_depth_shader);
-    renderer.DrawSphere(match.GetBall(), simple_depth_shader);
+    if (match.GetGround()) {
+      renderer.DrawPhysicsPlane(*match.GetGround(), simple_depth_shader);
+    }
+    if (match.GetBall()) {
+      renderer.DrawSphere(*match.GetBall(), simple_depth_shader);
+    }
     for (engine::physics::Box box : match.GetBoxes()) {
       renderer.DrawBox(box, simple_depth_shader);
     }
@@ -205,20 +198,23 @@ int main() {
     model_loading_shader.Use();
     model_loading_shader.SetMat4("lightSpaceMatrix", light_space_matrix);
     model_loading_shader.SetInt("shadowMap", 8);
-    glActiveTexture(
-        GL_TEXTURE8);  // todo set to 8 so it doesn't conflict with model
-                       // texture index, need a better long term solution
+    glActiveTexture(GL_TEXTURE8);  // todo set to 8 so it doesn't conflict with model
+                                   // texture index, need a better long term solution
     glBindTexture(GL_TEXTURE_2D, depth_map);
     model_loading_shader.SetBool("useTexture", false);
     model_loading_shader.SetVec3("lightColor", glm::vec3(1.0f));
     model_loading_shader.SetVec3("lightPos", light_pos);
     model_loading_shader.SetVec3("viewPos", camera.position);
-    renderer.DrawPhysicsPlane(match.GetGround(), model_loading_shader, camera);
+    if (match.GetGround()) {
+      renderer.DrawPhysicsPlane(*match.GetGround(), model_loading_shader, camera);
+    }
     for (engine::physics::Plane wall : match.GetWalls()) {
       renderer.DrawPhysicsPlane(wall, model_loading_shader, camera);
     }
-    model_loading_shader.SetVec3("diffuseColor", glm::vec3(0.0f, 0.5f, 0.3f));
-    renderer.DrawSphere(match.GetBall(), model_loading_shader, camera);
+    if (match.GetBall()) {
+      model_loading_shader.SetVec3("diffuseColor", glm::vec3(0.0f, 0.5f, 0.3f));
+      renderer.DrawSphere(*match.GetBall(), model_loading_shader, camera);
+    }
     for (engine::physics::Box box : match.GetBoxes()) {
       renderer.DrawBox(box, model_loading_shader, camera);
     }
@@ -228,7 +224,9 @@ int main() {
     for (engine::physics::Plane wall : match.GetWalls()) {
       renderer.DrawPhysicsPlaneNormal(wall, line_shader, camera);
     }
-    renderer.DrawPhysicsPlaneNormal(match.GetGround(), line_shader, camera);
+    if (match.GetGround()) {
+      renderer.DrawPhysicsPlaneNormal(*match.GetGround(), line_shader, camera);
+    }
     for (engine::physics::Box box : match.GetBoxes()) {
       renderer.DrawBoxWireframe(box, model_loading_shader, camera);
     }
@@ -247,40 +245,32 @@ void SetupShaderBuffer() {
   glGenFramebuffers(1, &depth_map_fbo);
   glGenTextures(1, &depth_map);
   glBindTexture(GL_TEXTURE_2D, depth_map);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, shadow_width,
-               shadow_height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, shadow_width, shadow_height, 0, GL_DEPTH_COMPONENT, GL_FLOAT,
+               nullptr);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   glBindFramebuffer(GL_FRAMEBUFFER, depth_map_fbo);
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D,
-                         depth_map, 0);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depth_map, 0);
   glDrawBuffer(GL_NONE);
   glReadBuffer(GL_NONE);
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 void ProcessInput(GLFWwindow* window, engine::render::Camera& camera) {
-  if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-    glfwSetWindowShouldClose(window, true);
+  if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) glfwSetWindowShouldClose(window, true);
 
   const float camera_speed = camera.movement_speed * delta_time;
-  glm::vec3 forward =
-      glm::normalize(glm::vec3(camera.front.x, 0.0f, camera.front.z));
+  glm::vec3 forward = glm::normalize(glm::vec3(camera.front.x, 0.0f, camera.front.z));
 
-  if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-    camera.position += camera_speed * forward;
-  if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-    camera.position -= camera_speed * forward;
+  if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) camera.position += camera_speed * forward;
+  if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) camera.position -= camera_speed * forward;
   if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-    camera.position -=
-        glm::normalize(glm::cross(camera.front, camera.up)) * camera_speed;
+    camera.position -= glm::normalize(glm::cross(camera.front, camera.up)) * camera_speed;
   if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-    camera.position +=
-        glm::normalize(glm::cross(camera.front, camera.up)) * camera_speed;
-  if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
-    camera.position += glm::vec3(0.0f, 1.0f, 0.0f) * camera_speed;
+    camera.position += glm::normalize(glm::cross(camera.front, camera.up)) * camera_speed;
+  if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) camera.position += glm::vec3(0.0f, 1.0f, 0.0f) * camera_speed;
   if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
     camera.position -= glm::vec3(0.0f, 1.0f, 0.0f) * camera_speed;
 
@@ -297,8 +287,7 @@ void ProcessInput(GLFWwindow* window, engine::render::Camera& camera) {
 }
 
 void MouseCallback(GLFWwindow* window, double x_pos_in, double y_pos_in) {
-  auto* camera =
-      static_cast<engine::render::Camera*>(glfwGetWindowUserPointer(window));
+  auto* camera = static_cast<engine::render::Camera*>(glfwGetWindowUserPointer(window));
   float mouse_sensitivity = 0.05f;
   float xpos = static_cast<float>(x_pos_in);
   float ypos = static_cast<float>(y_pos_in);
@@ -317,8 +306,7 @@ void MouseCallback(GLFWwindow* window, double x_pos_in, double y_pos_in) {
     return;
   }
   float xoffset = xpos - last_x;
-  float yoffset =
-      last_y - ypos;  // reversed since y-coordinates go from bottom to top
+  float yoffset = last_y - ypos;  // reversed since y-coordinates go from bottom to top
 
   last_x = xpos;
   last_y = ypos;
