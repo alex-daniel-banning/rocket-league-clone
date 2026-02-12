@@ -1,7 +1,4 @@
-[ ] Save github tag
 [ ] Implement box v plane collisions
-
-[ ] Error handling when objects spawn inside each other
 
 Random
     [ ] Disable plain language suggestions, or disable "Enter" selecting the first one
@@ -13,6 +10,7 @@ Random
 Backlog
     [ ] Figure out what I want epsilon to be across code base
         [ ] Possibly make it relative. Research this...
+    [ ] Error handling when objects spawn inside each other
 
 Reference vs Incident object:
     reference = wall/surface
