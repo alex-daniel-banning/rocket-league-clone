@@ -1,3 +1,4 @@
+#include "engine/physics/box_builder.hpp"
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glad/glad.h>
 
@@ -7,6 +8,7 @@
 #include <engine/match.hpp>
 #include <engine/path_manager.hpp>
 #include <engine/physics/box.hpp>
+#include <engine/physics/box_builder.hpp>
 #include <engine/physics/plane.hpp>
 #include <engine/render/camera.hpp>
 #include <engine/render/renderer.hpp>
@@ -66,11 +68,136 @@ std::vector<engine::physics::Plane> walls = {
                            glm::angleAxis(glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f)))};
 
 int main(int argc, char* argv[]) {
-  if (argc < 2) {
-    std::cerr << "Usage: " << argv[0] << " <scenario>\n";
+  std::map<std::string, std::function<engine::Match()>> scenarios = {
+      {"head_on",
+       []() {
+         return engine::Match::Builder()
+             .WithWalls(walls)
+             .WithGround(engine::physics::Plane(ground_size, ground_size))
+             .WithBox(BoxBuilder().Size(glm::vec3(5.0f)).Position(glm::vec3(0.0f, 5.0f, 0.0f)).Mass(30.0f).Build())
+             .WithBox(BoxBuilder()
+                          .Size(glm::vec3(5.0f))
+                          .Position(glm::vec3(10.0f, 5.0f, 0.0f))
+                          .Mass(30.0f)
+                          .Velocity(glm::vec3(-5.0f, 0.0f, 0.0f))
+                          .Build())
+             .Build();
+       }},
+      {"mass_ratio",
+       []() {
+         return engine::Match::Builder()
+             .WithWalls(walls)
+             .WithGround(engine::physics::Plane(ground_size, ground_size))
+             .WithBox(BoxBuilder().Size(glm::vec3(5.0f)).Position(glm::vec3(0.0f, 5.0f, 0.0f)).Mass(30.0f).Build())
+             .WithBox(BoxBuilder()
+                          .Size(glm::vec3(5.0f))
+                          .Position(glm::vec3(10.0f, 5.0f, 0.0f))
+                          .Mass(100.0f)
+                          .Velocity(glm::vec3(-5.0f, 0.0f, 0.0f))
+                          .Build())
+             .Build();
+       }},
+      {"off_center",
+       []() {
+         return engine::Match::Builder()
+             .WithWalls(walls)
+             .WithGround(engine::physics::Plane(ground_size, ground_size))
+             .WithBox(BoxBuilder().Size(glm::vec3(5.0f)).Position(glm::vec3(0.0f, 5.0f, 0.0f)).Mass(30.0f).Build())
+             .WithBox(BoxBuilder()
+                          .Size(glm::vec3(5.0f))
+                          .Position(glm::vec3(10.0f, 6.0f, 0.0f))
+                          .Mass(30.0f)
+                          .Velocity(glm::vec3(-5.0f, 0.0f, 0.0f))
+                          .Build())
+             .Build();
+       }},
+      {"rotation_only",
+       []() {
+         return engine::Match::Builder()
+             .WithWalls(walls)
+             .WithGround(engine::physics::Plane(ground_size, ground_size))
+             .WithBox(BoxBuilder().Size(glm::vec3(5.0f)).Position(glm::vec3(0.0f, 5.0f, 0.0f)).Mass(30.0f).Build())
+             .WithBox(BoxBuilder()
+                          .Size(glm::vec3(5.0f))
+                          .Position(glm::vec3(5.5f, 8.0f, 0.0f))
+                          .Mass(30.0f)
+                          .AngularVelocity(glm::vec3(0.0f, 2.0f, 5.0f))
+                          .Build())
+             .Build();
+       }},
+      {"edge_face",
+       []() {
+         return engine::Match::Builder()
+             .WithWalls(walls)
+             .WithGround(engine::physics::Plane(ground_size, ground_size))
+             .WithBox(BoxBuilder().Size(glm::vec3(5.0f)).Position(glm::vec3(0.0f, 5.0f, 0.0f)).Mass(30.0f).Build())
+             .WithBox(BoxBuilder()
+                          .Size(glm::vec3(5.0f))
+                          .Position(glm::vec3(10.0f, 5.0f, 0.0f))
+                          .Mass(30.0f)
+                          .Velocity(glm::vec3(-5.0f, 0.0f, 0.0f))
+                          .Rotation(glm::quat(glm::angleAxis(glm::radians(45.0f), glm::vec3(0.0f, 1.0f, 0.0f))))
+                          .Build())
+             .Build();
+       }},
+      {"corner_face",
+       []() {
+         return engine::Match::Builder()
+             .WithWalls(walls)
+             .WithGround(engine::physics::Plane(ground_size, ground_size))
+             .WithBox(BoxBuilder().Size(glm::vec3(5.0f)).Position(glm::vec3(0.0f, 5.0f, 0.0f)).Mass(30.0f).Build())
+             .WithBox(BoxBuilder()
+                          .Size(glm::vec3(5.0f))
+                          .Position(glm::vec3(10.0f, 5.0f, 0.0f))
+                          .Mass(30.0f)
+                          .Velocity(glm::vec3(-5.0f, 0.0f, 0.0f))
+                          .Rotation(glm::rotation(glm::normalize(glm::vec3(1, 1, 1)), glm::vec3(1.0f, 0.0f, 0.0f)))
+                          .Build())
+             .Build();
+       }},
+      {"large_mass",
+       []() {
+         return engine::Match::Builder()
+             .WithWalls(walls)
+             .WithGround(engine::physics::Plane(ground_size, ground_size))
+             .WithBox(BoxBuilder().Size(glm::vec3(5.0f)).Position(glm::vec3(0.0f, 5.0f, 0.0f)).Mass(1.0f).Build())
+             .WithBox(BoxBuilder()
+                          .Size(glm::vec3(5.0f))
+                          .Position(glm::vec3(10.0f, 5.0f, 0.0f))
+                          .Mass(1000.0f)
+                          .Velocity(glm::vec3(-5.0f, 0.0f, 0.0f))
+                          .Build())
+             .Build();
+       }},
+      {"glancing",
+       []() {
+         return engine::Match::Builder()
+             .WithWalls(walls)
+             .WithGround(engine::physics::Plane(ground_size, ground_size))
+             .WithBox(BoxBuilder().Size(glm::vec3(5.0f)).Position(glm::vec3(0.0f, 5.0f, 0.0f)).Mass(125.0f).Build())
+             .WithBox(BoxBuilder()
+                          .Size(glm::vec3(2.0f))
+                          .Position(glm::vec3(4.0f, 7.0f, 0.0f))
+                          .Mass(8.0f)
+                          .Velocity(glm::vec3(-2.0f, 5.0f, 0.0f))
+                          .AngularVelocity(0.0f, 0.0f, -1.0f)
+                          .Build())
+             .Build();
+       }},
+  };
+  if (argc > 1 && !scenarios.count(argv[1]) && std::string(argv[1]) != "--list") {
+    std::cout << "Unknown argument: " << argv[1] << "\n";
+  }
+  if (argc < 2 || !scenarios.count(argv[1])) {
+    std::cout << "\nChoose from this list of scenarios:\n";
+    for (auto scenario : scenarios) {
+      std::cout << scenario.first << "\n";
+    }
+    std::cout << "Usage: " << argv[0] << " <scenario>\n\n";
     return 1;
   }
-  std::string scenario = argv[1];
+
+  engine::Match match = scenarios.at(argv[1])();
 
   // Initialize GLFW
   if (!glfwInit()) {
@@ -113,7 +240,7 @@ int main(int argc, char* argv[]) {
   // Setup completed.
 
   glEnable(GL_DEPTH_TEST);
-  engine::render::Camera camera(glm::vec3(25.0f, 10.0f, 25.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, 0.0f);
+  engine::render::Camera camera(glm::vec3(0.0f, 10.0f, 25.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, 0.0f);
   camera.LookAt(glm::vec3(0.0f, 5.0f, 0.0f));
   camera.projection.far_plane = 300.0f;
   glfwSetWindowUserPointer(window, &camera);
@@ -130,27 +257,6 @@ int main(int argc, char* argv[]) {
                                               engine::PathManager::GlobalAsset("shaders/model_loading.frag").c_str());
 
   engine::render::Renderer renderer(screen_width, screen_height);
-
-  // engine::Match match = engine::Match::Builder()
-  //     .WithBall(engine::physics::Sphere(1.0f, 10.0f, glm::vec3(10.0f, 4.5f, 0.0f), glm::vec3(-5.0f, 0.0f, 0.0f)))
-  //     .WithGround(engine::physics::Plane(ground_size, ground_size))
-  //     .WithWalls(walls)
-  //     .WithBox(engine::physics::Box(glm::vec3(5.0f), glm::vec3(0.0f, 3.0f, 0.0f), glm::vec3(0.0f), 30.0f,
-  //                                   glm::quat(), glm::vec3(0.0f, 0.0f, 0.0f)))
-  //     .Build();
-  std::map<std::string, std::function<engine::Match()>> scenarios = {
-      {"head_on", []() {
-         return engine::Match::Builder()
-             .WithWalls(walls)
-             .WithBall(engine::physics::Sphere(1.0f, 10.0f, glm::vec3(10.0f, 4.5f, 0.0f), glm::vec3(-5.0f, 0.0f, 0.0f)))
-             .WithGround(engine::physics::Plane(ground_size, ground_size))
-             //.WithBox(engine::physics::Box())
-             .WithBox(engine::physics::Box(glm::vec3(5.0f), glm::vec3(0.0f, 3.0f, 0.0f), glm::vec3(0.0f), 30.0f,
-                                           glm::quat(), glm::vec3(0.0f, 0.0f, 0.0f)))
-             .Build();
-       }}};
-  if (!scenarios.count(scenario)) std::cerr << "Unknown scenario: " << scenario << "\n";
-  engine::Match match = scenarios.at(scenario)();
 
   engine::render::Shader line_shader(engine::PathManager::GlobalAsset("shaders/lineShader.vert").c_str(),
                                      engine::PathManager::GlobalAsset("shaders/lineShader.frag").c_str());

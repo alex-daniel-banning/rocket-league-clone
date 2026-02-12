@@ -1,20 +1,7 @@
-[ ] Verify with demo (box_v_box_resolution_demo)
-    [x] New file: src/demos/collisions/box-v-box/box_v_box_resolution_demo.cpp
-    [x] Add to src/demos/CMakeLists.txt
-    [ ] CLI arg selects scenario, --list prints available
-    [ ] Auto-reset after a few seconds (like OBB demo)
-    [ ] Scale up sizes/positions ~3x for visibility
-    [ ] Scenarios:
-        [ ] head_on — equal mass, no rotation
-        [ ] mass_ratio — 1:3 mass difference
-        [ ] off_center — produces angular velocity
-        [ ] rotation_only — spin transfer
-        [ ] edge_face — 45deg rotated box
-        [ ] corner_face — arbitrarily rotated box
-        [ ] large_mass — 1:1000 ratio
-        [ ] glancing — mostly tangential
-        [ ] velocity_exchange — classic equal-mass billiard
+[ ] Save github tag
 [ ] Implement box v plane collisions
+
+[ ] Error handling when objects spawn inside each other
 
 Random
     [ ] Disable plain language suggestions, or disable "Enter" selecting the first one
