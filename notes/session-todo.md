@@ -1,3 +1,5 @@
+[ ] Figure out what to do about failing sphere_v_plane_collision_demo executable
+[ ] Tick accumulator death spiral fix? Is it an issue?
 [ ] Implement box v plane collisions
 
 Random
