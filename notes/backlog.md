@@ -1,39 +1,40 @@
-Collisions
-Box v Box collision resolution
+# Project Backlog
 
-################################################################################
-Brainstorming:
-Next mini project options:
-    Collisions/Physics
-        Rigid-body basis:
-            Acceleration
-            Forces
-        Gravity
-        Friction:
-            Basic static + dynamic
-        Collisions:
-            Tunneling
-            Optimization (spatial partitioning)
-        Mass?
-        Center of mass?
-        Rotation after impact?
-        Friction with collisions?
+## Doing (WIP limit: 3)
+- Box v Plane Collisions
+    - [ ] Detection
+    - [ ] Resolution
 
-    Basic car control
-        Steering
-        Forward Forces
-        Braking
-        Wheel grip
+## Core Features
+- [ ] Collisions
+    - [ ] Tunneling resolution
+    - [ ] Optimization (spatial partitioning)
+    - [ ] Friction with collisions
+    - [ ] Standard/Shared/Relative epsilon values
+- [ ] Car system
+    - [ ] Steering/wheel system
+    - [ ] Render hitbox and model
+    - [ ] Jumping
+    - [ ] Rocket boost
+    - [ ] Dodging
+    - [ ] Air roll/steering
+- [ ] Gravity
+- [ ] Menu system
+    - [ ] Pause Menu
+    - [ ] Main Menu
+    - [ ] Settings
+        - [ ] Camera Settings
+- [ ] Camera system
 
-    Hit boxes
+## Defects
+- [ ] Initializing match with objects inside each other might be causing issues (general match initialization error handling)
+- [ ] Tick accumulator death spiral fix? Is it an issue?
 
-Backlog:
-    Debug rendering (for collisions)
-        Wireframe/Debug render with basic frag shader (bright green, perhaps)
-    Add coordinates at top left of screen for debugging
-    When camera movement is controlled by mouse, it's apparent that the mouse position jolts the camera when starting the program
-    Shader wrapper class to catch unset uniforms
-    Implement debug visualization for rendering
-    Add logging system (including OpenGL API call tracing)
-    Test pre-commit hook
+## Misc (env, tooling, etc.)
+- [ ] Consider refactoring main function/file
+- [ ] What to do with stale demo files
+- [ ] Performance profiling
+- [ ] Add logging system (including OpenGL API call tracing)
+- [ ] Make quicklist shrink to fix small number of results
 
+## Brainstorm

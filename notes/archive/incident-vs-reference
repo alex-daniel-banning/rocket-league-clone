@@ -1,0 +1,7 @@
+Reference vs Incident object:
+    reference = wall/surface
+    incident = the thing hitting the wall
+
+    Penetration axis should point from reference to incident (it's the direction you'd push the incident object to get it out of the wall)
+    reference -> defines the clippling planes
+    incident -> it's vertices get clipped

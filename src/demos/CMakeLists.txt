@@ -3,7 +3,7 @@ set(ALL_DEMO_NAMES "" CACHE INTERNAL "List of all demo executable names")
 
 set(DEMO_SOURCES
     #rendering/ortho_shadows.cpp
-    collisions/sphere_v_plane_collision_demo.cpp
+    #collisions/sphere_v_plane_collision_demo.cpp
     collisions/sphere-box-obb/sphere_v_box_obb_demo.cpp
     collisions/box-box/box-box-collision-demo.cpp
 )
