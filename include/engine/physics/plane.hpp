@@ -15,10 +15,8 @@ class Plane {
   glm::vec3 color;
 
   Plane() = default;
-  explicit Plane(float x_length = 1.0f, float z_length = 1.0f,
-                 glm::vec3 color = glm::vec3(0.2f),
-                 glm::vec3 position = glm::vec3(0.0f),
-                 glm::quat rotation = glm::quat(glm::vec3(0.0f)));
+  explicit Plane(float x_length = 1.0f, float z_length = 1.0f, glm::vec3 color = glm::vec3(0.2f),
+                 glm::vec3 position = glm::vec3(0.0f), glm::quat rotation = glm::quat(glm::vec3(0.0f)));
   void CalculateCornerPositions();
   void InitializeRenderData();
 
@@ -27,9 +25,7 @@ class Plane {
   glm::quat GetRotation() const { return rotation_; }
   float GetXLength() const { return x_length_; }
   float GetZLength() const { return z_length_; }
-  std::array<glm::vec3, 4> GetCornerPositions() const {
-    return corner_positions_;
-  }
+  std::array<glm::vec3, 4> GetCornerPositions() const { return corner_positions_; }
 
   void SetPosition(const glm::vec3 p);
   void SetRotation(const glm::quat r);

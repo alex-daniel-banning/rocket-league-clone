@@ -18,6 +18,25 @@ glm::vec3 CalculateCentroid(const std::vector<glm::vec3> points) {
   z = z / points.size();
   return glm::vec3(x, y, z);
 }
+
+float CalculateOverlap(glm::vec3 axis, const engine::physics::Box& box, const engine::physics::Plane& plane,
+                       const std::array<glm::vec3, 3> axes_a, const std::array<glm::vec3, 3> axes_b) {
+  // Project box centers onto axis
+  float proj_a = glm::dot(box.position, axis);
+  float proj_b = glm::dot(plane.GetPosition(), axis);
+
+  // Calculate extents (half-widths of projections)
+  float r_a = std::abs(glm::dot(axes_a[0], axis)) * box.Size().x * 0.5f +
+              std::abs(glm::dot(axes_a[1], axis)) * box.Size().y * 0.5f +
+              std::abs(glm::dot(axes_a[2], axis)) * box.Size().z * 0.5f;
+
+  // Skip Y axis because Plane is implemented so that the Y axis has no thickness.
+  float r_b = std::abs(glm::dot(axes_b[0], axis)) * plane.GetXLength() * 0.5f +
+              std::abs(glm::dot(axes_b[2], axis)) * plane.GetZLength() * 0.5f;
+
+  float distance = std::abs(proj_a - proj_b);
+  return (r_a + r_b) - distance;
+}
 };  // namespace
 
 namespace engine::physics {
@@ -258,6 +277,82 @@ void Collisions::ResolveCollision(Box& box_a, Box& box_b, Contact contact, float
     box_b.position += contact.normal * box_b_correction;
   }
   return;
+}
+
+bool Collisions::ComputeContact(const Box& box, const Plane& plane, Contact& out) {
+  const float epsilon = 1e-6f;
+  float penetration = std::numeric_limits<float>::max();
+  glm::vec3 penetration_axis;
+
+  const std::array<glm::vec3, 3> axes_box = GetAxesFromQuaternion(box.rotation);
+  const std::array<glm::vec3, 3> axes_plane = GetAxesFromQuaternion(plane.GetRotation());
+
+  enum class AxisSource { FACE_A, FACE_B, EDGE_EDGE };
+  AxisSource axis_source;
+
+  std::vector<glm::vec3> axes_to_test;
+  axes_to_test.reserve(10);
+  axes_to_test.insert(axes_to_test.end(), axes_box.begin(), axes_box.end());
+  axes_to_test.push_back(axes_plane[1]);
+  for (const glm::vec3 edge_a : axes_box) {
+    for (int i = 0; i < axes_plane.size(); i += 2) {
+      // Skip the y axis because that axis is the flat axis for this implementation of Plane
+      glm::vec3 axis = glm::cross(edge_a, axes_plane[i]);
+      if (glm::length(axis) >= epsilon) axes_to_test.push_back(glm::normalize(axis));
+    }
+  }
+
+  for (int i = 0; i < axes_to_test.size(); i++) {
+    float overlap = ::CalculateOverlap(axes_to_test[i], box, plane, axes_box, axes_plane);
+    if (overlap <= 0) return false;
+    // Bias edge-edge overlaps so face axes are preferred when close
+    if (overlap < penetration) {
+      penetration = overlap;
+      penetration_axis = axes_to_test[i];
+      if (glm::dot(plane.GetPosition() - box.position, penetration_axis) < 0) penetration_axis = -penetration_axis;
+      if (i < 3)
+        axis_source = AxisSource::FACE_A;
+      else if (i < 4)
+        axis_source = AxisSource::FACE_B;
+      else
+        axis_source = AxisSource::EDGE_EDGE;
+    }
+  }
+
+  // continue...
+  std::vector<glm::vec3> contact_points;
+  if (axis_source == AxisSource::EDGE_EDGE) {
+    contact_points = ClipEdgeEdge(box, box_b, penetration_axis, axes_box, axes_plane);
+  } else {
+    const auto& incident_axes = (axis_source == AxisSource::FACE_A) ? axes_plane : axes_box;
+    bool has_parallel = false;
+    bool has_perpendicular = false;
+    for (const auto& axis : incident_axes) {
+      float d = std::abs(glm::dot(axis, penetration_axis));
+      if (d > 0.999f) has_parallel = true;
+      if (d < 0.001f) has_perpendicular = true;
+    }
+    if (has_parallel) {
+      contact_points = ClipFaceFace(box, box_b, penetration_axis, axes_box, axes_plane);
+    } else if (has_perpendicular) {
+      contact_points = (axis_source == AxisSource::FACE_A)
+                           ? ClipFaceFace(box, box_b, penetration_axis, axes_box, axes_plane)
+                           : ClipFaceFace(box_b, box, penetration_axis, axes_plane, axes_box);
+    } else {
+      contact_points = (axis_source == AxisSource::FACE_A)
+                           ? ClipCornerToFace(box_b, box, penetration_axis, axes_plane, axes_box)
+                           : ClipCornerToFace(box, box_b, penetration_axis, axes_box, axes_plane);
+    }
+  }
+
+  for (auto& p : contact_points) {
+    p = p + (0.5f * penetration * penetration_axis);
+  }
+  out.points.insert(out.points.end(), contact_points.begin(), contact_points.end());
+  out.normal = penetration_axis;
+  out.penetration = penetration;
+  assert(out.points.size() > 0);
+  return true;
 }
 
 std::array<glm::vec3, 3> Collisions::GetAxesFromQuaternion(glm::quat q) {  // clang-format off

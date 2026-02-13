@@ -26,9 +26,11 @@
         - [ ] Camera Settings
 - [ ] Camera system
 
-## Defects
+## Defects/Tech Debt
 - [ ] Initializing match with objects inside each other might be causing issues (general match initialization error handling)
 - [ ] Tick accumulator death spiral fix? Is it an issue?
+- [ ] Move functions in implementation files to anonymous namespaces
+- [ ] Clean up plane class. It shouldn't use getters and setters because especially because the fields should be const
 
 ## Misc (env, tooling, etc.)
 - [ ] Consider refactoring main function/file
