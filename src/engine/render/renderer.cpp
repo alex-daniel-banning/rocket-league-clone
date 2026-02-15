@@ -80,7 +80,7 @@ static constexpr unsigned int cube_wire_indices[] = {
   6, 3, 7
 };
 // clang-format on
-Renderer::Renderer(const float screen_width, const float screen_height) {
+Renderer::Renderer(float screen_width, float screen_height) {
   this->screen_width_ = screen_width;
   this->screen_height_ = screen_height;
   InitCube();
@@ -174,8 +174,8 @@ void Renderer::DrawSphereWireframe(const engine::physics::Sphere& sphere, engine
 }
 
 // todo, remove this, too coupled perhaps
-void Renderer::DrawModel(engine::render::Model& model, engine::render::Shader& shader, const Camera& camera,
-                         glm::vec3 position, glm::vec3 scale, glm::quat rotation) {
+void Renderer::DrawModel(const engine::render::Model& model, engine::render::Shader& shader, const Camera& camera,
+                         const glm::vec3& position, const glm::vec3& scale, const glm::quat& rotation) {
   shader.Use();
   glm::mat4 model_matrix = glm::mat4(1.0f);
   model_matrix = glm::translate(model_matrix, position);

@@ -13,7 +13,7 @@ unsigned int TextureFromFile(const char* path, const std::string& directory, boo
 class Model {
  public:
   explicit Model(const char* path) { LoadModel(path); }
-  void Draw(engine::render::Shader& shader);
+  void Draw(engine::render::Shader& shader) const;
 
  private:
   // model data
@@ -21,7 +21,7 @@ class Model {
   std::string directory_;
   std::vector<Texture> loaded_textures_;
 
-  void LoadModel(std::string path);
+  void LoadModel(const std::string& path);
   void ProcessNode(aiNode* node, const aiScene* scene);
   Mesh ProcessMesh(aiMesh* mesh, const aiScene* scene);
   std::vector<Texture> LoadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string type_name);

@@ -17,21 +17,6 @@ class Collisions {
   static void ResolveCollision(Box& box_a, Box& box_b, const Contact contact, float coefficient_of_restitution);
 
  private:
-  static std::array<glm::vec3, 3> GetAxesFromQuaternion(glm::quat q);
-  static float CalculateOverlap(glm::vec3 axis, const Box& box_a, const Box& box_b,
-                                const std::array<glm::vec3, 3> axes_a, const std::array<glm::vec3, 3> axes_b);
-  static std::vector<glm::vec3> ClipFaceFace(const Box& box_a, const Box& box_b,
-                                             glm::vec3 penetration_axis,  // TODO make const?
-                                             const std::array<glm::vec3, 3>& axes_a,
-                                             const std::array<glm::vec3, 3>& axes_b);
-  static std::vector<glm::vec3> ClipPolygonAgainstPlane(const std::vector<glm::vec3>& polygon, glm::vec3 plane_point,
-                                                        glm::vec3 plane_normal, const float epsilon = 0.001f);
-  static std::vector<glm::vec3> ClipEdgeEdge(const Box& box_a, const Box& box_b, glm::vec3 penetration_axis,
-                                             const std::array<glm::vec3, 3>& axes_a,
-                                             const std::array<glm::vec3, 3>& axes_b);
-  static std::vector<glm::vec3> ClipCornerToFace(  // TODO, make these anonymous
-      const Box& box_inc, const Box& box_ref, glm::vec3 penetration_axis, const std::array<glm::vec3, 3>& axes_inc,
-      const std::array<glm::vec3, 3>& axes_ref);
 };
 
 }  // namespace engine::physics

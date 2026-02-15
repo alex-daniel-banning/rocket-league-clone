@@ -12,7 +12,7 @@ namespace engine::render {
 
 class Renderer {
  public:
-  Renderer(const float screen_width, const float screen_height);
+  Renderer(float screen_width, float screen_height);
   void DrawBox(const engine::physics::Box& box, Shader& shader, const Camera& camera);
   void DrawBox(const engine::physics::Box& box, Shader& shader);
   void DrawBoxWireframe(const engine::physics::Box& box, Shader& shader, const Camera& camera);
@@ -20,8 +20,8 @@ class Renderer {
   void DrawSphere(const engine::physics::Sphere& sphere, Shader& shader);
   void DrawSphereWireframe(const engine::physics::Sphere& sphere, Shader& shader, const Camera& camera);
 
-  void DrawModel(Model& model, Shader& shader, const Camera& camera, glm::vec3 position, glm::vec3 scale,
-                 glm::quat rotation);
+  void DrawModel(const Model& model, Shader& shader, const Camera& camera, const glm::vec3& position,
+                 const glm::vec3& scale, const glm::quat& rotation);
   void DrawPhysicsPlane(const physics::Plane& plane, Shader& shader);
   void DrawPhysicsPlane(const physics::Plane& plane, Shader& shader, const Camera& camera);
   void DrawPhysicsPlaneNormal(const physics::Plane& plane, Shader& shader, const Camera& camera);

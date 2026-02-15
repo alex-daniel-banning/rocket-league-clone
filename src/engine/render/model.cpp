@@ -10,13 +10,13 @@
 
 namespace engine::render {
 
-void Model::Draw(engine::render::Shader& shader) {
-  for (Mesh& mesh : meshes_) {
+void Model::Draw(engine::render::Shader& shader) const {
+  for (const Mesh& mesh : meshes_) {
     mesh.Draw(shader);
   }
 }
 
-void Model::LoadModel(std::string path) {
+void Model::LoadModel(const std::string& path) {
   Assimp::Importer import;
   const aiScene* scene = import.ReadFile(path, aiProcess_Triangulate);
 

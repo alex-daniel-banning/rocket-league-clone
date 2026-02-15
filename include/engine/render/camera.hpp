@@ -53,7 +53,7 @@ class Camera {
   void ProcessMouseMovement(float xoffset, float yoffset, float mouse_sensitivity, bool constrain_pitch = true);
 
   void LookAtOrigin();
-  void LookAt(glm::vec3 target);
+  void LookAt(const glm::vec3& target);
 
  private:
   glm::vec3 right_;

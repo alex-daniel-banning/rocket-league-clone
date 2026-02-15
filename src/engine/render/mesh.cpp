@@ -5,7 +5,8 @@
 
 namespace engine::render {
 
-Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures) {
+Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices,
+           const std::vector<Texture>& textures) {
   this->vertices = vertices;
   this->indices = indices;
   this->textures = textures;
@@ -13,7 +14,7 @@ Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std:
   SetupMesh();
 }
 
-Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, glm::vec3 color) {
+Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices, const glm::vec3& color) {
   this->vertices = vertices;
   this->indices = indices;
   this->color = color;

@@ -32,7 +32,7 @@ void Camera::ProcessKeyboard(Camera_Movement direction, float delta_time) {
   if (direction == RIGHT) position += right_ * velocity;
 };
 
-void Camera::ProcessMouseMovement(float xoffset, float yoffset, const float mouse_sensitivity, bool constrain_pitch) {
+void Camera::ProcessMouseMovement(float xoffset, float yoffset, float mouse_sensitivity, bool constrain_pitch) {
   xoffset *= mouse_sensitivity;
   yoffset *= mouse_sensitivity;
 
@@ -82,7 +82,7 @@ void Camera::LookAtOrigin() {
   yaw = glm::degrees(atan2(front.z, front.x));
 }
 
-void Camera::LookAt(glm::vec3 target)
+void Camera::LookAt(const glm::vec3& target)
 
 {
   front = glm::normalize(target - position);
