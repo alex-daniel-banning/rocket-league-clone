@@ -284,3 +284,94 @@ TEST(SphereBoxResolution, ZeroRelativeVelocity_OnlyAdjustsPosition) {
   EXPECT_FALSE(still_colliding)
       << "Objects should no longer be penetrating after resolution";
 }
+
+// --- Immovable box (mass <= 0) tests ---
+
+TEST(SphereBoxImmovable, SphereBouncesOffImmovableBox) {
+  engine::physics::Sphere sphere(1.0f, 1.0f, glm::vec3(1.499f, 0.0f, 0.0f),
+                                 glm::vec3(-2.0f, 0.0f, 0.0f));
+  engine::physics::Box box(glm::vec3(1.0f), glm::vec3(0.0f), glm::vec3(0.0f),
+                           0.0f, glm::quat());
+
+  glm::vec3 box_vel_before = box.velocity;
+  glm::vec3 box_pos_before = box.position;
+
+  engine::physics::Contact contact;
+  ASSERT_TRUE(
+      engine::physics::Collisions::ComputeContact(box, sphere, contact));
+  engine::physics::Collisions::ResolveElasticCollision(box, sphere, contact);
+
+  EXPECT_GT(sphere.velocity.x, 0.0f)
+      << "Sphere should bounce back in the positive direction";
+  TestUtil::ExpectVec3Near(box_vel_before, box.velocity,
+                           "Immovable box velocity should not change");
+  TestUtil::ExpectVec3Near(box_pos_before, box.position,
+                           "Immovable box position should not change");
+  EXPECT_EQ(box.angular_velocity, glm::vec3(0.0f))
+      << "Immovable box should not rotate";
+}
+
+TEST(SphereBoxImmovable, OffCenterHit_ImmovableBoxUnchanged) {
+  engine::physics::Sphere sphere(1.0f, 1.0f, glm::vec3(1.499f, 0.3f, 0.0f),
+                                 glm::vec3(-2.0f, 0.0f, 0.0f));
+  engine::physics::Box box(glm::vec3(1.0f), glm::vec3(0.0f), glm::vec3(0.0f),
+                           0.0f, glm::quat());
+
+  glm::vec3 box_vel_before = box.velocity;
+  glm::vec3 box_pos_before = box.position;
+
+  engine::physics::Contact contact;
+  ASSERT_TRUE(
+      engine::physics::Collisions::ComputeContact(box, sphere, contact));
+  engine::physics::Collisions::ResolveElasticCollision(box, sphere, contact);
+
+  TestUtil::ExpectVec3Near(box_vel_before, box.velocity,
+                           "Immovable box velocity should not change");
+  TestUtil::ExpectVec3Near(box_pos_before, box.position,
+                           "Immovable box position should not change");
+  EXPECT_EQ(box.angular_velocity, glm::vec3(0.0f))
+      << "Immovable box should not rotate";
+  EXPECT_GT(glm::length(sphere.velocity), 0.0f)
+      << "Sphere should be deflected";
+}
+
+TEST(SphereBoxImmovable, PenetrationCorrection_OnlySphereMovesOut) {
+  engine::physics::Sphere sphere(1.0f, 1.0f, glm::vec3(1.4f, 0.0f, 0.0f),
+                                 glm::vec3(-2.0f, 0.0f, 0.0f));
+  engine::physics::Box box(glm::vec3(1.0f), glm::vec3(0.0f), glm::vec3(0.0f),
+                           0.0f, glm::quat());
+
+  glm::vec3 box_pos_before = box.position;
+
+  engine::physics::Contact contact;
+  ASSERT_TRUE(
+      engine::physics::Collisions::ComputeContact(box, sphere, contact));
+  engine::physics::Collisions::ResolveElasticCollision(box, sphere, contact);
+
+  TestUtil::ExpectVec3Near(box_pos_before, box.position,
+                           "Immovable box should not be displaced");
+
+  engine::physics::Contact contact_after;
+  EXPECT_FALSE(
+      engine::physics::Collisions::ComputeContact(box, sphere, contact_after))
+      << "Objects should no longer be penetrating after resolution";
+}
+
+TEST(SphereBoxImmovable, KineticEnergyConserved_ElasticBounce) {
+  engine::physics::Sphere sphere(1.0f, 1.0f, glm::vec3(1.499f, 0.0f, 0.0f),
+                                 glm::vec3(-2.0f, 0.0f, 0.0f));
+  engine::physics::Box box(glm::vec3(1.0f), glm::vec3(0.0f), glm::vec3(0.0f),
+                           0.0f, glm::quat());
+
+  float ke_before = 0.5f * sphere.mass * glm::dot(sphere.velocity, sphere.velocity);
+
+  engine::physics::Contact contact;
+  ASSERT_TRUE(
+      engine::physics::Collisions::ComputeContact(box, sphere, contact));
+  engine::physics::Collisions::ResolveElasticCollision(box, sphere, contact);
+
+  float ke_after = 0.5f * sphere.mass * glm::dot(sphere.velocity, sphere.velocity);
+
+  EXPECT_NEAR(ke_after, ke_before, 1e-3f)
+      << "Sphere kinetic energy should be conserved when bouncing off immovable box";
+}

@@ -90,23 +90,19 @@ Renderer::Renderer(const float screen_width, const float screen_height) {
   InitLine();
 }
 
-void Renderer::DrawBox(const engine::physics::Box& box,
-                       engine::render::Shader& shader, const Camera& camera) {
+void Renderer::DrawBox(const engine::physics::Box& box, engine::render::Shader& shader, const Camera& camera) {
   glm::mat4 model = glm::mat4(1.0f);
   glm::mat4 view;
   view = camera.GetViewMatrix();
   glm::mat4 projection;
-  projection = glm::perspective(
-      camera.projection.fov, screen_width_ / screen_height_,
-      camera.projection.near_plane, camera.projection.far_plane);
+  projection = glm::perspective(camera.projection.fov, screen_width_ / screen_height_, camera.projection.near_plane,
+                                camera.projection.far_plane);
   model = glm::translate(model, box.position);
   model = model * glm::toMat4(box.rotation);
-  model =
-      glm::scale(model, glm::vec3(box.Size().x, box.Size().y, box.Size().z));
+  model = glm::scale(model, glm::vec3(box.Size().x, box.Size().y, box.Size().z));
   shader.SetMat4("model", model);
   shader.SetMat4("view", view);
   shader.SetMat4("projection", projection);
-  shader.SetVec3("diffuseColor", glm::vec3(0.4f, 0.4f, 0.65f));
   glBindVertexArray(cube_vao_);
   glDrawArrays(GL_TRIANGLES, 0, 36);
   glBindVertexArray(0);
@@ -123,20 +119,16 @@ void Renderer::DrawBox(const engine::physics::Box& box, Shader& shader) {
   glBindVertexArray(0);
 }
 
-void Renderer::DrawBoxWireframe(const engine::physics::Box& box,
-                                engine::render::Shader& shader,
-                                const Camera& camera) {
+void Renderer::DrawBoxWireframe(const engine::physics::Box& box, engine::render::Shader& shader, const Camera& camera) {
   glm::mat4 model = glm::mat4(1.0f);
   glm::mat4 view;
   view = camera.GetViewMatrix();
   glm::mat4 projection;
-  projection = glm::perspective(
-      camera.projection.fov, screen_width_ / screen_height_,
-      camera.projection.near_plane, camera.projection.far_plane);
+  projection = glm::perspective(camera.projection.fov, screen_width_ / screen_height_, camera.projection.near_plane,
+                                camera.projection.far_plane);
   model = glm::translate(model, box.position);
   model = model * glm::toMat4(box.rotation);
-  model =
-      glm::scale(model, glm::vec3(box.Size().x, box.Size().y, box.Size().z));
+  model = glm::scale(model, glm::vec3(box.Size().x, box.Size().y, box.Size().z));
   shader.Use();
   shader.SetMat4("model", model);
   shader.SetMat4("view", view);
@@ -150,14 +142,11 @@ void Renderer::DrawBoxWireframe(const engine::physics::Box& box,
   glBindVertexArray(0);
 }
 
-void Renderer::DrawSphere(const engine::physics::Sphere& sphere,
-                          engine::render::Shader& shader,
-                          const Camera& camera) {
+void Renderer::DrawSphere(const engine::physics::Sphere& sphere, engine::render::Shader& shader, const Camera& camera) {
   glm::mat4 model = MakeModelMatrix(sphere);
   glm::mat4 view = camera.GetViewMatrix();
-  glm::mat4 projection = glm::perspective(
-      camera.projection.fov, screen_width_ / screen_height_,
-      camera.projection.near_plane, camera.projection.far_plane);
+  glm::mat4 projection = glm::perspective(camera.projection.fov, screen_width_ / screen_height_,
+                                          camera.projection.near_plane, camera.projection.far_plane);
 
   shader.Use();
   shader.SetMat4("model", model);
@@ -168,8 +157,7 @@ void Renderer::DrawSphere(const engine::physics::Sphere& sphere,
   glBindVertexArray(0);
 }
 
-void Renderer::DrawSphere(const engine::physics::Sphere& sphere,
-                          Shader& shader) {
+void Renderer::DrawSphere(const engine::physics::Sphere& sphere, Shader& shader) {
   glm::mat4 model_matrix = glm::mat4(1.0f);
   model_matrix = glm::translate(model_matrix, sphere.position);
   model_matrix = glm::scale(model_matrix, glm::vec3(sphere.radius));
@@ -179,18 +167,15 @@ void Renderer::DrawSphere(const engine::physics::Sphere& sphere,
   glBindVertexArray(0);
 }
 
-void Renderer::DrawSphereWireframe(const engine::physics::Sphere& sphere,
-                                   engine::render::Shader& shader,
+void Renderer::DrawSphereWireframe(const engine::physics::Sphere& sphere, engine::render::Shader& shader,
                                    const Camera& camera) {
   glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
   DrawSphere(sphere, shader, camera);
 }
 
 // todo, remove this, too coupled perhaps
-void Renderer::DrawModel(engine::render::Model& model,
-                         engine::render::Shader& shader, const Camera& camera,
-                         glm::vec3 position, glm::vec3 scale,
-                         glm::quat rotation) {
+void Renderer::DrawModel(engine::render::Model& model, engine::render::Shader& shader, const Camera& camera,
+                         glm::vec3 position, glm::vec3 scale, glm::quat rotation) {
   shader.Use();
   glm::mat4 model_matrix = glm::mat4(1.0f);
   model_matrix = glm::translate(model_matrix, position);
@@ -199,9 +184,8 @@ void Renderer::DrawModel(engine::render::Model& model,
   glm::mat4 view;
   view = camera.GetViewMatrix();
   glm::mat4 projection;
-  projection = glm::perspective(
-      camera.projection.fov, screen_width_ / screen_height_,
-      camera.projection.near_plane, camera.projection.far_plane);
+  projection = glm::perspective(camera.projection.fov, screen_width_ / screen_height_, camera.projection.near_plane,
+                                camera.projection.far_plane);
   shader.SetMat4("model", model_matrix);
   shader.SetMat4("view", view);
   shader.SetMat4("projection", projection);
@@ -224,20 +208,17 @@ void Renderer::DrawPhysicsPlane(const physics::Plane& plane, Shader& shader) {
   glBindVertexArray(0);
 }
 
-void Renderer::DrawPhysicsPlane(const physics::Plane& plane, Shader& shader,
-                                const Camera& camera) {
+void Renderer::DrawPhysicsPlane(const physics::Plane& plane, Shader& shader, const Camera& camera) {
   glm::mat4 model_matrix = glm::mat4(1.0f);
   glm::mat4 view;
   view = camera.GetViewMatrix();
   glm::mat4 projection;
-  projection = glm::perspective(
-      camera.projection.fov, screen_width_ / screen_height_,
-      camera.projection.near_plane, camera.projection.far_plane);
+  projection = glm::perspective(camera.projection.fov, screen_width_ / screen_height_, camera.projection.near_plane,
+                                camera.projection.far_plane);
 
   model_matrix = glm::translate(model_matrix, plane.GetPosition());
   model_matrix = model_matrix * glm::mat4_cast(plane.GetRotation());
-  model_matrix = glm::scale(
-      model_matrix, glm::vec3(plane.GetXLength(), 1.0f, plane.GetZLength()));
+  model_matrix = glm::scale(model_matrix, glm::vec3(plane.GetXLength(), 1.0f, plane.GetZLength()));
   shader.SetMat4("model", model_matrix);
   shader.SetMat4("view", view);
   shader.SetMat4("projection", projection);
@@ -247,15 +228,13 @@ void Renderer::DrawPhysicsPlane(const physics::Plane& plane, Shader& shader,
   glBindVertexArray(0);
 }
 
-void Renderer::DrawPhysicsPlaneNormal(const physics::Plane& plane,
-                                      Shader& shader, const Camera& camera) {
+void Renderer::DrawPhysicsPlaneNormal(const physics::Plane& plane, Shader& shader, const Camera& camera) {
   glm::mat4 model_matrix = glm::mat4(1.0f);
   glm::mat4 view;
   view = camera.GetViewMatrix();
   glm::mat4 projection;
-  projection = glm::perspective(
-      camera.projection.fov, screen_width_ / screen_height_,
-      camera.projection.near_plane, camera.projection.far_plane);
+  projection = glm::perspective(camera.projection.fov, screen_width_ / screen_height_, camera.projection.near_plane,
+                                camera.projection.far_plane);
 
   model_matrix = glm::translate(model_matrix, plane.GetPosition());
   model_matrix = model_matrix * glm::mat4_cast(plane.GetRotation());
@@ -286,17 +265,14 @@ void Renderer::InitCube() {
 
   glBindVertexArray(cube_vao_);
   glBindBuffer(GL_ARRAY_BUFFER, cube_vbo_);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(cube_vertices), cube_vertices,
-               GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(cube_vertices), cube_vertices, GL_STATIC_DRAW);
 
   // Positions
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float),
-                        static_cast<const void*>(nullptr));
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), static_cast<const void*>(nullptr));
   glEnableVertexAttribArray(0);
 
   // Normals
-  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float),
-                        reinterpret_cast<const void*>(3 * sizeof(float)));
+  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), reinterpret_cast<const void*>(3 * sizeof(float)));
   glEnableVertexAttribArray(1);
 
   glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -309,17 +285,14 @@ void Renderer::InitPlane() {
 
   glBindVertexArray(plane_vao_);
   glBindBuffer(GL_ARRAY_BUFFER, plane_vbo_);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(plane_vertices), plane_vertices,
-               GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(plane_vertices), plane_vertices, GL_STATIC_DRAW);
 
   // Positions
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float),
-                        static_cast<const void*>(nullptr));
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), static_cast<const void*>(nullptr));
   glEnableVertexAttribArray(0);
 
   // Normals
-  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float),
-                        reinterpret_cast<const void*>(3 * sizeof(float)));
+  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), reinterpret_cast<const void*>(3 * sizeof(float)));
   glEnableVertexAttribArray(1);
 
   glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -335,13 +308,11 @@ void Renderer::InitLine() {
 
   glBindVertexArray(line_vao_);
   glBindBuffer(GL_ARRAY_BUFFER, line_vbo_);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(line_vertices), line_vertices,
-               GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(line_vertices), line_vertices, GL_STATIC_DRAW);
 
   // Positions
   glEnableVertexAttribArray(0);
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3),
-                        static_cast<const void*>(nullptr));
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), static_cast<const void*>(nullptr));
 
   glBindVertexArray(0);
 }
@@ -354,16 +325,13 @@ void Renderer::InitWireCube() {
   glBindVertexArray(cube_wire_vao_);
 
   glBindBuffer(GL_ARRAY_BUFFER, cube_wire_vbo_);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(cube_wire_vertices), cube_wire_vertices,
-               GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(cube_wire_vertices), cube_wire_vertices, GL_STATIC_DRAW);
 
   glEnableVertexAttribArray(0);
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float),
-                        static_cast<const void*>(nullptr));
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), static_cast<const void*>(nullptr));
 
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cube_wire_ebo_);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(cube_wire_indices),
-               cube_wire_indices, GL_STATIC_DRAW);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(cube_wire_indices), cube_wire_indices, GL_STATIC_DRAW);
 
   glBindVertexArray(0);
 }
@@ -455,23 +423,19 @@ void Renderer::InitSphere() {
 
   // Vertex buffer
   glBindBuffer(GL_ARRAY_BUFFER, vbo);
-  glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex),
-               vertices.data(), GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW);
 
   // Element buffer
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int),
-               indices.data(), GL_STATIC_DRAW);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
 
   // Position attribute
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex),
-                        static_cast<const void*>(nullptr));
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), static_cast<const void*>(nullptr));
   glEnableVertexAttribArray(0);
 
   // Normal attribute
-  glVertexAttribPointer(
-      1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex),
-      reinterpret_cast<const void*>(offsetof(Vertex, normal)));
+  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex),
+                        reinterpret_cast<const void*>(offsetof(Vertex, normal)));
   glEnableVertexAttribArray(1);
 
   glBindVertexArray(0);

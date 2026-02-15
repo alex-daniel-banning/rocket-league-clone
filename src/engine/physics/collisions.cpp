@@ -2,6 +2,9 @@
 #include <algorithm>
 #include <engine/physics/collision_type.hpp>
 #include <engine/physics/collisions.hpp>
+#include <stdexcept>
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/quaternion.hpp>
 
 namespace {
 glm::vec3 CalculateCentroid(const std::vector<glm::vec3> points) {
@@ -19,62 +22,9 @@ glm::vec3 CalculateCentroid(const std::vector<glm::vec3> points) {
   return glm::vec3(x, y, z);
 }
 
-float CalculateOverlap(glm::vec3 axis, const engine::physics::Box& box, const engine::physics::Plane& plane,
-                       const std::array<glm::vec3, 3> axes_a, const std::array<glm::vec3, 3> axes_b) {
-  // Project box centers onto axis
-  float proj_a = glm::dot(box.position, axis);
-  float proj_b = glm::dot(plane.GetPosition(), axis);
-
-  // Calculate extents (half-widths of projections)
-  float r_a = std::abs(glm::dot(axes_a[0], axis)) * box.Size().x * 0.5f +
-              std::abs(glm::dot(axes_a[1], axis)) * box.Size().y * 0.5f +
-              std::abs(glm::dot(axes_a[2], axis)) * box.Size().z * 0.5f;
-
-  // Skip Y axis because Plane is implemented so that the Y axis has no thickness.
-  float r_b = std::abs(glm::dot(axes_b[0], axis)) * plane.GetXLength() * 0.5f +
-              std::abs(glm::dot(axes_b[2], axis)) * plane.GetZLength() * 0.5f;
-
-  float distance = std::abs(proj_a - proj_b);
-  return (r_a + r_b) - distance;
-}
 };  // namespace
 
 namespace engine::physics {
-
-// TODO, pass in Contact struct
-bool Collisions::Collides(const Plane& plane, Sphere sphere) {
-  return Collisions::DistanceSquared(plane, sphere) < sphere.radius * sphere.radius;
-};
-
-void Collisions::HandleElasticCollision(const Plane& plane, Sphere& sphere) {
-  if (!Collides(plane, sphere)) {
-    return;
-  }
-  glm::vec3 v_perpendicular = glm::dot(sphere.velocity, plane.GetNormal()) * plane.GetNormal();
-  glm::vec3 v_parallel = sphere.velocity - v_perpendicular;
-  // TODO, penetration correction
-  if (glm::length(v_perpendicular) < 0.001f) {
-    float distance_from_plane = glm::sqrt(Collisions::DistanceSquared(plane, sphere));
-    glm::vec3 closest;
-    closest.x = glm::clamp(sphere.position.x, plane.GetMin().x, plane.GetMax().x);
-    closest.y = glm::clamp(sphere.position.y, plane.GetMin().y, plane.GetMax().y);
-    closest.z = glm::clamp(sphere.position.z, plane.GetMin().z, plane.GetMax().z);
-    sphere.position = closest + (sphere.radius * plane.GetNormal());
-    return;
-  }
-  sphere.velocity = v_parallel - v_perpendicular;
-}
-
-float Collisions::DistanceSquared(const Plane& plane, Sphere sphere) {
-  // find closes point on the aabb to the sphere center
-  glm::vec3 closest;
-  closest.x = glm::clamp(sphere.position.x, plane.GetMin().x, plane.GetMax().x);
-  closest.y = glm::clamp(sphere.position.y, plane.GetMin().y, plane.GetMax().y);
-  closest.z = glm::clamp(sphere.position.z, plane.GetMin().z, plane.GetMax().z);
-
-  float distance_squared = glm::dot(closest - sphere.position, closest - sphere.position);
-  return distance_squared;
-};
 
 bool Collisions::ComputeContact(const Box& box, const Sphere& sphere, Contact& out) {
   glm::vec3 sphere_to_box = sphere.position - box.position;
@@ -120,7 +70,7 @@ void Collisions::ResolveCollision(Box& box, Sphere& sphere, Contact contact, flo
   assert(rel_vel_along_normal <= 0.0f);
 
   // Linear mass component
-  float mass_component = (1.0f / sphere.mass) + (1.0f / box.mass);
+  float mass_component = (1.0f / sphere.mass) + box.mass_inv;
 
   // Angular mass component
   glm::vec3 r_cross_n = glm::cross(r, n);
@@ -135,16 +85,16 @@ void Collisions::ResolveCollision(Box& box, Sphere& sphere, Contact contact, flo
 
   // Apply the impulse
   sphere.velocity += impulse_vector / sphere.mass;
-  box.velocity -= impulse_vector / box.mass;
+  box.velocity -= impulse_vector * box.mass_inv;
   box.angular_velocity += i_world_inv * glm::cross(r, -impulse_vector);
 
   // Penetration correction
   if (contact.penetration > 0.0f) {
     // Separate the two along normal
     float total_correction = contact.penetration + separation_slop;
-    float total_inv_mass = (1.0f / sphere.mass) + (1.0f / box.mass);
+    float total_inv_mass = (1.0f / sphere.mass) + box.mass_inv;
     float sphere_correction = (total_correction / total_inv_mass) * (1.0f / sphere.mass);
-    float box_correction = (total_correction / total_inv_mass) * (1.0f / box.mass);
+    float box_correction = (total_correction / total_inv_mass) * box.mass_inv;
     sphere.position += contact.normal * sphere_correction;
     box.position -= contact.normal * box_correction;
   }
@@ -230,6 +180,9 @@ bool Collisions::ComputeContact(const Box& box_a, const Box& box_b, Contact& out
 }
 
 void Collisions::ResolveCollision(Box& box_a, Box& box_b, Contact contact, float coefficient_of_restitution) {
+  if (box_a.mass_inv == 0.0f && box_b.mass_inv == 0.0f) {
+    throw std::logic_error("Two immovable objects should not have collision resolution applied.");
+  }
   // TODO, handle tunneling
   const float separation_slop = 1e-3f;
 
@@ -253,7 +206,7 @@ void Collisions::ResolveCollision(Box& box_a, Box& box_b, Contact contact, float
   // Compute effective mass along collision normal
   glm::vec3 r_cross_n_a = glm::cross(r_a, contact.normal);
   glm::vec3 r_cross_n_b = glm::cross(r_b, contact.normal);
-  float m_eff = (1 / box_a.mass) + (1 / box_b.mass) +
+  float m_eff = box_a.mass_inv + box_b.mass_inv +
                 glm::dot(contact.normal, glm::cross(i_world_inv_a * r_cross_n_a, r_a)) +
                 glm::dot(contact.normal, glm::cross(i_world_inv_b * r_cross_n_b, r_b));
   // Impulse magnitude
@@ -261,8 +214,8 @@ void Collisions::ResolveCollision(Box& box_a, Box& box_b, Contact contact, float
   float j = -(1.0f + coefficient_of_restitution) * v_n / m_eff;
   glm::vec3 impulse = j * contact.normal;
   // Accumulate the impulse value
-  box_a.velocity += impulse / box_a.mass;
-  box_b.velocity -= impulse / box_b.mass;
+  box_a.velocity += impulse * box_a.mass_inv;
+  box_b.velocity -= impulse * box_b.mass_inv;
   box_a.angular_velocity += i_world_inv_a * glm::cross(r_a, impulse);
   box_b.angular_velocity -= i_world_inv_b * glm::cross(r_b, impulse);
 
@@ -270,89 +223,13 @@ void Collisions::ResolveCollision(Box& box_a, Box& box_b, Contact contact, float
   if (contact.penetration > 0.0f) {
     // Separate the two along normal
     float total_correction = contact.penetration + separation_slop;
-    float total_inv_mass = (1.0f / box_a.mass) + (1.0f / box_b.mass);
-    float box_a_correction = (total_correction / total_inv_mass) * (1.0f / box_a.mass);
-    float box_b_correction = (total_correction / total_inv_mass) * (1.0f / box_b.mass);
+    float total_inv_mass = box_a.mass_inv + box_b.mass_inv;
+    float box_a_correction = (total_correction / total_inv_mass) * box_a.mass_inv;
+    float box_b_correction = (total_correction / total_inv_mass) * box_b.mass_inv;
     box_a.position -= contact.normal * box_a_correction;
     box_b.position += contact.normal * box_b_correction;
   }
   return;
-}
-
-bool Collisions::ComputeContact(const Box& box, const Plane& plane, Contact& out) {
-  const float epsilon = 1e-6f;
-  float penetration = std::numeric_limits<float>::max();
-  glm::vec3 penetration_axis;
-
-  const std::array<glm::vec3, 3> axes_box = GetAxesFromQuaternion(box.rotation);
-  const std::array<glm::vec3, 3> axes_plane = GetAxesFromQuaternion(plane.GetRotation());
-
-  enum class AxisSource { FACE_A, FACE_B, EDGE_EDGE };
-  AxisSource axis_source;
-
-  std::vector<glm::vec3> axes_to_test;
-  axes_to_test.reserve(10);
-  axes_to_test.insert(axes_to_test.end(), axes_box.begin(), axes_box.end());
-  axes_to_test.push_back(axes_plane[1]);
-  for (const glm::vec3 edge_a : axes_box) {
-    for (int i = 0; i < axes_plane.size(); i += 2) {
-      // Skip the y axis because that axis is the flat axis for this implementation of Plane
-      glm::vec3 axis = glm::cross(edge_a, axes_plane[i]);
-      if (glm::length(axis) >= epsilon) axes_to_test.push_back(glm::normalize(axis));
-    }
-  }
-
-  for (int i = 0; i < axes_to_test.size(); i++) {
-    float overlap = ::CalculateOverlap(axes_to_test[i], box, plane, axes_box, axes_plane);
-    if (overlap <= 0) return false;
-    // Bias edge-edge overlaps so face axes are preferred when close
-    if (overlap < penetration) {
-      penetration = overlap;
-      penetration_axis = axes_to_test[i];
-      if (glm::dot(plane.GetPosition() - box.position, penetration_axis) < 0) penetration_axis = -penetration_axis;
-      if (i < 3)
-        axis_source = AxisSource::FACE_A;
-      else if (i < 4)
-        axis_source = AxisSource::FACE_B;
-      else
-        axis_source = AxisSource::EDGE_EDGE;
-    }
-  }
-
-  // continue...
-  std::vector<glm::vec3> contact_points;
-  if (axis_source == AxisSource::EDGE_EDGE) {
-    contact_points = ClipEdgeEdge(box, box_b, penetration_axis, axes_box, axes_plane);
-  } else {
-    const auto& incident_axes = (axis_source == AxisSource::FACE_A) ? axes_plane : axes_box;
-    bool has_parallel = false;
-    bool has_perpendicular = false;
-    for (const auto& axis : incident_axes) {
-      float d = std::abs(glm::dot(axis, penetration_axis));
-      if (d > 0.999f) has_parallel = true;
-      if (d < 0.001f) has_perpendicular = true;
-    }
-    if (has_parallel) {
-      contact_points = ClipFaceFace(box, box_b, penetration_axis, axes_box, axes_plane);
-    } else if (has_perpendicular) {
-      contact_points = (axis_source == AxisSource::FACE_A)
-                           ? ClipFaceFace(box, box_b, penetration_axis, axes_box, axes_plane)
-                           : ClipFaceFace(box_b, box, penetration_axis, axes_plane, axes_box);
-    } else {
-      contact_points = (axis_source == AxisSource::FACE_A)
-                           ? ClipCornerToFace(box_b, box, penetration_axis, axes_plane, axes_box)
-                           : ClipCornerToFace(box, box_b, penetration_axis, axes_box, axes_plane);
-    }
-  }
-
-  for (auto& p : contact_points) {
-    p = p + (0.5f * penetration * penetration_axis);
-  }
-  out.points.insert(out.points.end(), contact_points.begin(), contact_points.end());
-  out.normal = penetration_axis;
-  out.penetration = penetration;
-  assert(out.points.size() > 0);
-  return true;
 }
 
 std::array<glm::vec3, 3> Collisions::GetAxesFromQuaternion(glm::quat q) {  // clang-format off
@@ -513,7 +390,7 @@ std::vector<glm::vec3> Collisions::ClipEdgeEdge(const Box& box_ref, const Box& b
     for (int j = 0; j < 3; j++) {
       glm::vec3 cross = glm::cross(axes_ref[i], axes_inc[j]);
       float cross_length = glm::length(cross);
-      if (cross_length < 1e-6f) continue;
+      if (cross_length < 1e-6f) continue;  // epsilon
       glm::vec3 cross_normalized = cross / cross_length;
       float alignment = std::abs(glm::dot(cross_normalized, penetration_axis));
       if (alignment > best_alignment) {

@@ -15,15 +15,15 @@ class Match {
       ball_ = ball;
       return *this;
     }
-    Builder& WithGround(physics::Plane ground) {
-      ground_ = ground;
+    Builder& WithGround(physics::Box ground) {
+      ground_.emplace(std::move(ground));
       return *this;
     }
-    Builder& WithWall(physics::Plane wall) {
+    Builder& WithWall(physics::Box wall) {
       walls_.push_back(wall);
       return *this;
     }
-    Builder& WithWalls(std::vector<physics::Plane> walls) {
+    Builder& WithWalls(std::vector<physics::Box> walls) {
       walls_ = std::move(walls);
       return *this;
     }
@@ -39,22 +39,22 @@ class Match {
 
    private:
     std::optional<physics::Sphere> ball_;
-    std::optional<physics::Plane> ground_;
-    std::vector<physics::Plane> walls_;
+    std::optional<physics::Box> ground_;
+    std::vector<physics::Box> walls_;
     std::vector<physics::Box> boxes_;
   };
 
   const std::optional<physics::Sphere>& GetBall() const { return ball_; }
   const std::vector<physics::Box>& GetBoxes() const { return boxes_; }
-  const std::optional<physics::Plane>& GetGround() const { return ground_; }
-  const std::vector<physics::Plane>& GetWalls() const { return walls_; }
+  const std::optional<physics::Box>& GetGround() const { return ground_; }
+  const std::vector<physics::Box>& GetWalls() const { return walls_; }
   void Tick(float delta_time);
   void Reset();
 
  private:
-  Match(std::optional<physics::Sphere> ball, std::optional<physics::Plane> ground, std::vector<physics::Plane> walls,
+  Match(std::optional<physics::Sphere> ball, std::optional<physics::Box> ground, std::vector<physics::Box> walls,
         std::vector<physics::Box> boxes)
-      : ball_(ball), initial_ball_(ball), ground_(ground), boxes_(boxes), initial_boxes_(boxes), walls_(std::move(walls)) {}
+      : ball_(ball), initial_ball_(ball), ground_(ground), boxes_(boxes), initial_boxes_(boxes), walls_(walls) {}
 
   static constexpr float fixed_dt = 1.0f / 120.0f;
   float accumulator_ = 0.0f;
@@ -62,8 +62,8 @@ class Match {
   const std::vector<physics::Box> initial_boxes_;
   std::optional<physics::Sphere> ball_;
   std::vector<physics::Box> boxes_;
-  std::optional<physics::Plane> ground_;
-  std::vector<physics::Plane> walls_;
+  std::optional<physics::Box> ground_;
+  std::vector<physics::Box> walls_;
 
   void HandleCollisions();
 };

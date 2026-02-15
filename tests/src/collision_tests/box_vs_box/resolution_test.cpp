@@ -2,11 +2,16 @@
 #include <engine/physics/box_builder.hpp>
 #include <engine/physics/collisions.hpp>
 #include <gtest/gtest.h>
+#include <stdexcept>
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/quaternion.hpp>
+
+#include "test_util.hpp"
 
 TEST(BoxBoxResolution, HeadOnCollision_ProducesNoRotation) {
   // clang-format off
-  auto box_a = BoxBuilder().Build();
-  auto box_b = BoxBuilder()
+  auto box_a = engine::physics::BoxBuilder().Build();
+  auto box_b = engine::physics::BoxBuilder()
     .Position(0.999f, 0.0f, 0.0f)
     .Velocity(glm::vec3(-1.0f, 0.0f, 0.0f))
     .Build();
@@ -25,8 +30,8 @@ TEST(BoxBoxResolution, HeadOnCollision_ProducesNoRotation) {
 
 TEST(BoxBoxResolution, LighterBoxMovesFaster) {
   // clang-format off
-  auto box_a = BoxBuilder().Build();
-  auto box_b = BoxBuilder()
+  auto box_a = engine::physics::BoxBuilder().Build();
+  auto box_b = engine::physics::BoxBuilder()
     .Position(0.999f, 0.0f, 0.0f)
     .Velocity(glm::vec3(-1.0f, 0.0f, 0.0f))
     .Mass(3.0f)
@@ -43,10 +48,10 @@ TEST(BoxBoxResolution, LighterBoxMovesFaster) {
 
 TEST(BoxBoxResolution, SameDirectionCollision) {
   // clang-format off
-  auto box_a = BoxBuilder()
+  auto box_a = engine::physics::BoxBuilder()
     .Velocity(glm::vec3(-0.5f, 0.0f, 0.0f))
     .Build();
-  auto box_b = BoxBuilder()
+  auto box_b = engine::physics::BoxBuilder()
     .Position(0.999f, 0.0f, 0.0f)
     .Velocity(glm::vec3(-1.0f, 0.0f, 0.0f))
     .Mass(3.0f)
@@ -63,10 +68,10 @@ TEST(BoxBoxResolution, SameDirectionCollision) {
 
 TEST(BoxBoxResolution, ZeroRelativeVelocity_ShouldCreateNoImpulse) {
   // clang-format off
-  auto box_a = BoxBuilder()
+  auto box_a = engine::physics::BoxBuilder()
     .Velocity(glm::vec3(-1.0f, 0.0f, 0.0f))
     .Build();
-  auto box_b = BoxBuilder()
+  auto box_b = engine::physics::BoxBuilder()
     .Position(0.999f, 0.0f, 0.0f)
     .Velocity(glm::vec3(-1.0f, 0.0f, 0.0f))
     .Mass(3.0f)
@@ -85,8 +90,8 @@ TEST(BoxBoxResolution, ZeroRelativeVelocity_ShouldCreateNoImpulse) {
 
 TEST(BoxBoxResolution, OffCenterImpact_ProducesAngularVelocity) {
   // clang-format off
-  auto box_a = BoxBuilder().Build();
-  auto box_b = BoxBuilder()
+  auto box_a = engine::physics::BoxBuilder().Build();
+  auto box_b = engine::physics::BoxBuilder()
     .Position(0.999f, 0.5f, 0.0f)
     .Velocity(glm::vec3(-1.0f, 0.0f, 0.0f))
     .Build();
@@ -105,8 +110,8 @@ TEST(BoxBoxResolution, OffCenterImpact_ProducesAngularVelocity) {
 
 TEST(BoxBoxResolution, RotationOnlyCollision) {
   // clang-format off
-  auto box_a = BoxBuilder().Build();
-  auto box_b = BoxBuilder()
+  auto box_a = engine::physics::BoxBuilder().Build();
+  auto box_b = engine::physics::BoxBuilder()
     .Position(0.999f, 0.5f, 0.0f)
     .AngularVelocity(0.0f, 0.0f, -5.0f)
     .Build();
@@ -125,8 +130,8 @@ TEST(BoxBoxResolution, RotationOnlyCollision) {
 TEST(BoxBoxResolution, OrientationIndependence) {
   // --- Axis-aligned baseline (same as OffCenterImpact) ---
   // clang-format off
-  auto box_a_aa = BoxBuilder().Build();
-  auto box_b_aa = BoxBuilder()
+  auto box_a_aa = engine::physics::BoxBuilder().Build();
+  auto box_b_aa = engine::physics::BoxBuilder()
     .Position(0.999f, 0.5f, 0.0f)
     .Velocity(-1.0f, 0.0f, 0.0f)
     .Build();
@@ -139,10 +144,10 @@ TEST(BoxBoxResolution, OrientationIndependence) {
   glm::quat q = glm::angleAxis(glm::radians(47.0f), glm::normalize(glm::vec3(1.0f, 2.0f, 3.0f)));
 
   // clang-format off
-  auto box_a_rot = BoxBuilder()
+  auto box_a_rot = engine::physics::BoxBuilder()
     .Rotation(q)
     .Build();
-  auto box_b_rot = BoxBuilder()
+  auto box_b_rot = engine::physics::BoxBuilder()
     .Position(q * glm::vec3(0.999f, 0.5f, 0.0f))
     .Velocity(q * glm::vec3(-1.0f, 0.0f, 0.0f))
     .Rotation(q)
@@ -167,8 +172,8 @@ TEST(BoxBoxResolution, OrientationIndependence) {
 TEST(BoxBoxResolution, ContactTypeEquivalence) {
   // Face-Face: both axis-aligned, incident box has face parallel to penetration axis
   // clang-format off
-  auto ff_a = BoxBuilder().Build();
-  auto ff_b = BoxBuilder()
+  auto ff_a = engine::physics::BoxBuilder().Build();
+  auto ff_b = engine::physics::BoxBuilder()
     .Position(0.999f, 0.0f, 0.0f)
     .Velocity(-1.0f, 0.0f, 0.0f)
     .Build();
@@ -181,8 +186,8 @@ TEST(BoxBoxResolution, ContactTypeEquivalence) {
   // Incident z-axis is perpendicular to penetration axis, no axis parallel.
   glm::quat edge_rot = glm::angleAxis(glm::radians(45.0f), glm::vec3(0.0f, 0.0f, 1.0f));
   // clang-format off
-  auto ef_a = BoxBuilder().Build();
-  auto ef_b = BoxBuilder()
+  auto ef_a = engine::physics::BoxBuilder().Build();
+  auto ef_b = engine::physics::BoxBuilder()
     .Position(0.999f, 0.0f, 0.0f)
     .Velocity(-1.0f, 0.0f, 0.0f)
     .Rotation(edge_rot)
@@ -196,8 +201,8 @@ TEST(BoxBoxResolution, ContactTypeEquivalence) {
   // penetration axis, triggering the ClipCornerToFace path.
   glm::quat corner_rot = glm::angleAxis(glm::radians(45.0f), glm::normalize(glm::vec3(0.0f, 1.0f, 1.0f)));
   // clang-format off
-  auto cf_a = BoxBuilder().Build();
-  auto cf_b = BoxBuilder()
+  auto cf_a = engine::physics::BoxBuilder().Build();
+  auto cf_b = engine::physics::BoxBuilder()
     .Position(0.999f, 0.0f, 0.0f)
     .Velocity(-1.0f, 0.0f, 0.0f)
     .Rotation(corner_rot)
@@ -235,8 +240,8 @@ float TotalKE(const engine::physics::Box& a, const engine::physics::Box& b) {
 
 TEST(BoxBoxResolution, CoefficientOfRestitution_Elastic) {
   // clang-format off
-  auto box_a = BoxBuilder().Build();
-  auto box_b = BoxBuilder()
+  auto box_a = engine::physics::BoxBuilder().Build();
+  auto box_b = engine::physics::BoxBuilder()
     .Position(0.999f, 0.5f, 0.0f)
     .Velocity(-1.0f, 0.0f, 0.0f)
     .Build();
@@ -253,8 +258,8 @@ TEST(BoxBoxResolution, CoefficientOfRestitution_Elastic) {
 
 TEST(BoxBoxResolution, CoefficientOfRestitution_PerfectlyInelastic) {
   // clang-format off
-  auto box_a = BoxBuilder().Build();
-  auto box_b = BoxBuilder()
+  auto box_a = engine::physics::BoxBuilder().Build();
+  auto box_b = engine::physics::BoxBuilder()
     .Position(0.999f, 0.5f, 0.0f)
     .Velocity(-1.0f, 0.0f, 0.0f)
     .Build();
@@ -280,8 +285,8 @@ TEST(BoxBoxResolution, CoefficientOfRestitution_PerfectlyInelastic) {
 
 TEST(BoxBoxResolution, CoefficientOfRestitution_Partial) {
   // clang-format off
-  auto box_a = BoxBuilder().Build();
-  auto box_b = BoxBuilder()
+  auto box_a = engine::physics::BoxBuilder().Build();
+  auto box_b = engine::physics::BoxBuilder()
     .Position(0.999f, 0.5f, 0.0f)
     .Velocity(-1.0f, 0.0f, 0.0f)
     .Build();
@@ -304,8 +309,8 @@ TEST(BoxBoxResolution, CoefficientOfRestitution_Partial) {
 
 TEST(BoxBoxResolution, PenetrationCorrection_FullySeparated) {
   // clang-format off
-  auto box_a = BoxBuilder().Build();
-  auto box_b = BoxBuilder()
+  auto box_a = engine::physics::BoxBuilder().Build();
+  auto box_b = engine::physics::BoxBuilder()
     .Position(0.999f, 0.0f, 0.0f)
     .Velocity(-1.0f, 0.0f, 0.0f)
     .Build();
@@ -321,10 +326,10 @@ TEST(BoxBoxResolution, PenetrationCorrection_FullySeparated) {
 
 TEST(BoxBoxResolution, PenetrationCorrection_ProportionalToInverseMass) {
   // clang-format off
-  auto box_a = BoxBuilder()
+  auto box_a = engine::physics::BoxBuilder()
     .Mass(1.0f)
     .Build();
-  auto box_b = BoxBuilder()
+  auto box_b = engine::physics::BoxBuilder()
     .Position(0.999f, 0.0f, 0.0f)
     .Velocity(-1.0f, 0.0f, 0.0f)
     .Mass(3.0f)
@@ -348,8 +353,8 @@ TEST(BoxBoxResolution, PenetrationCorrection_ProportionalToInverseMass) {
 TEST(BoxBoxResolution, Symmetry_SwappedArguments) {
   // Run 1: ComputeContact(a, b), ResolveCollision(a, b)
   // clang-format off
-  auto a1 = BoxBuilder().Build();
-  auto b1 = BoxBuilder()
+  auto a1 = engine::physics::BoxBuilder().Build();
+  auto b1 = engine::physics::BoxBuilder()
     .Position(0.999f, 0.5f, 0.0f)
     .Velocity(-1.0f, 0.0f, 0.0f)
     .Build();
@@ -360,8 +365,8 @@ TEST(BoxBoxResolution, Symmetry_SwappedArguments) {
 
   // Run 2: same setup but swapped argument order
   // clang-format off
-  auto a2 = BoxBuilder().Build();
-  auto b2 = BoxBuilder()
+  auto a2 = engine::physics::BoxBuilder().Build();
+  auto b2 = engine::physics::BoxBuilder()
     .Position(0.999f, 0.5f, 0.0f)
     .Velocity(-1.0f, 0.0f, 0.0f)
     .Build();
@@ -383,10 +388,10 @@ TEST(BoxBoxResolution, Symmetry_SwappedArguments) {
 
 TEST(BoxBoxResolution, Symmetry_EqualMassHeadOn_VelocitiesExchange) {
   // clang-format off
-  auto box_a = BoxBuilder()
+  auto box_a = engine::physics::BoxBuilder()
     .Velocity(1.0f, 0.0f, 0.0f)
     .Build();
-  auto box_b = BoxBuilder()
+  auto box_b = engine::physics::BoxBuilder()
     .Position(0.999f, 0.0f, 0.0f)
     .Velocity(-1.0f, 0.0f, 0.0f)
     .Build();
@@ -402,8 +407,8 @@ TEST(BoxBoxResolution, Symmetry_EqualMassHeadOn_VelocitiesExchange) {
 
 TEST(BoxBoxResolution, EdgeCase_LargeMassRatio) {
   // clang-format off
-  auto light = BoxBuilder().Build();
-  auto heavy = BoxBuilder()
+  auto light = engine::physics::BoxBuilder().Build();
+  auto heavy = engine::physics::BoxBuilder()
     .Position(0.999f, 0.0f, 0.0f)
     .Velocity(-1.0f, 0.0f, 0.0f)
     .Mass(1000.0f)
@@ -420,8 +425,8 @@ TEST(BoxBoxResolution, EdgeCase_LargeMassRatio) {
 TEST(BoxBoxResolution, EdgeCase_GlancingCollision) {
   // Box B approaches mostly tangentially with a small normal component
   // clang-format off
-  auto box_a = BoxBuilder().Build();
-  auto box_b = BoxBuilder()
+  auto box_a = engine::physics::BoxBuilder().Build();
+  auto box_b = engine::physics::BoxBuilder()
     .Position(0.999f, 0.5f, 0.0f)
     .Velocity(-0.1f, -1.0f, 0.0f)
     .Build();
@@ -441,8 +446,8 @@ TEST(BoxBoxResolution, EdgeCase_MultipleContactPoints) {
   // Face-Face collision produces multiple contact points.
   // Verify momentum is conserved even with multi-point contacts.
   // clang-format off
-  auto box_a = BoxBuilder().Build();
-  auto box_b = BoxBuilder()
+  auto box_a = engine::physics::BoxBuilder().Build();
+  auto box_b = engine::physics::BoxBuilder()
     .Position(0.999f, 0.0f, 0.0f)
     .Velocity(-1.0f, 0.0f, 0.0f)
     .Build();
@@ -459,4 +464,125 @@ TEST(BoxBoxResolution, EdgeCase_MultipleContactPoints) {
   EXPECT_NEAR(p_after.x, p_before.x, tol) << "Momentum (x) should be conserved with multiple contact points.";
   EXPECT_NEAR(p_after.y, p_before.y, tol) << "Momentum (y) should be conserved with multiple contact points.";
   EXPECT_NEAR(p_after.z, p_before.z, tol) << "Momentum (z) should be conserved with multiple contact points.";
+}
+
+// --- Immovable box (mass <= 0) tests ---
+
+TEST(BoxBoxImmovable, MovableBouncesOffImmovable) {
+  // clang-format off
+  auto movable = engine::physics::BoxBuilder()
+    .Velocity(-1.0f, 0.0f, 0.0f)
+    .Build();
+  auto immovable = engine::physics::BoxBuilder()
+    .Position(0.999f, 0.0f, 0.0f)
+    .Mass(0.0f)
+    .Build();
+  // clang-format on
+  glm::vec3 immovable_vel_before = immovable.velocity;
+  glm::vec3 immovable_pos_before = immovable.position;
+
+  engine::physics::Contact contact;
+  ASSERT_TRUE(engine::physics::Collisions::ComputeContact(movable, immovable, contact));
+  engine::physics::Collisions::ResolveCollision(movable, immovable, contact, 1.0f);
+
+  EXPECT_GT(movable.velocity.x, 0.0f) << "Movable box should bounce back.";
+  TestUtil::ExpectVec3Near(immovable_vel_before, immovable.velocity, "Immovable box velocity should not change");
+  TestUtil::ExpectVec3Near(immovable_pos_before, immovable.position, "Immovable box position should not change");
+  EXPECT_EQ(immovable.angular_velocity, glm::vec3(0.0f)) << "Immovable box should not rotate.";
+}
+
+TEST(BoxBoxImmovable, PenetrationCorrection_OnlyMovableDisplaced) {
+  // clang-format off
+  auto movable = engine::physics::BoxBuilder()
+    .Velocity(-1.0f, 0.0f, 0.0f)
+    .Build();
+  auto immovable = engine::physics::BoxBuilder()
+    .Position(0.999f, 0.0f, 0.0f)
+    .Mass(0.0f)
+    .Build();
+  // clang-format on
+  glm::vec3 immovable_pos_before = immovable.position;
+
+  engine::physics::Contact contact;
+  ASSERT_TRUE(engine::physics::Collisions::ComputeContact(movable, immovable, contact));
+  engine::physics::Collisions::ResolveCollision(movable, immovable, contact, 1.0f);
+
+  TestUtil::ExpectVec3Near(immovable_pos_before, immovable.position, "Immovable box should not be displaced");
+
+  engine::physics::Contact post_contact;
+  EXPECT_FALSE(engine::physics::Collisions::ComputeContact(movable, immovable, post_contact))
+      << "Boxes should no longer overlap after penetration correction.";
+}
+
+TEST(BoxBoxImmovable, KineticEnergyConserved_ElasticBounce) {
+  // clang-format off
+  auto movable = engine::physics::BoxBuilder()
+    .Velocity(-1.0f, 0.0f, 0.0f)
+    .Build();
+  auto immovable = engine::physics::BoxBuilder()
+    .Position(0.999f, 0.0f, 0.0f)
+    .Mass(0.0f)
+    .Build();
+  // clang-format on
+
+  float ke_before = TotalKE(movable, immovable);
+
+  engine::physics::Contact contact;
+  ASSERT_TRUE(engine::physics::Collisions::ComputeContact(movable, immovable, contact));
+  engine::physics::Collisions::ResolveCollision(movable, immovable, contact, 1.0f);
+
+  float ke_after = TotalKE(movable, immovable);
+
+  EXPECT_NEAR(ke_after, ke_before, 1e-3f) << "Kinetic energy should be conserved bouncing off immovable box.";
+}
+
+TEST(BoxBoxImmovable, Symmetry_ArgumentOrder) {
+  // clang-format off
+  auto movable1 = engine::physics::BoxBuilder()
+    .Velocity(-1.0f, 0.0f, 0.0f)
+    .Build();
+  auto immovable1 = engine::physics::BoxBuilder()
+    .Position(0.999f, 0.0f, 0.0f)
+    .Mass(0.0f)
+    .Build();
+  auto movable2 = engine::physics::BoxBuilder()
+    .Velocity(-1.0f, 0.0f, 0.0f)
+    .Build();
+  auto immovable2 = engine::physics::BoxBuilder()
+    .Position(0.999f, 0.0f, 0.0f)
+    .Mass(0.0f)
+    .Build();
+  // clang-format on
+
+  engine::physics::Contact contact1;
+  ASSERT_TRUE(engine::physics::Collisions::ComputeContact(movable1, immovable1, contact1));
+  engine::physics::Collisions::ResolveCollision(movable1, immovable1, contact1, 1.0f);
+
+  engine::physics::Contact contact2;
+  ASSERT_TRUE(engine::physics::Collisions::ComputeContact(immovable2, movable2, contact2));
+  engine::physics::Collisions::ResolveCollision(immovable2, movable2, contact2, 1.0f);
+
+  float tol = 1e-3f;
+  EXPECT_NEAR(movable1.velocity.x, movable2.velocity.x, tol);
+  EXPECT_NEAR(movable1.velocity.y, movable2.velocity.y, tol);
+  EXPECT_NEAR(movable1.velocity.z, movable2.velocity.z, tol);
+  TestUtil::ExpectVec3Near(immovable1.velocity, immovable2.velocity, "Immovable velocity should match regardless of arg order");
+  TestUtil::ExpectVec3Near(immovable1.position, immovable2.position, "Immovable position should match regardless of arg order");
+}
+
+TEST(BoxBoxImmovable, TwoImmovables_ShouldThrowError) {
+  // clang-format off
+  auto immovable_a = engine::physics::BoxBuilder()
+    .Mass(0.0f)
+    .Build();
+  auto immovable_b = engine::physics::BoxBuilder()
+    .Position(0.999f, 0.0f, 0.0f)
+    .Mass(0.0f)
+    .Build();
+  // clang-format on
+  engine::physics::Contact contact;
+  ASSERT_TRUE(engine::physics::Collisions::ComputeContact(immovable_a, immovable_b, contact));
+  EXPECT_THROW(engine::physics::Collisions::ResolveCollision(immovable_a, immovable_b, contact, 1.0f),
+               std::logic_error)
+      << "Resolving collision between two immovable objects should throw an error.";
 }

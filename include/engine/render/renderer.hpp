@@ -13,24 +13,18 @@ namespace engine::render {
 class Renderer {
  public:
   Renderer(const float screen_width, const float screen_height);
-  void DrawBox(const engine::physics::Box& box, Shader& shader,
-               const Camera& camera);
+  void DrawBox(const engine::physics::Box& box, Shader& shader, const Camera& camera);
   void DrawBox(const engine::physics::Box& box, Shader& shader);
-  void DrawBoxWireframe(const engine::physics::Box& box, Shader& shader,
-                        const Camera& camera);
-  void DrawSphere(const engine::physics::Sphere& sphere, Shader& shader,
-                  const Camera& camera);
+  void DrawBoxWireframe(const engine::physics::Box& box, Shader& shader, const Camera& camera);
+  void DrawSphere(const engine::physics::Sphere& sphere, Shader& shader, const Camera& camera);
   void DrawSphere(const engine::physics::Sphere& sphere, Shader& shader);
-  void DrawSphereWireframe(const engine::physics::Sphere& sphere,
-                           Shader& shader, const Camera& camera);
+  void DrawSphereWireframe(const engine::physics::Sphere& sphere, Shader& shader, const Camera& camera);
 
-  void DrawModel(Model& model, Shader& shader, const Camera& camera,
-                 glm::vec3 position, glm::vec3 scale, glm::quat rotation);
+  void DrawModel(Model& model, Shader& shader, const Camera& camera, glm::vec3 position, glm::vec3 scale,
+                 glm::quat rotation);
   void DrawPhysicsPlane(const physics::Plane& plane, Shader& shader);
-  void DrawPhysicsPlane(const physics::Plane& plane, Shader& shader,
-                        const Camera& camera);
-  void DrawPhysicsPlaneNormal(const physics::Plane& plane, Shader& shader,
-                              const Camera& camera);
+  void DrawPhysicsPlane(const physics::Plane& plane, Shader& shader, const Camera& camera);
+  void DrawPhysicsPlaneNormal(const physics::Plane& plane, Shader& shader, const Camera& camera);
 
   glm::mat4 MakeModelMatrix(const engine::physics::Box& box);
   glm::mat4 MakeModelMatrix(const engine::physics::Sphere& sphere);

@@ -4,23 +4,17 @@
 #include <engine/physics/Sphere.hpp>
 #include <engine/physics/box.hpp>
 #include <engine/physics/collision_type.hpp>
-#include <engine/physics/plane.hpp>
 
 namespace engine::physics {
 
 class Collisions {
  public:
-  static bool Collides(const Plane& plane, Sphere sphere);
-  static void HandleElasticCollision(const Plane& plane, Sphere& sphere);
-  static float DistanceSquared(const Plane& plane, Sphere sphere);
-
   static bool ComputeContact(const Box& box, const Sphere& sphere, Contact& out);
   static void ResolveCollision(Box& box, Sphere& sphere, Contact contact, float coefficient_of_restitution);
   static void ResolveElasticCollision(Box& box, Sphere& sphere, Contact contact);
 
   static bool ComputeContact(const Box& box_a, const Box& box_b, Contact& out);
   static void ResolveCollision(Box& box_a, Box& box_b, const Contact contact, float coefficient_of_restitution);
-  static bool ComputeContact(const Box& box, const Plane& plane, Contact& out);
 
  private:
   static std::array<glm::vec3, 3> GetAxesFromQuaternion(glm::quat q);

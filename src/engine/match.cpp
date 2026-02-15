@@ -36,31 +36,57 @@ void Match::Tick(float delta_time) {
 
 void Match::Reset() {
   ball_ = initial_ball_;
-  boxes_ = initial_boxes_;
+  boxes_ = {initial_boxes_.begin(), initial_boxes_.end()};
 }
 
 void Match::HandleCollisions() {
   if (ball_) {
-    for (physics::Plane wall : walls_) {
-      physics::Collisions::HandleElasticCollision(wall, *ball_);
-    }
-    if (ground_) {
-      physics::Collisions::HandleElasticCollision(*ground_, *ball_);
-    }
-    for (physics::Box& box : boxes_) {
+    // Ball v Wall collisions
+    for (physics::Box wall : walls_) {
       physics::Contact contact;
-      if (physics::Collisions::ComputeContact(box, *ball_, contact)) {
-        physics::Collisions::ResolveElasticCollision(box, *ball_, contact);
+      if (physics::Collisions::ComputeContact(wall, *ball_, contact)) {
+        physics::Collisions::ResolveElasticCollision(wall, *ball_, contact);
+      }
+    }
+    // Ball v Ground collisions
+    if (ground_) {
+      physics::Contact contact;
+      if (physics::Collisions::ComputeContact(*ground_, *ball_, contact)) {
+        physics::Collisions::ResolveElasticCollision(*ground_, *ball_, contact);
+      }
+    }
+    // Ball v Car collisions
+    for (physics::Box& car : boxes_) {
+      physics::Contact contact;
+      if (physics::Collisions::ComputeContact(car, *ball_, contact)) {
+        physics::Collisions::ResolveElasticCollision(car, *ball_, contact);
       }
     }
   }
 
+  // Car v Car collisions
   for (unsigned int i = 0; i < boxes_.size() - 1; i++) {
     for (unsigned int j = i + 1; j < boxes_.size(); j++) {
       physics::Contact contact;
       if (physics::Collisions::ComputeContact(boxes_[i], boxes_[j], contact)) {
         physics::Collisions::ResolveCollision(boxes_[i], boxes_[j], contact, 1.0f);
       }
+    }
+  }
+  // Car v Wall collisions
+  for (physics::Box& car : boxes_) {
+    for (physics::Box& wall : walls_) {
+      physics::Contact contact;
+      if (physics::Collisions::ComputeContact(car, wall, contact)) {
+        physics::Collisions::ResolveCollision(car, wall, contact, 1.0f);
+      }
+    }
+  }
+  // Car v Ground collisions
+  for (physics::Box& car : boxes_) {
+    physics::Contact contact;
+    if (physics::Collisions::ComputeContact(car, *ground_, contact)) {
+      physics::Collisions::ResolveCollision(car, *ground_, contact, 1.0f);
     }
   }
 }

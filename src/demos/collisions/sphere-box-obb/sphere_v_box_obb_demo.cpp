@@ -7,6 +7,7 @@
 #include <engine/match.hpp>
 #include <engine/path_manager.hpp>
 #include <engine/physics/box.hpp>
+#include <engine/physics/box_builder.hpp>
 #include <engine/physics/plane.hpp>
 #include <engine/render/camera.hpp>
 #include <engine/render/renderer.hpp>
@@ -87,7 +88,7 @@ int main() {
   // Setup completed.
 
   glEnable(GL_DEPTH_TEST);
-  engine::render::Camera camera(glm::vec3(25.0f, 10.0f, 25.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, 0.0f);
+  engine::render::Camera camera(glm::vec3(24.0f, 10.0f, 24.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, 0.0f);
   camera.LookAt(glm::vec3(0.0f, 5.0f, 0.0f));
   camera.projection.far_plane = 300.0f;
   glfwSetWindowUserPointer(window, &camera);
@@ -110,30 +111,44 @@ int main() {
   // Why does it not matter that my rotation is 90 or -90? i.e. I can normal
   // isn't behaving as expected.
   float wall_translation_size = ground_size / 2;
-  std::vector<engine::physics::Plane> walls = {
-      engine::physics::Plane(ground_size, ground_size, wall_color,
-                             glm::vec3(wall_translation_size, wall_translation_size, 0.0f),
-                             glm::angleAxis(glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f))),
-      engine::physics::Plane(ground_size, ground_size, wall_color,
-                             glm::vec3(-wall_translation_size, wall_translation_size, 0.0f),
-                             glm::angleAxis(glm::radians(-90.0f), glm::vec3(0.0f, 0.0f, 1.0f))),
-      engine::physics::Plane(ground_size, ground_size, wall_color,
-                             glm::vec3(0.0f, wall_translation_size, wall_translation_size),
-                             glm::angleAxis(glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f))),
-      engine::physics::Plane(ground_size, ground_size, wall_color,
-                             glm::vec3(0.0f, wall_translation_size, -wall_translation_size),
-                             glm::angleAxis(glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f)))};
+  std::vector<engine::physics::Box> walls = {
+      engine::physics::BoxBuilder()
+          .Size(glm::vec3(ground_size, 1.0f, ground_size))
+          .Position(glm::vec3(wall_translation_size, wall_translation_size, 0.0f))
+          .Rotation(glm::angleAxis(glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f)))
+          .Mass(0.0f)
+          .Build(),
+      engine::physics::BoxBuilder()
+          .Size(glm::vec3(ground_size, 1.0f, ground_size))
+          .Position(glm::vec3(-wall_translation_size, wall_translation_size, 0.0f))
+          .Rotation(glm::angleAxis(glm::radians(-90.0f), glm::vec3(0.0f, 0.0f, 1.0f)))
+          .Mass(0.0f)
+          .Build(),
+      engine::physics::BoxBuilder()
+          .Size(glm::vec3(ground_size, 1.0f, ground_size))
+          .Position(glm::vec3(0.0f, wall_translation_size, wall_translation_size))
+          .Rotation(glm::angleAxis(glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f)))
+          .Mass(0.0f)
+          .Build(),
+      engine::physics::BoxBuilder()
+          .Size(glm::vec3(ground_size, 1.0f, ground_size))
+          .Position(glm::vec3(0.0f, wall_translation_size, -wall_translation_size))
+          .Rotation(glm::angleAxis(glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f)))
+          .Mass(0.0f)
+          .Build()};
 
-  engine::Match match = engine::Match::Builder()
-      .WithBall(engine::physics::Sphere(1.0f, 10.0f, glm::vec3(10.0f, 4.5f, 0.0f), glm::vec3(-5.0f, 0.0f, 0.0f)))
-      .WithGround(engine::physics::Plane(ground_size, ground_size))
-      .WithWalls(walls)
-      .WithBox(engine::physics::Box(glm::vec3(5.0f), glm::vec3(0.0f, 3.0f, 0.0f), glm::vec3(0.0f), 30.0f,
-                                    glm::quat(), glm::vec3(0.0f, 0.0f, 0.0f)))
-      .Build();
-
-  engine::render::Shader line_shader(engine::PathManager::GlobalAsset("shaders/lineShader.vert").c_str(),
-                                     engine::PathManager::GlobalAsset("shaders/lineShader.frag").c_str());
+  engine::Match match =
+      engine::Match::Builder()
+          .WithBall(engine::physics::Sphere(1.0f, 10.0f, glm::vec3(10.0f, 4.5f, 0.0f), glm::vec3(-5.0f, 0.0f, 0.0f)))
+          .WithGround(engine::physics::BoxBuilder()
+                          .Size(glm::vec3(ground_size, 1.0f, ground_size))
+                          .Position(glm::vec3(0.0f, -0.5f, 0.0f))
+                          .Mass(0.0f)
+                          .Build())
+          //.WithWalls(walls)
+          .WithBox(engine::physics::Box(glm::vec3(5.0f), glm::vec3(0.0f, 3.0f, 0.0f), glm::vec3(0.0f), 30.0f,
+                                        glm::quat(), glm::vec3(0.0f, 0.0f, 0.0f)))
+          .Build();
 
   float demo_start = glfwGetTime();
   // Main loop
@@ -177,7 +192,7 @@ int main() {
 
     simple_depth_shader.Use();
     if (match.GetGround()) {
-      renderer.DrawPhysicsPlane(*match.GetGround(), simple_depth_shader);
+      renderer.DrawBox(*match.GetGround(), simple_depth_shader);
     }
     if (match.GetBall()) {
       renderer.DrawSphere(*match.GetBall(), simple_depth_shader);
@@ -206,26 +221,28 @@ int main() {
     model_loading_shader.SetVec3("lightPos", light_pos);
     model_loading_shader.SetVec3("viewPos", camera.position);
     if (match.GetGround()) {
-      renderer.DrawPhysicsPlane(*match.GetGround(), model_loading_shader, camera);
+      model_loading_shader.SetVec3("diffuseColor", glm::vec3(0.2f));
+      renderer.DrawBox(*match.GetGround(), model_loading_shader, camera);
     }
-    for (engine::physics::Plane wall : match.GetWalls()) {
-      renderer.DrawPhysicsPlane(wall, model_loading_shader, camera);
+    if (!match.GetWalls().empty()) model_loading_shader.SetVec3("diffuseColor", glm::vec3(0.3f));
+    for (engine::physics::Box wall : match.GetWalls()) {
+      renderer.DrawBox(wall, model_loading_shader, camera);
     }
     if (match.GetBall()) {
       model_loading_shader.SetVec3("diffuseColor", glm::vec3(0.0f, 0.5f, 0.3f));
       renderer.DrawSphere(*match.GetBall(), model_loading_shader, camera);
     }
+    if (!match.GetBoxes().empty()) model_loading_shader.SetVec3("diffuseColor", glm::vec3(0.0f, 0.5f, 0.3f));
     for (engine::physics::Box box : match.GetBoxes()) {
       renderer.DrawBox(box, model_loading_shader, camera);
     }
 
     // debug rendering
-    line_shader.Use();
-    for (engine::physics::Plane wall : match.GetWalls()) {
-      renderer.DrawPhysicsPlaneNormal(wall, line_shader, camera);
+    for (engine::physics::Box wall : match.GetWalls()) {
+      renderer.DrawBoxWireframe(wall, model_loading_shader, camera);
     }
     if (match.GetGround()) {
-      renderer.DrawPhysicsPlaneNormal(*match.GetGround(), line_shader, camera);
+      renderer.DrawBoxWireframe(*match.GetGround(), model_loading_shader, camera);
     }
     for (engine::physics::Box box : match.GetBoxes()) {
       renderer.DrawBoxWireframe(box, model_loading_shader, camera);

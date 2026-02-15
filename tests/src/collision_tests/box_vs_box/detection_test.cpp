@@ -4,6 +4,8 @@
 #include <gtest/gtest.h>
 
 #include "engine/physics/Contact.hpp"
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/quaternion.hpp>
 
 namespace {
 // Struct for sphere vs box detection test case

@@ -5,6 +5,8 @@
 #include "engine/math.hpp"
 #include "engine/physics/box.hpp"
 #include "engine/physics/collisions.hpp"
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/quaternion.hpp>
 
 namespace {
 struct BoxBoxContactPointCase {

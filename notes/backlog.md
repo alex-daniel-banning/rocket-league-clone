@@ -1,16 +1,23 @@
 # Project Backlog
 
 ## Doing (WIP limit: 3)
-- Box v Plane Collisions
-    - [ ] Detection
-    - [ ] Resolution
+
+## On Deck
+- [ ] Performance profiling
+- [ ] FPS counter
+- [ ] Debug logging (see logging.md)
+
+## Awaiting classification
 
 ## Core Features
 - [ ] Collisions
+    - [ ] Optimization
+        - [ ] Broad phase (spatial partitioning, AABB)
+        - [ ] Sleeping (objects that have settled down into a slow velocity/acceleration get flagged as "sleeping" and skip collisions entirely until something disturbs them)
     - [ ] Tunneling resolution
-    - [ ] Optimization (spatial partitioning)
     - [ ] Friction with collisions
     - [ ] Standard/Shared/Relative epsilon values
+    - [ ] Stress testing
 - [ ] Car system
     - [ ] Steering/wheel system
     - [ ] Render hitbox and model
@@ -25,8 +32,24 @@
     - [ ] Settings
         - [ ] Camera Settings
 - [ ] Camera system
+### Rendering
+- [ ] Translucent walls (alpha blending/render order/depth testing add complexity to this)
 
 ## Defects/Tech Debt
+- [ ] Update clang-format: add IncludeBlocks (Regroup), IncludeIsMainRegex, and fix include group priorities
+  IncludeBlocks: Regroup
+  IncludeIsMainRegex: '([-_](test|unittest))?$'
+  IncludeCategories:
+    - Regex: '.*glad\.h'
+      Priority: 1
+    - Regex: '<GLFW/glfw3.h>'
+      Priority: 2
+    - Regex: '<.*>'
+      Priority: 3
+    - Regex: '".*"'
+      Priority: 4
+- [ ] Use double quotes for project #include directives instead of angle brackets
+- [ ] Use BoxBuilder's for sphere/box collision tests
 - [ ] Initializing match with objects inside each other might be causing issues (general match initialization error handling)
 - [ ] Tick accumulator death spiral fix? Is it an issue?
 - [ ] Move functions in implementation files to anonymous namespaces
@@ -35,7 +58,7 @@
 ## Misc (env, tooling, etc.)
 - [ ] Consider refactoring main function/file
 - [ ] What to do with stale demo files
-- [ ] Performance profiling
+- [ ] Find dead/unused code (static analysis or link-time optimization flags)
 - [ ] Add logging system (including OpenGL API call tracing)
 - [ ] Make quicklist shrink to fix small number of results
 
