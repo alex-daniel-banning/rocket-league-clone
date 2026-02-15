@@ -1,7 +1,5 @@
-#include <Print.hpp>
-#include <algorithm>
-#include <engine/physics/collision_type.hpp>
 #include <engine/physics/collisions.hpp>
+#include <print.hpp>
 #include <stdexcept>
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>
@@ -10,40 +8,14 @@ namespace {
 glm::vec3 CalculateCentroid(const std::vector<glm::vec3>& points) {
   assert(points.size() > 0);
   if (points.size() == 1) return points[0];
-  float x = 0.0f, y = 0.0f, z = 0.0f;
-  for (auto& p : points) {
-    x += p.x;
-    y += p.y;
-    z += p.z;
-  }
-  x = x / points.size();
-  y = y / points.size();
-  z = z / points.size();
-  return glm::vec3(x, y, z);
+  glm::vec3 sum(0.0f);
+  for (const auto& p : points) sum += p;
+  return sum / static_cast<float>(points.size());
 }
 
-std::array<glm::vec3, 3> GetAxesFromQuaternion(glm::quat q) {  // clang-format off
-  // Right axis (local X)
-  glm::vec3 right = glm::vec3(
-    1 - 2 * (q.y * q.y + q.z * q.z),
-    2 * (q.x * q.y + q.w * q.z),
-    2 * (q.x * q.z - q.w * q.y)
-  );
-
-  // Up axis (local Y)
-  glm::vec3 up = glm::vec3(
-    2 * (q.x * q.y - q.w * q.z),
-    1 - 2 * (q.x * q.x + q.z * q.z),
-    2 * (q.y * q.z + q.w * q.x)
-  );
-
-  // Forward axis (local Z)
-  glm::vec3 forward = glm::vec3(
-    2 * (q.x * q.z + q.w * q.y),
-    2 * (q.y * q.z - q.w * q.x),
-    1 - 2 * (q.x * q.x + q.y * q.y)
-  );
-  return {glm::normalize(right), glm::normalize(up), glm::normalize(forward)};
+std::array<glm::vec3, 3> GetAxesFromQuaternion(const glm::quat& q) {  // clang-format off
+  glm::mat3 mat3 = glm::toMat3(q);
+  return {glm::normalize(mat3[0]), glm::normalize(mat3[1]), glm::normalize(mat3[2])};
 }  // clang-format on
 
 float CalculateOverlap(const glm::vec3& axis, const engine::physics::Box& box_a, const engine::physics::Box& box_b,
@@ -69,8 +41,8 @@ std::vector<glm::vec3> ClipPolygonAgainstPlane(const std::vector<glm::vec3>& pol
                                                const glm::vec3& plane_normal, float epsilon = 0.001f) {
   std::vector<glm::vec3> output;
   for (size_t i = 0; i < polygon.size(); i++) {
-    glm::vec3 v1 = polygon[i];
-    glm::vec3 v2 = polygon[(i + 1) % polygon.size()];
+    const auto& v1 = polygon[i];
+    const auto& v2 = polygon[(i + 1) % polygon.size()];
 
     float d1 = glm::dot(v1 - plane_point, plane_normal);
     float d2 = glm::dot(v2 - plane_point, plane_normal);
@@ -100,20 +72,6 @@ std::vector<glm::vec3> ClipFaceFace(const engine::physics::Box& box_ref, const e
       inc_dot = d;
       inc_idx = i;
     }
-  }
-  // After finding inc_idx, check, for a tie with second-best axis
-  float inc_dots[3];
-  for (int i = 0; i < 3; i++) {
-    inc_dots[i] = std::abs(glm::dot(axes_inc[i], penetration_axis));
-  }
-  // Sort to find top two
-  int first_inc = 0, second_inc = 1;
-  if (inc_dots[1] > inc_dots[0]) std::swap(first_inc, second_inc);
-  if (inc_dots[2] > inc_dots[first_inc]) {
-    second_inc = first_inc;
-    first_inc = 2;
-  } else if (inc_dots[2] > inc_dots[second_inc]) {
-    second_inc = 2;
   }
 
   // 2. Find which box_ref axis is most aligned with penetration axis
@@ -148,8 +106,8 @@ std::vector<glm::vec3> ClipFaceFace(const engine::physics::Box& box_ref, const e
   // 4. Clip against 4 side planes of reference face
   int ref_tangent_1 = (ref_idx + 1) % 3;
   int ref_tangent_2 = (ref_idx + 2) % 3;
-  // If the dot product of the inc_axis and penetration is negative, then the
-  // inc_axis is pointing in the correct direction and doesn't need to be
+  // If the dot product of the ref_axis and penetration is negative, then the
+  // ref_axis is pointing in the correct direction and doesn't need to be
   // corrected.
   float ref_sign = (ref_dot < 0.0f) ? -1.0f : 1.0f;
   glm::vec3 ref_center = box_ref.position + (ref_sign * box_ref.HalfExtents()[ref_idx] * axes_ref[ref_idx]);
@@ -258,6 +216,31 @@ std::vector<glm::vec3> ClipCornerToFace(const engine::physics::Box& box_inc, con
   return {corner};
 };
 
+void CorrectPenetration(glm::vec3& position_a, float inv_mass_a, glm::vec3& position_b, float inv_mass_b,
+                        const glm::vec3& normal, float penetration) {
+  if (penetration <= 0.0f) return;
+  const float separation_slop = 1e-3f;
+  float total_correction = penetration + separation_slop;
+  float total_inv_mass = inv_mass_a + inv_mass_b;
+  position_a -= normal * (total_correction / total_inv_mass) * inv_mass_a;
+  position_b += normal * (total_correction / total_inv_mass) * inv_mass_b;
+}
+
+glm::mat3 WorldInverseInertia(const glm::quat& rotation, const glm::mat3& inertia_tensor_inv) {
+  glm::mat3 rot = glm::toMat3(rotation);
+  return rot * inertia_tensor_inv * glm::transpose(rot);
+}
+
+float AngularMassContribution(const glm::mat3& i_world_inv, const glm::vec3& r, const glm::vec3& n) {
+  return glm::dot(n, glm::cross(i_world_inv * glm::cross(r, n), r));
+}
+
+void ApplyImpulse(glm::vec3& velocity, float mass_inv, glm::vec3& angular_velocity, const glm::mat3& i_world_inv,
+                  const glm::vec3& r, const glm::vec3& impulse) {
+  velocity += impulse * mass_inv;
+  angular_velocity += i_world_inv * glm::cross(r, impulse);
+}
+
 };  // namespace
 
 namespace engine::physics {
@@ -269,10 +252,9 @@ bool Collisions::ComputeContact(const Box& box, const Sphere& sphere, Contact& o
   std::array<glm::vec3, 3> obb_axes = {box.rotation * glm::vec3(1.0f, 0.0f, 0.0f),
                                        box.rotation * glm::vec3(0.0f, 1.0f, 0.0f),
                                        box.rotation * glm::vec3(0.0f, 0.0f, 1.0f)};
-  std::array<float, 3> halves = {box.Size().x / 2, box.Size().y / 2, box.Size().z / 2};
   for (unsigned int i = 0; i < 3; i++) {
     float distance = glm::dot(sphere_to_box, obb_axes[i]);
-    distance = glm::clamp(distance, -halves[i], halves[i]);
+    distance = glm::clamp(distance, -box.HalfExtents()[i], box.HalfExtents()[i]);
     closest_point = closest_point + (distance * obb_axes[i]);
   }
   glm::vec3 v_box_surface_to_sphere_center = sphere.position - closest_point;
@@ -287,17 +269,15 @@ bool Collisions::ComputeContact(const Box& box, const Sphere& sphere, Contact& o
   return true;
 };
 
-void Collisions::ResolveCollision(Box& box, Sphere& sphere, Contact contact, float coefficient_of_restitution) {
+void Collisions::ResolveCollision(Box& box, Sphere& sphere, const Contact& contact, float coefficient_of_restitution) {
   // TODO, handle tunneling
-  const float separation_slop = 1e-3f;
 
   // This is all from the perspective of the sphere
   glm::vec3 omega = box.angular_velocity;
   glm::vec3 r = contact.points[0] - box.position;
   glm::vec3 v_rel = sphere.velocity - (box.velocity + glm::cross(omega, r));
   glm::vec3 n = contact.normal;
-  glm::mat3 rot = glm::toMat3(box.rotation);
-  glm::mat3 i_world_inv = rot * box.inertia_tensor_inv * glm::transpose(rot);
+  glm::mat3 i_world_inv = WorldInverseInertia(box.rotation, box.inertia_tensor_inv);
   float rel_vel_along_normal = glm::dot(v_rel, n);
 
   // We should never have a situation where a sphere impacts a box, while also
@@ -305,39 +285,18 @@ void Collisions::ResolveCollision(Box& box, Sphere& sphere, Contact contact, flo
   // leading to it and how to handle it.
   assert(rel_vel_along_normal <= 0.0f);
 
-  // Linear mass component
-  float mass_component = (1.0f / sphere.mass) + box.mass_inv;
-
-  // Angular mass component
-  glm::vec3 r_cross_n = glm::cross(r, n);
-  glm::vec3 angular_contrib = glm::cross(i_world_inv * r_cross_n, r);
-  float angular_mass_component = glm::dot(n, angular_contrib);
-
-  // Total effective mass along normal
-  float effective_mass = mass_component + angular_mass_component;
+  float effective_mass = sphere.mass_inv + box.mass_inv + AngularMassContribution(i_world_inv, r, n);
 
   float impulse_scalar = -(1 + coefficient_of_restitution) * rel_vel_along_normal / effective_mass;
   glm::vec3 impulse_vector = impulse_scalar * n;
 
-  // Apply the impulse
-  sphere.velocity += impulse_vector / sphere.mass;
-  box.velocity -= impulse_vector * box.mass_inv;
-  box.angular_velocity += i_world_inv * glm::cross(r, -impulse_vector);
+  sphere.velocity += impulse_vector * sphere.mass_inv;
+  ApplyImpulse(box.velocity, box.mass_inv, box.angular_velocity, i_world_inv, r, -impulse_vector);
 
-  // Penetration correction
-  if (contact.penetration > 0.0f) {
-    // Separate the two along normal
-    float total_correction = contact.penetration + separation_slop;
-    float total_inv_mass = (1.0f / sphere.mass) + box.mass_inv;
-    float sphere_correction = (total_correction / total_inv_mass) * (1.0f / sphere.mass);
-    float box_correction = (total_correction / total_inv_mass) * box.mass_inv;
-    sphere.position += contact.normal * sphere_correction;
-    box.position -= contact.normal * box_correction;
-  }
-  return;
+  CorrectPenetration(box.position, box.mass_inv, sphere.position, sphere.mass_inv, contact.normal, contact.penetration);
 }
 
-void Collisions::ResolveElasticCollision(Box& box, Sphere& sphere, Contact contact) {
+void Collisions::ResolveElasticCollision(Box& box, Sphere& sphere, const Contact& contact) {
   ResolveCollision(box, sphere, contact, 1.0f);
 }
 
@@ -352,18 +311,18 @@ bool Collisions::ComputeContact(const Box& box_a, const Box& box_b, Contact& out
   enum class AxisSource { FACE_A, FACE_B, EDGE_EDGE };
   AxisSource axis_source;
 
-  std::vector<glm::vec3> axes_to_test;
-  axes_to_test.reserve(15);
-  axes_to_test.insert(axes_to_test.end(), axes_a.begin(), axes_a.end());
-  axes_to_test.insert(axes_to_test.end(), axes_b.begin(), axes_b.end());
-  for (const glm::vec3 edge_a : axes_a) {
-    for (const glm::vec3 edge_b : axes_b) {
+  size_t axis_count = 0;
+  std::array<glm::vec3, 15> axes_to_test;
+  for (const auto& axis : axes_a) axes_to_test[axis_count++] = axis;
+  for (const auto& axis : axes_b) axes_to_test[axis_count++] = axis;
+  for (const auto& edge_a : axes_a) {
+    for (const auto& edge_b : axes_b) {
       glm::vec3 axis = glm::cross(edge_a, edge_b);
-      if (glm::length(axis) >= epsilon) axes_to_test.push_back(glm::normalize(axis));
+      if (glm::length(axis) >= epsilon) axes_to_test[axis_count++] = glm::normalize(axis);
     }
   }
 
-  for (size_t i = 0; i < axes_to_test.size(); i++) {
+  for (size_t i = 0; i < axis_count; i++) {
     float overlap = CalculateOverlap(axes_to_test[i], box_a, box_b, axes_a, axes_b);
     if (overlap <= 0) return false;
     // Bias edge-edge overlaps so face axes are preferred when close
@@ -415,57 +374,39 @@ bool Collisions::ComputeContact(const Box& box_a, const Box& box_b, Contact& out
   return true;
 }
 
-void Collisions::ResolveCollision(Box& box_a, Box& box_b, Contact contact, float coefficient_of_restitution) {
+void Collisions::ResolveCollision(Box& box_a, Box& box_b, const Contact& contact, float coefficient_of_restitution) {
   if (box_a.mass_inv == 0.0f && box_b.mass_inv == 0.0f) {
     throw std::logic_error("Two immovable objects should not have collision resolution applied.");
   }
   // TODO, handle tunneling
-  const float separation_slop = 1e-3f;
 
-  const glm::vec3 box_a_initial_velocity = box_a.velocity;
-  const glm::vec3 box_b_initial_velocity = box_b.velocity;
-  const glm::vec3 box_a_initial_angular_velocity = box_a.angular_velocity;
-  const glm::vec3 box_b_initial_angular_velocity = box_b.angular_velocity;
   glm::vec3 impulse_centroid = CalculateCentroid(contact.points);
   // Contact point relative to each body's center of mass
   glm::vec3 r_a = impulse_centroid - box_a.position;
   glm::vec3 r_b = impulse_centroid - box_b.position;
   // Velocity at contact point for each body
-  glm::vec3 v_contact_a = box_a_initial_velocity + glm::cross(box_a_initial_angular_velocity, r_a);
-  glm::vec3 v_contact_b = box_b_initial_velocity + glm::cross(box_b_initial_angular_velocity, r_b);
+  glm::vec3 v_contact_a = box_a.velocity + glm::cross(box_a.angular_velocity, r_a);
+  glm::vec3 v_contact_b = box_b.velocity + glm::cross(box_b.angular_velocity, r_b);
   glm::vec3 rel_vel = v_contact_a - v_contact_b;
   // Transform inertia tensors to world space
-  glm::mat3 rot_a = glm::toMat3(box_a.rotation);
-  glm::mat3 rot_b = glm::toMat3(box_b.rotation);
-  glm::mat3 i_world_inv_a = rot_a * box_a.inertia_tensor_inv * glm::transpose(rot_a);
-  glm::mat3 i_world_inv_b = rot_b * box_b.inertia_tensor_inv * glm::transpose(rot_b);
+  glm::mat3 i_world_inv_a = WorldInverseInertia(box_a.rotation, box_a.inertia_tensor_inv);
+  glm::mat3 i_world_inv_b = WorldInverseInertia(box_b.rotation, box_b.inertia_tensor_inv);
   // Compute effective mass along collision normal
-  glm::vec3 r_cross_n_a = glm::cross(r_a, contact.normal);
-  glm::vec3 r_cross_n_b = glm::cross(r_b, contact.normal);
-  float m_eff = box_a.mass_inv + box_b.mass_inv +
-                glm::dot(contact.normal, glm::cross(i_world_inv_a * r_cross_n_a, r_a)) +
-                glm::dot(contact.normal, glm::cross(i_world_inv_b * r_cross_n_b, r_b));
+  float m_eff = box_a.mass_inv + box_b.mass_inv + AngularMassContribution(i_world_inv_a, r_a, contact.normal) +
+                AngularMassContribution(i_world_inv_b, r_b, contact.normal);
   // Impulse magnitude
   float v_n = glm::dot(rel_vel, contact.normal);
   float j = -(1.0f + coefficient_of_restitution) * v_n / m_eff;
   glm::vec3 impulse = j * contact.normal;
-  // Accumulate the impulse value
-  box_a.velocity += impulse * box_a.mass_inv;
-  box_b.velocity -= impulse * box_b.mass_inv;
-  box_a.angular_velocity += i_world_inv_a * glm::cross(r_a, impulse);
-  box_b.angular_velocity -= i_world_inv_b * glm::cross(r_b, impulse);
+  ApplyImpulse(box_a.velocity, box_a.mass_inv, box_a.angular_velocity, i_world_inv_a, r_a, impulse);
+  ApplyImpulse(box_b.velocity, box_b.mass_inv, box_b.angular_velocity, i_world_inv_b, r_b, -impulse);
 
-  // Penetration correction
-  if (contact.penetration > 0.0f) {
-    // Separate the two along normal
-    float total_correction = contact.penetration + separation_slop;
-    float total_inv_mass = box_a.mass_inv + box_b.mass_inv;
-    float box_a_correction = (total_correction / total_inv_mass) * box_a.mass_inv;
-    float box_b_correction = (total_correction / total_inv_mass) * box_b.mass_inv;
-    box_a.position -= contact.normal * box_a_correction;
-    box_b.position += contact.normal * box_b_correction;
-  }
-  return;
+  CorrectPenetration(box_a.position, box_a.mass_inv, box_b.position, box_b.mass_inv, contact.normal,
+                     contact.penetration);
+}
+
+void Collisions::ResolveElasticCollision(Box& box_a, Box& box_b, const Contact& contact) {
+  Collisions::ResolveCollision(box_a, box_b, contact, 1.0f);
 }
 
 }  // namespace engine::physics

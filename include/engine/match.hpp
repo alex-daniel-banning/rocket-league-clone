@@ -1,8 +1,8 @@
 #pragma once
 
-#include <engine/physics/Sphere.hpp>
 #include <engine/physics/box.hpp>
 #include <engine/physics/plane.hpp>
+#include <engine/physics/sphere.hpp>
 #include <optional>
 #include <vector>
 
@@ -12,7 +12,7 @@ class Match {
   class Builder {
    public:
     Builder& WithBall(physics::Sphere ball) {
-      ball_ = ball;
+      ball_.emplace(std::move(ball));
       return *this;
     }
     Builder& WithGround(physics::Box ground) {
@@ -20,7 +20,7 @@ class Match {
       return *this;
     }
     Builder& WithWall(physics::Box wall) {
-      walls_.push_back(wall);
+      walls_.push_back(std::move(wall));
       return *this;
     }
     Builder& WithWalls(std::vector<physics::Box> walls) {
@@ -28,7 +28,7 @@ class Match {
       return *this;
     }
     Builder& WithBox(physics::Box box) {
-      boxes_.push_back(box);
+      boxes_.push_back(std::move(box));
       return *this;
     }
     Builder& WithBoxes(std::vector<physics::Box> boxes) {

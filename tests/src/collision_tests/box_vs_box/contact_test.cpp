@@ -1,4 +1,4 @@
-#include "engine/physics/Contact.hpp"
+#include "engine/physics/contact.hpp"
 
 #include <gtest/gtest.h>
 

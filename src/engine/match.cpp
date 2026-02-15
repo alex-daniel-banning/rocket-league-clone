@@ -1,8 +1,8 @@
-#include <Print.hpp>
 #include <engine/match.hpp>
-#include <engine/physics/Contact.hpp>
 #include <engine/physics/box.hpp>
 #include <engine/physics/collisions.hpp>
+#include <engine/physics/contact.hpp>
+#include <print.hpp>
 
 namespace engine {
 
@@ -13,29 +13,34 @@ void Match::Tick(float delta_time) {
     const float linear_damping_per_sec = 0.98f;
     const float angular_damping_per_sec = 0.95f;
 
+    if (ball_) {
+      ball_->position += fixed_dt * ball_->velocity;
+    }
+    for (physics::Box& car : boxes_) {
+      car.position += fixed_dt * car.velocity;
+      glm::quat q = car.rotation;
+      glm::vec3 w = car.angular_velocity;
+      car.rotation = glm::normalize(q + (0.5f * fixed_dt * q * glm::quat(0, w.x, w.y, w.z)));
+    }
+    HandleCollisions();
+
     // Convert to per-frame damping
     float linear_damp = std::pow(linear_damping_per_sec, fixed_dt);
     float angular_damp = std::pow(angular_damping_per_sec, fixed_dt);
-
     if (ball_) {
-      ball_->position += fixed_dt * ball_->velocity;
       ball_->velocity *= linear_damp;
     }
-    for (physics::Box& box : boxes_) {
-      box.position += fixed_dt * box.velocity;
-      glm::quat q = box.rotation;
-      glm::vec3 w = box.angular_velocity;
-      box.rotation = glm::normalize(q + (0.5f * fixed_dt * q * glm::quat(0, w.x, w.y, w.z)));
-      box.velocity *= linear_damp;
-      box.angular_velocity *= angular_damp;
+    for (physics::Box& car : boxes_) {
+      car.velocity *= linear_damp;
+      car.angular_velocity *= angular_damp;
     }
-    HandleCollisions();
+
     accumulator_ -= fixed_dt;
   }
 }
 
 void Match::Reset() {
-  ball_ = initial_ball_;
+  if (ball_ && initial_ball_) ball_.emplace(*initial_ball_);
   boxes_ = {initial_boxes_.begin(), initial_boxes_.end()};
 }
 
@@ -69,7 +74,7 @@ void Match::HandleCollisions() {
     for (unsigned int j = i + 1; j < boxes_.size(); j++) {
       physics::Contact contact;
       if (physics::Collisions::ComputeContact(boxes_[i], boxes_[j], contact)) {
-        physics::Collisions::ResolveCollision(boxes_[i], boxes_[j], contact, 1.0f);
+        physics::Collisions::ResolveElasticCollision(boxes_[i], boxes_[j], contact);
       }
     }
   }
@@ -78,7 +83,7 @@ void Match::HandleCollisions() {
     for (physics::Box& wall : walls_) {
       physics::Contact contact;
       if (physics::Collisions::ComputeContact(car, wall, contact)) {
-        physics::Collisions::ResolveCollision(car, wall, contact, 1.0f);
+        physics::Collisions::ResolveElasticCollision(car, wall, contact);
       }
     }
   }
@@ -86,7 +91,7 @@ void Match::HandleCollisions() {
   for (physics::Box& car : boxes_) {
     physics::Contact contact;
     if (physics::Collisions::ComputeContact(car, *ground_, contact)) {
-      physics::Collisions::ResolveCollision(car, *ground_, contact, 1.0f);
+      physics::Collisions::ResolveElasticCollision(car, *ground_, contact);
     }
   }
 }

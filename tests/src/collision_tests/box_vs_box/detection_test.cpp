@@ -1,9 +1,9 @@
-#include <Print.hpp>
 #include <engine/math.hpp>
 #include <engine/physics/collisions.hpp>
 #include <gtest/gtest.h>
+#include <print.hpp>
 
-#include "engine/physics/Contact.hpp"
+#include "engine/physics/contact.hpp"
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>
 

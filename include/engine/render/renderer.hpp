@@ -1,8 +1,8 @@
 #pragma once
 
-#include <engine/physics/Sphere.hpp>
 #include <engine/physics/box.hpp>
 #include <engine/physics/plane.hpp>
+#include <engine/physics/sphere.hpp>
 #include <engine/render/camera.hpp>
 #include <engine/render/model.hpp>
 #include <engine/render/shader.hpp>
