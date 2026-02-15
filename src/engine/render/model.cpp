@@ -20,8 +20,7 @@ void Model::LoadModel(std::string path) {
   Assimp::Importer import;
   const aiScene* scene = import.ReadFile(path, aiProcess_Triangulate);
 
-  if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE ||
-      !scene->mRootNode) {
+  if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
     std::cout << "ERROR::ASSIMP::" << import.GetErrorString() << std::endl;
     return;
   }
@@ -93,11 +92,9 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene) {
     // logging
     // std::cout << "Processing mesh with material.\n";
 
-    std::vector<Texture> diffuse_maps = LoadMaterialTextures(
-        material, aiTextureType_DIFFUSE, "texture_diffuse");
+    std::vector<Texture> diffuse_maps = LoadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
     textures.insert(textures.end(), diffuse_maps.begin(), diffuse_maps.end());
-    std::vector<Texture> specular_maps = LoadMaterialTextures(
-        material, aiTextureType_SPECULAR, "texture_specular");
+    std::vector<Texture> specular_maps = LoadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular");
     textures.insert(textures.end(), specular_maps.begin(), specular_maps.end());
   } else {
     // logging
@@ -118,9 +115,7 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene) {
   }
 }
 
-std::vector<Texture> Model::LoadMaterialTextures(aiMaterial* mat,
-                                                 aiTextureType type,
-                                                 std::string type_name) {
+std::vector<Texture> Model::LoadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string type_name) {
   std::vector<Texture> textures;
   for (unsigned int i = 0; i < mat->GetTextureCount(type); i++) {
     aiString str;
@@ -142,15 +137,13 @@ std::vector<Texture> Model::LoadMaterialTextures(aiMaterial* mat,
       loaded_textures_.push_back(texture);
 
       // logging
-      std::cout << "Processing texture with path -> " << texture.path
-                << std::endl;
+      std::cout << "Processing texture with path -> " << texture.path << std::endl;
     }
   }
   return textures;
 }
 
-unsigned int TextureFromFile(const char* path, const std::string& directory,
-                             bool gamma) {
+unsigned int TextureFromFile(const char* path, const std::string& directory, bool gamma) {
   std::string filename = std::string(path);
   filename = directory + '/' + filename;
 
@@ -158,12 +151,10 @@ unsigned int TextureFromFile(const char* path, const std::string& directory,
   glGenTextures(1, &texture_id);
 
   int width, height, nr_components;
-  unsigned char* data =
-      stbi_load(filename.c_str(), &width, &height, &nr_components, 0);
+  unsigned char* data = stbi_load(filename.c_str(), &width, &height, &nr_components, 0);
   if (data) {
     // logging
-    std::cout << "Texture successfully loaded from filename -> " << filename
-              << std::endl;
+    std::cout << "Texture successfully loaded from filename -> " << filename << std::endl;
 
     GLenum format;
     if (nr_components == 1) {
@@ -175,14 +166,12 @@ unsigned int TextureFromFile(const char* path, const std::string& directory,
     }
 
     glBindTexture(GL_TEXTURE_2D, texture_id);
-    glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format,
-                 GL_UNSIGNED_BYTE, data);
+    glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
     glGenerateMipmap(GL_TEXTURE_2D);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-                    GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     stbi_image_free(data);

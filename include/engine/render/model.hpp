@@ -8,8 +8,7 @@
 
 namespace engine::render {
 
-unsigned int TextureFromFile(const char* path, const std::string& directory,
-                             bool gamma = false);
+unsigned int TextureFromFile(const char* path, const std::string& directory, bool gamma = false);
 
 class Model {
  public:
@@ -25,7 +24,6 @@ class Model {
   void LoadModel(std::string path);
   void ProcessNode(aiNode* node, const aiScene* scene);
   Mesh ProcessMesh(aiMesh* mesh, const aiScene* scene);
-  std::vector<Texture> LoadMaterialTextures(aiMaterial* mat, aiTextureType type,
-                                            std::string type_name);
+  std::vector<Texture> LoadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string type_name);
 };
 }  // namespace engine::render

@@ -3,13 +3,8 @@
 namespace engine::physics {
 const glm::vec3 Plane::default_normal = glm::vec3(0.0f, 1.0f, 0.0f);
 
-Plane::Plane(float x_length, float z_length, glm::vec3 color,
-             glm::vec3 position, glm::quat rotation)
-    : x_length_(x_length),
-      z_length_(z_length),
-      color(color),
-      position_(position),
-      rotation_(rotation) {
+Plane::Plane(float x_length, float z_length, glm::vec3 color, glm::vec3 position, glm::quat rotation)
+    : x_length_(x_length), z_length_(z_length), color(color), position_(position), rotation_(rotation) {
   CalculateCornerPositions();
 }
 

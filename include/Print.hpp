@@ -15,8 +15,7 @@ class Print {
   // Print a glm::quat as w + xi + yj + zk
   static void Quat(const glm::quat& q, const std::string& label = "") {
     if (!label.empty()) std::cout << label << ": ";
-    std::cout << "(" << q.w << ", " << q.x << ", " << q.y << ", " << q.z
-              << ")\n";
+    std::cout << "(" << q.w << ", " << q.x << ", " << q.y << ", " << q.z << ")\n";
   }
 
   // Print as Euler angles (degrees)
@@ -24,8 +23,7 @@ class Print {
     glm::vec3 euler = glm::eulerAngles(q);  // radians
     euler = glm::degrees(euler);
     if (!label.empty()) std::cout << label << ": ";
-    std::cout << "Euler(deg) = (" << euler.x << ", " << euler.y << ", "
-              << euler.z << ")\n";
+    std::cout << "Euler(deg) = (" << euler.x << ", " << euler.y << ", " << euler.z << ")\n";
   }
 };
 

@@ -17,6 +17,4 @@ inline const char* ToString(CollisionType t) {
   return "UNKNOWN";
 }
 
-inline std::ostream& operator<<(std::ostream& os, CollisionType t) {
-  return os << ToString(t);
-}
+inline std::ostream& operator<<(std::ostream& os, CollisionType t) { return os << ToString(t); }

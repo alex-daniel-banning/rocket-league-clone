@@ -16,13 +16,11 @@ TEST(PlaneOrientation, PlaneRotation) {
   float degrees_of_rotation = glm::radians(90.0f);
   float xsize = 10.0f, zsize = 5.0f;
   float hx = xsize * 0.5f, hz = zsize * 0.5f;
-  engine::physics::Plane p(xsize, zsize, glm::vec3(0.5f), glm::vec3(0.0f),
-                           glm::angleAxis(degrees_of_rotation, x_axis));
+  engine::physics::Plane p(xsize, zsize, glm::vec3(0.5f), glm::vec3(0.0f), glm::angleAxis(degrees_of_rotation, x_axis));
   TestUtil::ExpectVec3Near(p.GetCornerPositions()[0], glm::vec3(-hx, hz, 0.0f));
   TestUtil::ExpectVec3Near(p.GetCornerPositions()[1], glm::vec3(hx, hz, 0.0f));
   TestUtil::ExpectVec3Near(p.GetCornerPositions()[2], glm::vec3(hx, -hz, 0.0f));
-  TestUtil::ExpectVec3Near(p.GetCornerPositions()[3],
-                           glm::vec3(-hx, -hz, 0.0f));
+  TestUtil::ExpectVec3Near(p.GetCornerPositions()[3], glm::vec3(-hx, -hz, 0.0f));
 }
 
 TEST(PlaneOrientation, PlaneTranslation) {
@@ -32,16 +30,11 @@ TEST(PlaneOrientation, PlaneTranslation) {
   float xsize = 10.0f, zsize = 5.0f;
   float hx = xsize * 0.5f, hz = zsize * 0.5f;
   glm::vec3 pos = glm::vec3(1.0f, 2.0f, -3.0f);
-  engine::physics::Plane p(xsize, zsize, glm::vec3(0.5f), pos,
-                           glm::angleAxis(degrees_of_rotation, x_axis));
-  TestUtil::ExpectVec3Near(p.GetCornerPositions()[0],
-                           pos + glm::vec3(-hx, 0.0f, -hz));
-  TestUtil::ExpectVec3Near(p.GetCornerPositions()[1],
-                           pos + glm::vec3(hx, 0.0f, -hz));
-  TestUtil::ExpectVec3Near(p.GetCornerPositions()[2],
-                           pos + glm::vec3(hx, 0.0f, hz));
-  TestUtil::ExpectVec3Near(p.GetCornerPositions()[3],
-                           pos + glm::vec3(-hx, 0.0f, hz));
+  engine::physics::Plane p(xsize, zsize, glm::vec3(0.5f), pos, glm::angleAxis(degrees_of_rotation, x_axis));
+  TestUtil::ExpectVec3Near(p.GetCornerPositions()[0], pos + glm::vec3(-hx, 0.0f, -hz));
+  TestUtil::ExpectVec3Near(p.GetCornerPositions()[1], pos + glm::vec3(hx, 0.0f, -hz));
+  TestUtil::ExpectVec3Near(p.GetCornerPositions()[2], pos + glm::vec3(hx, 0.0f, hz));
+  TestUtil::ExpectVec3Near(p.GetCornerPositions()[3], pos + glm::vec3(-hx, 0.0f, hz));
 }
 
 TEST(PlaneOrientation, PlaneRotationAndTranslation) {
@@ -51,14 +44,9 @@ TEST(PlaneOrientation, PlaneRotationAndTranslation) {
   float xsize = 10.0f, zsize = 5.0f;
   float hx = xsize * 0.5f, hz = zsize * 0.5f;
   glm::vec3 pos = glm::vec3(1.0f, 2.0f, -3.0f);
-  engine::physics::Plane p(xsize, zsize, glm::vec3(0.5f), pos,
-                           glm::angleAxis(degrees_of_rotation, x_axis));
-  TestUtil::ExpectVec3Near(p.GetCornerPositions()[0],
-                           pos + glm::vec3(-hx, hz, 0.0f));
-  TestUtil::ExpectVec3Near(p.GetCornerPositions()[1],
-                           pos + glm::vec3(hx, hz, 0.0f));
-  TestUtil::ExpectVec3Near(p.GetCornerPositions()[2],
-                           pos + glm::vec3(hx, -hz, 0.0f));
-  TestUtil::ExpectVec3Near(p.GetCornerPositions()[3],
-                           pos + glm::vec3(-hx, -hz, 0.0f));
+  engine::physics::Plane p(xsize, zsize, glm::vec3(0.5f), pos, glm::angleAxis(degrees_of_rotation, x_axis));
+  TestUtil::ExpectVec3Near(p.GetCornerPositions()[0], pos + glm::vec3(-hx, hz, 0.0f));
+  TestUtil::ExpectVec3Near(p.GetCornerPositions()[1], pos + glm::vec3(hx, hz, 0.0f));
+  TestUtil::ExpectVec3Near(p.GetCornerPositions()[2], pos + glm::vec3(hx, -hz, 0.0f));
+  TestUtil::ExpectVec3Near(p.GetCornerPositions()[3], pos + glm::vec3(-hx, -hz, 0.0f));
 }

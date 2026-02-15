@@ -5,8 +5,7 @@
 
 namespace engine::render {
 
-Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices,
-           std::vector<Texture> textures) {
+Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures) {
   this->vertices = vertices;
   this->indices = indices;
   this->textures = textures;
@@ -14,8 +13,7 @@ Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices,
   SetupMesh();
 }
 
-Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices,
-           glm::vec3 color) {
+Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, glm::vec3 color) {
   this->vertices = vertices;
   this->indices = indices;
   this->color = color;
@@ -31,27 +29,22 @@ void Mesh::SetupMesh() {
   glBindVertexArray(vao_);
   glBindBuffer(GL_ARRAY_BUFFER, vbo_);
 
-  glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0],
-               GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_STATIC_DRAW);
 
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo_);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int),
-               &indices[0], GL_STATIC_DRAW);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
 
   // vertex positions
   glEnableVertexAttribArray(0);
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex),
-                        static_cast<const void*>(nullptr));
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), static_cast<const void*>(nullptr));
   // vertex normals
   glEnableVertexAttribArray(1);
-  glVertexAttribPointer(
-      1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex),
-      reinterpret_cast<const void*>(offsetof(Vertex, normal)));
+  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex),
+                        reinterpret_cast<const void*>(offsetof(Vertex, normal)));
   // vertex normals
   glEnableVertexAttribArray(2);
-  glVertexAttribPointer(
-      2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex),
-      reinterpret_cast<const void*>(offsetof(Vertex, tex_coords)));
+  glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex),
+                        reinterpret_cast<const void*>(offsetof(Vertex, tex_coords)));
 
   glBindVertexArray(0);
 };

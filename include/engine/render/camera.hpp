@@ -41,8 +41,7 @@ class Camera {
   ProjectionSettings projection;
 
   // constructor with vectors
-  Camera(glm::vec3 position, glm::vec3 up, float yaw = default_yaw,
-         float pitch = default_pitch);
+  Camera(glm::vec3 position, glm::vec3 up, float yaw = default_yaw, float pitch = default_pitch);
 
   // returns the view matrix calculated using Euler Angles and the LookAt Matrix
   glm::mat4 GetViewMatrix() const;
@@ -51,9 +50,7 @@ class Camera {
   // parameter in the form of camera defined ENUM (to abstract it from windowing
   // systems)
   void ProcessKeyboard(Camera_Movement direction, float delta_time);
-  void ProcessMouseMovement(float xoffset, float yoffset,
-                            float mouse_sensitivity,
-                            bool constrain_pitch = true);
+  void ProcessMouseMovement(float xoffset, float yoffset, float mouse_sensitivity, bool constrain_pitch = true);
 
   void LookAtOrigin();
   void LookAt(glm::vec3 target);

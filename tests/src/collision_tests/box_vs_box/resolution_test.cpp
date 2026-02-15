@@ -566,8 +566,10 @@ TEST(BoxBoxImmovable, Symmetry_ArgumentOrder) {
   EXPECT_NEAR(movable1.velocity.x, movable2.velocity.x, tol);
   EXPECT_NEAR(movable1.velocity.y, movable2.velocity.y, tol);
   EXPECT_NEAR(movable1.velocity.z, movable2.velocity.z, tol);
-  TestUtil::ExpectVec3Near(immovable1.velocity, immovable2.velocity, "Immovable velocity should match regardless of arg order");
-  TestUtil::ExpectVec3Near(immovable1.position, immovable2.position, "Immovable position should match regardless of arg order");
+  TestUtil::ExpectVec3Near(immovable1.velocity, immovable2.velocity,
+                           "Immovable velocity should match regardless of arg order");
+  TestUtil::ExpectVec3Near(immovable1.position, immovable2.position,
+                           "Immovable position should match regardless of arg order");
 }
 
 TEST(BoxBoxImmovable, TwoImmovables_ShouldThrowError) {
@@ -582,7 +584,6 @@ TEST(BoxBoxImmovable, TwoImmovables_ShouldThrowError) {
   // clang-format on
   engine::physics::Contact contact;
   ASSERT_TRUE(engine::physics::Collisions::ComputeContact(immovable_a, immovable_b, contact));
-  EXPECT_THROW(engine::physics::Collisions::ResolveCollision(immovable_a, immovable_b, contact, 1.0f),
-               std::logic_error)
+  EXPECT_THROW(engine::physics::Collisions::ResolveCollision(immovable_a, immovable_b, contact, 1.0f), std::logic_error)
       << "Resolving collision between two immovable objects should throw an error.";
 }
