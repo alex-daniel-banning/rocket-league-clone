@@ -15,8 +15,13 @@ be toggled at runtime.
 
 enum class LogLevel { DEBUG, INFO, WARN, ERROR };
 
-// `inline` allows this global to be defined in a header included by multiple
-// .cpp files without causing linker duplicate-symbol errors.
+// Without `inline`, if two .cpp files both #include this header, each gets
+// its own definition of g_log_level. The linker sees two symbols with the
+// same name and fails with a "multiple definition" error.
+//
+// `inline` (C++17 for variables) tells the linker: "these are all the same
+// variable — pick one and share it." Every translation unit sees and modifies
+// the same g_log_level instance.
 inline LogLevel g_log_level = LogLevel::INFO;
 
 // Macros perform text substitution at compile time. Each LOG_X call expands

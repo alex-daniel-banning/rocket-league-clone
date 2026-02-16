@@ -1,8 +1,9 @@
-#include <engine/match.hpp>
-#include <engine/physics/box.hpp>
-#include <engine/physics/collisions.hpp>
-#include <engine/physics/contact.hpp>
-#include <print.hpp>
+#include "engine/match.hpp"
+
+#include "engine/log.hpp"
+#include "engine/physics/box.hpp"
+#include "engine/physics/collisions.hpp"
+#include "engine/physics/contact.hpp"
 
 namespace engine {
 
@@ -74,6 +75,9 @@ void Match::HandleCollisions() {
     for (unsigned int j = i + 1; j < boxes_.size(); j++) {
       physics::Contact contact;
       if (physics::Collisions::ComputeContact(boxes_[i], boxes_[j], contact)) {
+        LOG_DEBUG("Box/Box contact detected: pentration=%.4f normal=(%.2f, %.2f, %.2f)", contact.penetration,
+                  contact.normal.x, contact.normal.y, contact.normal.z);
+        for (const auto& p : contact.points) LOG_DEBUG("  point=(%.2f, %.2f, %.2f)", p.x, p.y, p.z);
         physics::Collisions::ResolveElasticCollision(boxes_[i], boxes_[j], contact);
       }
     }

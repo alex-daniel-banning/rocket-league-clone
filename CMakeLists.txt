@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.10)
 
 project(rocket-league-clone)
 
+set(LOG_LEVEL "INFO" CACHE STRING "Log level: DEBUG, INFO, WARN, ERROR")
+
 add_library(engine STATIC
     src/engine/glad.c
     src/engine/stb_image.cpp
@@ -16,6 +18,7 @@ add_library(engine STATIC
 )
 
 target_include_directories(engine PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/include/third_party /usr/include)
+target_compile_definitions(engine PUBLIC DEFAULT_LOG_LEVEL=LogLevel::${LOG_LEVEL})
 
 add_subdirectory(src/demos)
 

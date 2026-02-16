@@ -18,6 +18,13 @@ cd build
 cmake --build .
 ```
 
+### Debug logging
+To build with debug-level logging:
+```bash
+cmake -B build -DLOG_LEVEL=DEBUG
+cmake --build build
+```
+
 ## LSP Setup
 
 ### Generate compile_commands.json
@@ -40,19 +47,6 @@ Run from the build directory:
 
 ---
 
-## Branching Strategy
-
-**Workflow for experimental features:**
-
-1. **Branch from master** using descriptive names (e.g., `experiment/shadow-mapping`)
-2. **Experiment freely**—break things, try ideas, iterate rapidly
-3. **Extract reusable code**—when the problem is solved, identify engine-level components worth keeping
-4. **Merge selectively**—only merge the clean, reusable engine code back to master
-5. **Tag the branch**—when the experiment has a working demo worth preserving
-6. **Clean up**—delete the experimental branch once it's been mined for value
-
-This approach keeps master stable while allowing aggressive experimentation in branches.
-
 ## Testing Strategy
 
 **Unit tests** for deterministic components:
@@ -64,7 +58,3 @@ This approach keeps master stable while allowing aggressive experimentation in b
 **Scene-based tests** for complex interactions:
 - Create deterministic test scenes to verify behavior
 - Useful for physics interactions, rendering pipelines, and system integration
-
-**TODO:**
-- Implement debug visualization for rendering
-- Add logging system (including OpenGL API call tracing)
