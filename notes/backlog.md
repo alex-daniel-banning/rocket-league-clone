@@ -2,6 +2,7 @@
 
 ## Doing (WIP limit: 3)
 - [ ] Debug logging (see logging.md)
+- [ ] Fix box/box separating velocity bug (see box-box-separating-velocity-bug.md)
 
 ## On Deck
 - [ ] Performance profiling

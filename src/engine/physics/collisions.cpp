@@ -5,6 +5,8 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>
 
+#include "engine/log.hpp"
+
 namespace {
 glm::vec3 CalculateCentroid(const std::vector<glm::vec3>& points) {
   assert(points.size() > 0);
@@ -330,7 +332,7 @@ bool Collisions::ComputeContact(const Box& box_a, const Box& box_b, Contact& out
     if (overlap < penetration) {
       penetration = overlap;
       penetration_axis = axes_to_test[i];
-      if (glm::dot(box_b.position - box_a.position, penetration_axis) < 0) penetration_axis = -penetration_axis;
+      if (glm::dot(box_b.position - box_a.position, penetration_axis) > 0) penetration_axis = -penetration_axis;
       if (i < 3)
         axis_source = AxisSource::FACE_A;
       else if (i < 6)
@@ -376,6 +378,8 @@ bool Collisions::ComputeContact(const Box& box_a, const Box& box_b, Contact& out
 }
 
 void Collisions::ResolveCollision(Box& box_a, Box& box_b, const Contact& contact, float coefficient_of_restitution) {
+  // static int count = 0;
+  // if (count++ > 5) exit(0);
   if (box_a.mass_inv == 0.0f && box_b.mass_inv == 0.0f) {
     throw std::logic_error("Two immovable objects should not have collision resolution applied.");
   }
