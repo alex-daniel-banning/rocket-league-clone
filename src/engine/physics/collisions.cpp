@@ -208,14 +208,21 @@ std::vector<glm::vec3> ClipEdgeEdge(const engine::physics::Box& box_ref, const e
   // Step 4: Contact point is the midpoint
   return {(closest_on_ref + closest_on_inc) * 0.5f};
 }
-std::vector<glm::vec3> ClipCornerToFace(const engine::physics::Box& box_inc, const engine::physics::Box& box_ref,
-                                        const glm::vec3& penetration_axis, const std::array<glm::vec3, 3>& axes_inc,
-                                        const std::array<glm::vec3, 3>& axes_ref) {
+
+std::vector<glm::vec3> ClipCornerToFace(const engine::physics::Box& box_ref, const engine::physics::Box& box_inc,
+                                        const glm::vec3& penetration_axis, const std::array<glm::vec3, 3>& axes_ref,
+                                        const std::array<glm::vec3, 3>& axes_inc) {
+  // LOG_DEBUG("box_inc position=(%.2f, %.2f, %2.f)", box_inc.position.x, box_inc.position.y, box_inc.position.z);
+  // LOG_DEBUG("box_ref position=(%.2f, %.2f, %2.f)", box_ref.position.x, box_ref.position.y, box_ref.position.z);
+  // LOG_DEBUG("penetration_axis=(%.2f, %.2f, %2.f)", penetration_axis.x, penetration_axis.y, penetration_axis.z);
+  // assert(glm::dot(box_inc.position - box_ref.position, penetration_axis) > 1.0f &&
+  //       "penetration axis is not pointing from reference to incident box!");
   glm::vec3 corner = box_inc.position;
   for (int i = 0; i < 3; i++) {
-    float sign = glm::dot(axes_inc[i], -penetration_axis) > 0 ? 1.0f : -1.0f;
+    float sign = glm::dot(axes_inc[i], penetration_axis) < 0 ? 1.0f : -1.0f;
     corner += sign * box_inc.HalfExtents()[i] * axes_inc[i];
   }
+  // LOG_DEBUG("Corner point that is penetrating face: point=(%.2f, %.2f, %2.f)", corner.x, corner.y, corner.z);
   return {corner};
 };
 
@@ -332,7 +339,8 @@ bool Collisions::ComputeContact(const Box& box_a, const Box& box_b, Contact& out
     if (overlap < penetration) {
       penetration = overlap;
       penetration_axis = axes_to_test[i];
-      if (glm::dot(box_b.position - box_a.position, penetration_axis) > 0) penetration_axis = -penetration_axis;
+      // Penetration axis must always point from a to b. Is this what we want?
+      if (glm::dot(box_b.position - box_a.position, penetration_axis) < 0) penetration_axis = -penetration_axis;
       if (i < 3)
         axis_source = AxisSource::FACE_A;
       else if (i < 6)
@@ -361,12 +369,16 @@ bool Collisions::ComputeContact(const Box& box_a, const Box& box_b, Contact& out
                            ? ClipFaceFace(box_a, box_b, penetration_axis, axes_a, axes_b)
                            : ClipFaceFace(box_b, box_a, penetration_axis, axes_b, axes_a);
     } else {
-      contact_points = (axis_source == AxisSource::FACE_A)
-                           ? ClipCornerToFace(box_b, box_a, penetration_axis, axes_b, axes_a)
-                           : ClipCornerToFace(box_a, box_b, penetration_axis, axes_a, axes_b);
+      if (axis_source == AxisSource::FACE_A) {
+        contact_points = ClipCornerToFace(box_a, box_b, penetration_axis, axes_a, axes_b);
+      } else {
+        contact_points = ClipCornerToFace(box_b, box_a, -penetration_axis, axes_b, axes_a);
+      }
     }
   }
 
+  // Right now, correction always occurs in the direction from A to B. This assumes that contact points are points from
+  // box_a. Are there not instances where the contact points come from box_b?
   for (auto& p : contact_points) {
     p = p + (0.5f * penetration * penetration_axis);
   }
