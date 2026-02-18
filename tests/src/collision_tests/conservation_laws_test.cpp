@@ -59,9 +59,7 @@ TEST_P(SphereBox, LinearMomentum) {
 
   glm::vec3 momentum_before = TotalLinearMomentum(sphere, box);
 
-  engine::physics::Contact contact;
-  ASSERT_TRUE(engine::physics::Collisions::ComputeContact(box, sphere, contact));
-  engine::physics::Collisions::ResolveElasticCollision(box, sphere, contact);
+  engine::physics::Collisions::HandleCollision(box, sphere);
 
   glm::vec3 momentum_after = TotalLinearMomentum(sphere, box);
 
@@ -73,9 +71,7 @@ TEST_P(SphereBox, AngularMomentum) {
 
   glm::vec3 momentum_before = TotalAngularMomentum(sphere, box);
 
-  engine::physics::Contact contact;
-  ASSERT_TRUE(engine::physics::Collisions::ComputeContact(box, sphere, contact));
-  engine::physics::Collisions::ResolveElasticCollision(box, sphere, contact);
+  engine::physics::Collisions::HandleCollision(box, sphere);
 
   glm::vec3 momentum_after = TotalAngularMomentum(sphere, box);
 
@@ -87,9 +83,7 @@ TEST_P(SphereBox, TotalKineticEnergy) {
 
   float ke_before = TotalKineticEnergy(sphere, box);
 
-  engine::physics::Contact contact;
-  ASSERT_TRUE(engine::physics::Collisions::ComputeContact(box, sphere, contact));
-  engine::physics::Collisions::ResolveElasticCollision(box, sphere, contact);
+  engine::physics::Collisions::HandleCollision(box, sphere);
 
   float ke_after = TotalKineticEnergy(sphere, box);
 

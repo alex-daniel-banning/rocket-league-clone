@@ -1,5 +1,6 @@
 #include "engine/match.hpp"
 
+#include "engine/log.hpp"
 #include "engine/physics/box.hpp"
 #include "engine/physics/collisions.hpp"
 
@@ -7,7 +8,9 @@ namespace engine {
 
 void Match::Tick(float delta_time) {
   accumulator_ += delta_time;
+  int substeps = 0;
   while (accumulator_ >= fixed_dt) {
+    substeps++;
     // Define how much damping PER SECOND
     const float linear_damping_per_sec = 0.98f;
     const float angular_damping_per_sec = 0.95f;
@@ -36,6 +39,10 @@ void Match::Tick(float delta_time) {
 
     accumulator_ -= fixed_dt;
   }
+  if (substeps > 10) {
+    LOG_WARN("tick death spiral: %d substeps (dt=%.4f)", substeps, delta_time);
+  }
+  LOG_DEBUG("tick: dt=%.4f substeps=%d", delta_time, substeps);
 }
 
 void Match::Reset() {
@@ -47,24 +54,15 @@ void Match::HandleCollisions() {
   if (ball_) {
     // Ball v Wall collisions
     for (physics::Box wall : walls_) {
-      physics::Contact contact;
-      if (physics::Collisions::ComputeContact(wall, *ball_, contact)) {
-        physics::Collisions::ResolveElasticCollision(wall, *ball_, contact);
-      }
+      physics::Collisions::HandleCollision(wall, *ball_);
     }
     // Ball v Ground collisions
     if (ground_) {
-      physics::Contact contact;
-      if (physics::Collisions::ComputeContact(*ground_, *ball_, contact)) {
-        physics::Collisions::ResolveElasticCollision(*ground_, *ball_, contact);
-      }
+      physics::Collisions::HandleCollision(*ground_, *ball_);
     }
     // Ball v Car collisions
     for (physics::Box& car : boxes_) {
-      physics::Contact contact;
-      if (physics::Collisions::ComputeContact(car, *ball_, contact)) {
-        physics::Collisions::ResolveElasticCollision(car, *ball_, contact);
-      }
+      physics::Collisions::HandleCollision(car, *ball_);
     }
   }
 

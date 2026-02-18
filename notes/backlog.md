@@ -1,8 +1,7 @@
 # Project Backlog
 
 ## Doing (WIP limit: 3)
-- [ ] handle-collision-plan.md
-- [ ] Debug logging (see logging.md)
+- [ ] Build scene/match that will be useful for performance profiling
 
 ## On Deck
 - [ ] Performance profiling
@@ -10,6 +9,7 @@
 - [ ] Code coverage reports (see code-coverage.md)
 
 ## Awaiting classification
+- [ ] Code Coverage
 
 ## Core Features
 - [ ] Collisions

@@ -76,10 +76,7 @@ TEST(SphereBoxRotation, OffCenterImpact_ProducesAngularVelocity) {
   engine::physics::Sphere sphere(1.0f, 1.0f, glm::vec3(1.499f, 0.3f, 0.0f), glm::vec3(-2.0f, 0.0f, 0.0f));
   engine::physics::Box box(glm::vec3(1.0f), glm::vec3(0.0f), glm::vec3(0.0f), 5.0f, glm::quat());
 
-  engine::physics::Contact contact;
-  ASSERT_TRUE(engine::physics::Collisions::ComputeContact(box, sphere, contact));
-
-  engine::physics::Collisions::ResolveElasticCollision(box, sphere, contact);
+  engine::physics::Collisions::HandleCollision(box, sphere);
 
   // Impact above center on +X face should cause rotation about +Z axis
   EXPECT_GT(box.angular_velocity.z, 0.0f) << "Box should rotate counter-clockwise (positive Z angular velocity)";
@@ -87,69 +84,46 @@ TEST(SphereBoxRotation, OffCenterImpact_ProducesAngularVelocity) {
 
 TEST(SphereBoxRotation, HeavierBox_RotatesLess) {
   // Setup: identical collision scenario, different box masses
-  auto run_collision = [](float box_mass) -> std::pair<bool, float> {
+  auto run_collision = [](float box_mass) -> float {
     engine::physics::Sphere sphere(1.0f, 1.0f, glm::vec3(1.499f, 0.3f, 0.0f), glm::vec3(-2.0f, 0.0f, 0.0f));
     engine::physics::Box box(glm::vec3(1.0f), glm::vec3(0.0f), glm::vec3(0.0f), box_mass, glm::quat());
 
-    engine::physics::Contact contact;
-    bool collided = engine::physics::Collisions::ComputeContact(box, sphere, contact);
-    if (collided) {
-      engine::physics::Collisions::ResolveElasticCollision(box, sphere, contact);
-    }
-    return {collided, glm::length(box.angular_velocity)};
+    engine::physics::Collisions::HandleCollision(box, sphere);
+    return glm::length(box.angular_velocity);
   };
 
-  auto [light_collided, light_box_rotation] = run_collision(1.0f);
-  auto [heavy_collided, heavy_box_rotation] = run_collision(50.0f);
-
-  ASSERT_TRUE(light_collided) << "Light box collision not detected";
-  ASSERT_TRUE(heavy_collided) << "Heavy box collision not detected";
+  float light_box_rotation = run_collision(1.0f);
+  float heavy_box_rotation = run_collision(50.0f);
 
   EXPECT_GT(light_box_rotation, heavy_box_rotation) << "Light box should rotate more than heavy box for same impact";
 }
 
 TEST(SphereBoxRotation, HeavierSphere_ImpartsMoreRotation) {
-  auto run_collision = [](float sphere_mass) -> std::pair<bool, float> {
+  auto run_collision = [](float sphere_mass) -> float {
     engine::physics::Sphere sphere(1.0f, sphere_mass, glm::vec3(1.499f, 0.3f, 0.0f), glm::vec3(-2.0f, 0.0f, 0.0f));
     engine::physics::Box box(glm::vec3(1.0f), glm::vec3(0.0f), glm::vec3(0.0f), 5.0f, glm::quat());
 
-    engine::physics::Contact contact;
-    bool collided = engine::physics::Collisions::ComputeContact(box, sphere, contact);
-
-    if (collided) {
-      engine::physics::Collisions::ResolveElasticCollision(box, sphere, contact);
-    }
-    return {collided, glm::length(box.angular_velocity)};
+    engine::physics::Collisions::HandleCollision(box, sphere);
+    return glm::length(box.angular_velocity);
   };
 
-  auto [light_collided, light_sphere_impact] = run_collision(1.0f);
-  auto [heavy_collided, heavy_sphere_impact] = run_collision(10.0f);
-
-  ASSERT_TRUE(light_collided) << "Light sphere collision not detected";
-  ASSERT_TRUE(heavy_collided) << "Heavy sphere collision not detected";
+  float light_sphere_impact = run_collision(1.0f);
+  float heavy_sphere_impact = run_collision(10.0f);
 
   EXPECT_GT(heavy_sphere_impact, light_sphere_impact) << "Heavier sphere should impart more rotation for same velocity";
 }
 
 TEST(SphereBoxRotation, LargerLeverArm_CausesMoreRotation) {
-  auto run_collision = [](float y_offset) -> std::pair<bool, float> {
+  auto run_collision = [](float y_offset) -> float {
     engine::physics::Sphere sphere(1.0f, 1.0f, glm::vec3(1.499f, y_offset, 0.0f), glm::vec3(-2.0f, 0.0f, 0.0f));
     engine::physics::Box box(glm::vec3(1.0f), glm::vec3(0.0f), glm::vec3(0.0f), 5.0f, glm::quat());
 
-    engine::physics::Contact contact;
-    bool collides = engine::physics::Collisions::ComputeContact(box, sphere, contact);
-    if (collides) {
-      engine::physics::Collisions::ResolveElasticCollision(box, sphere, contact);
-    }
-
-    return {collides, glm::length(box.angular_velocity)};
+    engine::physics::Collisions::HandleCollision(box, sphere);
+    return glm::length(box.angular_velocity);
   };
 
-  auto [near_collided, near_center] = run_collision(0.1f);
-  auto [far_collided, far_from_center] = run_collision(0.4f);
-
-  ASSERT_TRUE(near_collided) << "Near-center sphere collision not detected";
-  ASSERT_TRUE(far_collided) << "Far-from-center sphere collision not detected";
+  float near_center = run_collision(0.1f);
+  float far_from_center = run_collision(0.4f);
 
   // Lever arm is 4x larger (0.4 vs 0.1), so rotation should be ~4x more
   // Being conservative, we expect at least 3x more rotation
@@ -159,26 +133,20 @@ TEST(SphereBoxRotation, LargerLeverArm_CausesMoreRotation) {
 }
 
 TEST(SphereBoxRotation, TangentialImpact_CausesMoreRotation) {
-  auto run_collision = [](const glm::vec3& velocity) -> std::pair<bool, float> {
+  auto run_collision = [](const glm::vec3& velocity) -> float {
     engine::physics::Sphere sphere(1.0f, 1.0f, glm::vec3(1.499f, 0.3f, 0.0f), velocity);
     engine::physics::Box box(glm::vec3(1.0f), glm::vec3(0.0f), glm::vec3(0.0f), 5.0f, glm::quat());
-    engine::physics::Contact contact;
-    bool collides = engine::physics::Collisions::ComputeContact(box, sphere, contact);
-    if (collides) {
-      engine::physics::Collisions::ResolveElasticCollision(box, sphere, contact);
-    }
-    return {collides, glm::length(box.angular_velocity)};
+
+    engine::physics::Collisions::HandleCollision(box, sphere);
+    return glm::length(box.angular_velocity);
   };
 
   // Tangential: sphere moving with perpendicular component (same speed,
   // different angle)
-  auto [tangential_collided, tangential_rotation] = run_collision(glm::vec3(-2.0f, 0.0f, 0.0f));
+  float tangential_rotation = run_collision(glm::vec3(-2.0f, 0.0f, 0.0f));
 
   // Direct head-on: sphere moving straight toward contact point
-  auto [direct_collided, direct_rotation] = run_collision(glm::vec3(-1.4f, -1.4f, 0.0f));
-
-  ASSERT_TRUE(tangential_collided) << "Tangential impact collision not detected";
-  ASSERT_TRUE(direct_collided) << "Direct impact collision not detected";
+  float direct_rotation = run_collision(glm::vec3(-1.4f, -1.4f, 0.0f));
 
   // Tangential impact should cause at least 50% more rotation
   EXPECT_GT(tangential_rotation, 1.2f * direct_rotation)
@@ -191,10 +159,7 @@ TEST(SphereBoxRotation, HeadOnImpact_ProducesMinimalRotation) {
   engine::physics::Sphere sphere(1.0f, 1.0f, glm::vec3(1.499f, 0.0f, 0.0f), glm::vec3(-2.0f, 0.0f, 0.0f));
   engine::physics::Box box(glm::vec3(1.0f), glm::vec3(0.0f), glm::vec3(0.0f), 5.0f, glm::quat());
 
-  engine::physics::Contact contact;
-  ASSERT_TRUE(engine::physics::Collisions::ComputeContact(box, sphere, contact));
-
-  engine::physics::Collisions::ResolveElasticCollision(box, sphere, contact);
+  engine::physics::Collisions::HandleCollision(box, sphere);
 
   EXPECT_NEAR(glm::length(box.angular_velocity), 0.0f, 1e-4f) << "Head-on collision should produce negligible rotation";
 }
@@ -210,9 +175,7 @@ TEST(SphereBoxResolution, ZeroRelativeVelocity_OnlyAdjustsPosition) {
   glm::vec3 sphere_pos_before = sphere.position;
   glm::vec3 box_pos_before = box.position;
 
-  engine::physics::Contact contact;
-  ASSERT_TRUE(engine::physics::Collisions::ComputeContact(box, sphere, contact));
-  engine::physics::Collisions::ResolveElasticCollision(box, sphere, contact);
+  engine::physics::Collisions::HandleCollision(box, sphere);
 
   // Velocities should remain unchanged (or change minimally due to penetration
   // resolution)
@@ -240,9 +203,7 @@ TEST(SphereBoxImmovable, SphereBouncesOffImmovableBox) {
   glm::vec3 box_vel_before = box.velocity;
   glm::vec3 box_pos_before = box.position;
 
-  engine::physics::Contact contact;
-  ASSERT_TRUE(engine::physics::Collisions::ComputeContact(box, sphere, contact));
-  engine::physics::Collisions::ResolveElasticCollision(box, sphere, contact);
+  engine::physics::Collisions::HandleCollision(box, sphere);
 
   EXPECT_GT(sphere.velocity.x, 0.0f) << "Sphere should bounce back in the positive direction";
   TestUtil::ExpectVec3Near(box_vel_before, box.velocity, "Immovable box velocity should not change");
@@ -257,9 +218,7 @@ TEST(SphereBoxImmovable, OffCenterHit_ImmovableBoxUnchanged) {
   glm::vec3 box_vel_before = box.velocity;
   glm::vec3 box_pos_before = box.position;
 
-  engine::physics::Contact contact;
-  ASSERT_TRUE(engine::physics::Collisions::ComputeContact(box, sphere, contact));
-  engine::physics::Collisions::ResolveElasticCollision(box, sphere, contact);
+  engine::physics::Collisions::HandleCollision(box, sphere);
 
   TestUtil::ExpectVec3Near(box_vel_before, box.velocity, "Immovable box velocity should not change");
   TestUtil::ExpectVec3Near(box_pos_before, box.position, "Immovable box position should not change");
@@ -273,9 +232,7 @@ TEST(SphereBoxImmovable, PenetrationCorrection_OnlySphereMovesOut) {
 
   glm::vec3 box_pos_before = box.position;
 
-  engine::physics::Contact contact;
-  ASSERT_TRUE(engine::physics::Collisions::ComputeContact(box, sphere, contact));
-  engine::physics::Collisions::ResolveElasticCollision(box, sphere, contact);
+  engine::physics::Collisions::HandleCollision(box, sphere);
 
   TestUtil::ExpectVec3Near(box_pos_before, box.position, "Immovable box should not be displaced");
 
@@ -290,9 +247,7 @@ TEST(SphereBoxImmovable, KineticEnergyConserved_ElasticBounce) {
 
   float ke_before = 0.5f * sphere.mass * glm::dot(sphere.velocity, sphere.velocity);
 
-  engine::physics::Contact contact;
-  ASSERT_TRUE(engine::physics::Collisions::ComputeContact(box, sphere, contact));
-  engine::physics::Collisions::ResolveElasticCollision(box, sphere, contact);
+  engine::physics::Collisions::HandleCollision(box, sphere);
 
   float ke_after = 0.5f * sphere.mass * glm::dot(sphere.velocity, sphere.velocity);
 
