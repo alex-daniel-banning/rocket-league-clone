@@ -13,8 +13,7 @@ class Collisions {
   static void ResolveElasticCollision(Box& box, Sphere& sphere, const Contact& contact);
 
   static bool ComputeContact(const Box& box_a, const Box& box_b, Contact& out);
-  static void ResolveCollision(Box& box_a, Box& box_b, const Contact& contact, float coefficient_of_restitution);
-  static void ResolveElasticCollision(Box& box_a, Box& box_b, const Contact& contact);
+  static void HandleCollision(Box& box_a, Box& box_b, float restitution = 1.0f);
 };
 
 }  // namespace engine::physics

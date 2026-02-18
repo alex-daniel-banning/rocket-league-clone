@@ -247,6 +247,32 @@ void ApplyImpulse(glm::vec3& velocity, float mass_inv, glm::vec3& angular_veloci
   angular_velocity += i_world_inv * glm::cross(r, impulse);
 }
 
+void ResolveBoxBoxCollision(engine::physics::Box& box_a, engine::physics::Box& box_b,
+                            const engine::physics::Contact& contact, float coefficient_of_restitution) {
+  if (box_a.mass_inv == 0.0f && box_b.mass_inv == 0.0f) {
+    throw std::logic_error("Two immovable objects should not have collision resolution applied.");
+  }
+
+  glm::vec3 impulse_centroid = CalculateCentroid(contact.points);
+  glm::vec3 r_a = impulse_centroid - box_a.position;
+  glm::vec3 r_b = impulse_centroid - box_b.position;
+  glm::vec3 v_contact_a = box_a.velocity + glm::cross(box_a.angular_velocity, r_a);
+  glm::vec3 v_contact_b = box_b.velocity + glm::cross(box_b.angular_velocity, r_b);
+  glm::vec3 rel_vel = v_contact_a - v_contact_b;
+  glm::mat3 i_world_inv_a = WorldInverseInertia(box_a.rotation, box_a.inertia_tensor_inv);
+  glm::mat3 i_world_inv_b = WorldInverseInertia(box_b.rotation, box_b.inertia_tensor_inv);
+  float m_eff = box_a.mass_inv + box_b.mass_inv + AngularMassContribution(i_world_inv_a, r_a, contact.normal) +
+                AngularMassContribution(i_world_inv_b, r_b, contact.normal);
+  float v_n = glm::dot(rel_vel, contact.normal);
+  float j = -(1.0f + coefficient_of_restitution) * v_n / m_eff;
+  glm::vec3 impulse = j * contact.normal;
+  ApplyImpulse(box_a.velocity, box_a.mass_inv, box_a.angular_velocity, i_world_inv_a, r_a, impulse);
+  ApplyImpulse(box_b.velocity, box_b.mass_inv, box_b.angular_velocity, i_world_inv_b, r_b, -impulse);
+
+  CorrectPenetration(box_a.position, box_a.mass_inv, box_b.position, box_b.mass_inv, contact.normal,
+                     contact.penetration);
+}
+
 };  // namespace
 
 namespace engine::physics {
@@ -335,7 +361,7 @@ bool Collisions::ComputeContact(const Box& box_a, const Box& box_b, Contact& out
     if (overlap < penetration) {
       penetration = overlap;
       penetration_axis = axes_to_test[i];
-      // Penetration axis must always point from a to b. Is this what we want?
+      // Penetration axis must always point from a to b.
       if (glm::dot(box_b.position - box_a.position, penetration_axis) < 0) penetration_axis = -penetration_axis;
       if (i < 3)
         axis_source = AxisSource::FACE_A;
@@ -390,41 +416,10 @@ bool Collisions::ComputeContact(const Box& box_a, const Box& box_b, Contact& out
   return true;
 }
 
-void Collisions::ResolveCollision(Box& box_a, Box& box_b, const Contact& contact, float coefficient_of_restitution) {
-  // static int count = 0;
-  // if (count++ > 5) exit(0);
-  if (box_a.mass_inv == 0.0f && box_b.mass_inv == 0.0f) {
-    throw std::logic_error("Two immovable objects should not have collision resolution applied.");
-  }
-  // TODO, handle tunneling
-
-  glm::vec3 impulse_centroid = CalculateCentroid(contact.points);
-  // Contact point relative to each body's center of mass
-  glm::vec3 r_a = impulse_centroid - box_a.position;
-  glm::vec3 r_b = impulse_centroid - box_b.position;
-  // Velocity at contact point for each body
-  glm::vec3 v_contact_a = box_a.velocity + glm::cross(box_a.angular_velocity, r_a);
-  glm::vec3 v_contact_b = box_b.velocity + glm::cross(box_b.angular_velocity, r_b);
-  glm::vec3 rel_vel = v_contact_a - v_contact_b;
-  // Transform inertia tensors to world space
-  glm::mat3 i_world_inv_a = WorldInverseInertia(box_a.rotation, box_a.inertia_tensor_inv);
-  glm::mat3 i_world_inv_b = WorldInverseInertia(box_b.rotation, box_b.inertia_tensor_inv);
-  // Compute effective mass along collision normal
-  float m_eff = box_a.mass_inv + box_b.mass_inv + AngularMassContribution(i_world_inv_a, r_a, contact.normal) +
-                AngularMassContribution(i_world_inv_b, r_b, contact.normal);
-  // Impulse magnitude
-  float v_n = glm::dot(rel_vel, contact.normal);
-  float j = -(1.0f + coefficient_of_restitution) * v_n / m_eff;
-  glm::vec3 impulse = j * contact.normal;
-  ApplyImpulse(box_a.velocity, box_a.mass_inv, box_a.angular_velocity, i_world_inv_a, r_a, impulse);
-  ApplyImpulse(box_b.velocity, box_b.mass_inv, box_b.angular_velocity, i_world_inv_b, r_b, -impulse);
-
-  CorrectPenetration(box_a.position, box_a.mass_inv, box_b.position, box_b.mass_inv, contact.normal,
-                     contact.penetration);
-}
-
-void Collisions::ResolveElasticCollision(Box& box_a, Box& box_b, const Contact& contact) {
-  Collisions::ResolveCollision(box_a, box_b, contact, 1.0f);
+void Collisions::HandleCollision(Box& box_a, Box& box_b, float restitution) {
+  Contact contact;
+  if (!ComputeContact(box_a, box_b, contact)) return;
+  ResolveBoxBoxCollision(box_a, box_b, contact, restitution);
 }
 
 }  // namespace engine::physics

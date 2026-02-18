@@ -1,9 +1,7 @@
 #include "engine/match.hpp"
 
-#include "engine/log.hpp"
 #include "engine/physics/box.hpp"
 #include "engine/physics/collisions.hpp"
-#include "engine/physics/contact.hpp"
 
 namespace engine {
 
@@ -73,50 +71,18 @@ void Match::HandleCollisions() {
   // Car v Car collisions
   for (unsigned int i = 0; i < boxes_.size() - 1; i++) {
     for (unsigned int j = i + 1; j < boxes_.size(); j++) {
-      physics::Contact contact;
-      if (physics::Collisions::ComputeContact(boxes_[i], boxes_[j], contact)) {
-        LOG_DEBUG("Box/Box contact detected: pentration=%.4f normal=(%.2f, %.2f, %.2f)", contact.penetration,
-                  contact.normal.x, contact.normal.y, contact.normal.z);
-        for (const auto& p : contact.points) LOG_DEBUG("  point=(%.2f, %.2f, %.2f)", p.x, p.y, p.z);
-        LOG_DEBUG("Box before collision: velocity=(%.2f, %.2f, %.2f)", boxes_[i].velocity.x, boxes_[i].velocity.y,
-                  boxes_[i].velocity.z);
-        LOG_DEBUG("Box before collision: velocity=(%.2f, %.2f, %.2f)", boxes_[j].velocity.x, boxes_[j].velocity.y,
-                  boxes_[j].velocity.z);
-        physics::Collisions::ResolveElasticCollision(boxes_[i], boxes_[j], contact);
-        LOG_DEBUG("Box after collision: velocity=(%.2f, %.2f, %.2f)", boxes_[i].velocity.x, boxes_[i].velocity.y,
-                  boxes_[i].velocity.z);
-        LOG_DEBUG("Box after collision: velocity=(%.2f, %.2f, %.2f)", boxes_[j].velocity.x, boxes_[j].velocity.y,
-                  boxes_[j].velocity.z);
-      }
+      physics::Collisions::HandleCollision(boxes_[i], boxes_[j]);
     }
   }
   // Car v Wall collisions
   for (physics::Box& car : boxes_) {
     for (physics::Box& wall : walls_) {
-      physics::Contact contact;
-      if (physics::Collisions::ComputeContact(car, wall, contact)) {
-        LOG_DEBUG("Box/Wall contact detected: pentration=%.4f normal=(%.2f, %.2f, %.2f)", contact.penetration,
-                  contact.normal.x, contact.normal.y, contact.normal.z);
-        for (const auto& p : contact.points) LOG_DEBUG("  point=(%.2f, %.2f, %.2f)", p.x, p.y, p.z);
-        LOG_DEBUG("Box before collision: velocity=(%.2f, %.2f, %.2f)", car.velocity.x, car.velocity.y, car.velocity.z);
-
-        physics::Collisions::ResolveElasticCollision(car, wall, contact);
-
-        LOG_DEBUG("Box after collision: velocity=(%.2f, %.2f, %.2f)", car.velocity.x, car.velocity.y, car.velocity.z);
-      }
+      physics::Collisions::HandleCollision(car, wall);
     }
   }
   // Car v Ground collisions
   for (physics::Box& car : boxes_) {
-    physics::Contact contact;
-    if (physics::Collisions::ComputeContact(car, *ground_, contact)) {
-      LOG_DEBUG("Box/Ground contact detected: pentration=%.4f normal=(%.2f, %.2f, %.2f)", contact.penetration,
-                contact.normal.x, contact.normal.y, contact.normal.z);
-      for (const auto& p : contact.points) LOG_DEBUG("  point=(%.2f, %.2f, %.2f)", p.x, p.y, p.z);
-      LOG_DEBUG("Box before collision: velocity=(%.2f, %.2f, %.2f)", car.velocity.x, car.velocity.y, car.velocity.z);
-      physics::Collisions::ResolveElasticCollision(car, *ground_, contact);
-      LOG_DEBUG("Box after collision: velocity=(%.2f, %.2f, %.2f)", car.velocity.x, car.velocity.y, car.velocity.z);
-    }
+    physics::Collisions::HandleCollision(car, *ground_);
   }
 }
 

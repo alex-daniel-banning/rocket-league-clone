@@ -16,10 +16,8 @@ TEST(BoxBoxResolution, HeadOnCollision_ProducesNoRotation) {
     .Velocity(glm::vec3(-1.0f, 0.0f, 0.0f))
     .Build();
   // clang-format on
-  engine::physics::Contact contact;
 
-  ASSERT_TRUE(engine::physics::Collisions::ComputeContact(box_a, box_b, contact));
-  engine::physics::Collisions::ResolveElasticCollision(box_a, box_b, contact);
+  engine::physics::Collisions::HandleCollision(box_a, box_b);
 
   EXPECT_EQ(box_a.angular_velocity, glm::vec3()) << "Box A should have no rotation.";
   EXPECT_EQ(box_b.angular_velocity, glm::vec3()) << "Box B should have no rotation.";
@@ -37,10 +35,8 @@ TEST(BoxBoxResolution, LighterBoxMovesFaster) {
     .Mass(3.0f)
     .Build();
   // clang-format on
-  engine::physics::Contact contact;
 
-  ASSERT_TRUE(engine::physics::Collisions::ComputeContact(box_a, box_b, contact));
-  engine::physics::Collisions::ResolveElasticCollision(box_a, box_b, contact);
+  engine::physics::Collisions::HandleCollision(box_a, box_b);
 
   EXPECT_EQ(box_a.velocity.x, -1.5f) << "Box A velocity should move towards the negative direction quickly.";
   EXPECT_EQ(box_b.velocity.x, -0.5f) << "Box B velocity should move towards the positive direction slowly.";
@@ -57,10 +53,8 @@ TEST(BoxBoxResolution, SameDirectionCollision) {
     .Mass(3.0f)
     .Build();
   // clang-format on
-  engine::physics::Contact contact;
 
-  ASSERT_TRUE(engine::physics::Collisions::ComputeContact(box_a, box_b, contact));
-  engine::physics::Collisions::ResolveElasticCollision(box_a, box_b, contact);
+  engine::physics::Collisions::HandleCollision(box_a, box_b);
 
   EXPECT_LT(box_a.velocity.x, -0.5f) << "Box A should speed up.";
   EXPECT_GT(box_b.velocity.x, -1.0f) << "Box B should slow down.";
@@ -77,10 +71,8 @@ TEST(BoxBoxResolution, ZeroRelativeVelocity_ShouldCreateNoImpulse) {
     .Mass(3.0f)
     .Build();
   // clang-format on
-  engine::physics::Contact contact;
 
-  ASSERT_TRUE(engine::physics::Collisions::ComputeContact(box_a, box_b, contact));
-  engine::physics::Collisions::ResolveElasticCollision(box_a, box_b, contact);
+  engine::physics::Collisions::HandleCollision(box_a, box_b);
 
   EXPECT_EQ(box_a.velocity, glm::vec3(-1.0f, 0.0f, 0.0f))
       << "Box A velocity is equal to box B and should not cause an impulse.";
@@ -96,10 +88,8 @@ TEST(BoxBoxResolution, OffCenterImpact_ProducesAngularVelocity) {
     .Velocity(glm::vec3(-1.0f, 0.0f, 0.0f))
     .Build();
   // clang-format on
-  engine::physics::Contact contact;
 
-  ASSERT_TRUE(engine::physics::Collisions::ComputeContact(box_a, box_b, contact));
-  engine::physics::Collisions::ResolveElasticCollision(box_a, box_b, contact);
+  engine::physics::Collisions::HandleCollision(box_a, box_b);
 
   EXPECT_GT(box_a.angular_velocity.z, 0) << "Box A should now be rotating counter-clockwise.";
   EXPECT_GT(box_b.angular_velocity.z, 0) << "Box B should now be rotating counter-clockwise.";
@@ -116,10 +106,8 @@ TEST(BoxBoxResolution, RotationOnlyCollision) {
     .AngularVelocity(0.0f, 0.0f, -5.0f)
     .Build();
   // clang-format on
-  engine::physics::Contact contact;
 
-  ASSERT_TRUE(engine::physics::Collisions::ComputeContact(box_a, box_b, contact));
-  engine::physics::Collisions::ResolveElasticCollision(box_a, box_b, contact);
+  engine::physics::Collisions::HandleCollision(box_a, box_b);
 
   EXPECT_GT(box_b.angular_velocity.z, -5.0f) << "Box B should lose some rotation.";
   EXPECT_LT(box_b.angular_velocity.z, 0.0f) << "Box B should still retain some rotation.";
@@ -136,9 +124,8 @@ TEST(BoxBoxResolution, OrientationIndependence) {
     .Velocity(-1.0f, 0.0f, 0.0f)
     .Build();
   // clang-format on
-  engine::physics::Contact contact_aa;
-  ASSERT_TRUE(engine::physics::Collisions::ComputeContact(box_a_aa, box_b_aa, contact_aa));
-  engine::physics::Collisions::ResolveElasticCollision(box_a_aa, box_b_aa, contact_aa);
+
+  engine::physics::Collisions::HandleCollision(box_a_aa, box_b_aa);
 
   // --- Same scenario rotated by an arbitrary quaternion ---
   glm::quat q = glm::angleAxis(glm::radians(47.0f), glm::normalize(glm::vec3(1.0f, 2.0f, 3.0f)));
@@ -153,9 +140,8 @@ TEST(BoxBoxResolution, OrientationIndependence) {
     .Rotation(q)
     .Build();
   // clang-format on
-  engine::physics::Contact contact_rot;
-  ASSERT_TRUE(engine::physics::Collisions::ComputeContact(box_a_rot, box_b_rot, contact_rot));
-  engine::physics::Collisions::ResolveElasticCollision(box_a_rot, box_b_rot, contact_rot);
+
+  engine::physics::Collisions::HandleCollision(box_a_rot, box_b_rot);
 
   // Velocity magnitudes should match the axis-aligned case
   float tol = 1e-3f;
@@ -178,9 +164,8 @@ TEST(BoxBoxResolution, ContactTypeEquivalence) {
     .Velocity(-1.0f, 0.0f, 0.0f)
     .Build();
   // clang-format on
-  engine::physics::Contact ff_contact;
-  ASSERT_TRUE(engine::physics::Collisions::ComputeContact(ff_a, ff_b, ff_contact));
-  engine::physics::Collisions::ResolveElasticCollision(ff_a, ff_b, ff_contact);
+
+  engine::physics::Collisions::HandleCollision(ff_a, ff_b);
 
   // Edge-Face: box_b rotated 45° around z so its edge leads into box_a's face.
   // Incident z-axis is perpendicular to penetration axis, no axis parallel.
@@ -193,9 +178,8 @@ TEST(BoxBoxResolution, ContactTypeEquivalence) {
     .Rotation(edge_rot)
     .Build();
   // clang-format on
-  engine::physics::Contact ef_contact;
-  ASSERT_TRUE(engine::physics::Collisions::ComputeContact(ef_a, ef_b, ef_contact));
-  engine::physics::Collisions::ResolveElasticCollision(ef_a, ef_b, ef_contact);
+
+  engine::physics::Collisions::HandleCollision(ef_a, ef_b);
 
   // Corner-Face: box_b rotated so no axis is parallel or perpendicular to
   // penetration axis, triggering the ClipCornerToFace path.
@@ -208,9 +192,8 @@ TEST(BoxBoxResolution, ContactTypeEquivalence) {
     .Rotation(corner_rot)
     .Build();
   // clang-format on
-  engine::physics::Contact cf_contact;
-  ASSERT_TRUE(engine::physics::Collisions::ComputeContact(cf_a, cf_b, cf_contact));
-  engine::physics::Collisions::ResolveElasticCollision(cf_a, cf_b, cf_contact);
+
+  engine::physics::Collisions::HandleCollision(cf_a, cf_b);
 
   // For symmetric head-on collisions, Face-Face and Edge-Face both produce
   // centroids on the center line (r parallel to normal), so their angular
@@ -246,11 +229,9 @@ TEST(BoxBoxResolution, CoefficientOfRestitution_Elastic) {
     .Velocity(-1.0f, 0.0f, 0.0f)
     .Build();
   // clang-format on
-  engine::physics::Contact contact;
   float ke_before = TotalKE(box_a, box_b);
 
-  ASSERT_TRUE(engine::physics::Collisions::ComputeContact(box_a, box_b, contact));
-  engine::physics::Collisions::ResolveElasticCollision(box_a, box_b, contact);
+  engine::physics::Collisions::HandleCollision(box_a, box_b);
 
   float ke_after = TotalKE(box_a, box_b);
   EXPECT_NEAR(ke_after, ke_before, 1e-3f) << "e=1: total kinetic energy should be conserved.";
@@ -264,10 +245,12 @@ TEST(BoxBoxResolution, CoefficientOfRestitution_PerfectlyInelastic) {
     .Velocity(-1.0f, 0.0f, 0.0f)
     .Build();
   // clang-format on
-  engine::physics::Contact contact;
 
+  // Use ComputeContact to get centroid/normal for post-resolution verification
+  engine::physics::Contact contact;
   ASSERT_TRUE(engine::physics::Collisions::ComputeContact(box_a, box_b, contact));
-  engine::physics::Collisions::ResolveCollision(box_a, box_b, contact, 0.0f);
+
+  engine::physics::Collisions::HandleCollision(box_a, box_b, 0.0f);
 
   // Compute relative contact-point velocity along the normal after resolution
   glm::vec3 centroid(0.0f);
@@ -294,9 +277,7 @@ TEST(BoxBoxResolution, CoefficientOfRestitution_Partial) {
   glm::vec3 p_before = box_a.mass * box_a.velocity + box_b.mass * box_b.velocity;
   float ke_before = TotalKE(box_a, box_b);
 
-  engine::physics::Contact contact;
-  ASSERT_TRUE(engine::physics::Collisions::ComputeContact(box_a, box_b, contact));
-  engine::physics::Collisions::ResolveCollision(box_a, box_b, contact, 0.5f);
+  engine::physics::Collisions::HandleCollision(box_a, box_b, 0.5f);
 
   glm::vec3 p_after = box_a.mass * box_a.velocity + box_b.mass * box_b.velocity;
   float ke_after = TotalKE(box_a, box_b);
@@ -315,9 +296,8 @@ TEST(BoxBoxResolution, PenetrationCorrection_FullySeparated) {
     .Velocity(-1.0f, 0.0f, 0.0f)
     .Build();
   // clang-format on
-  engine::physics::Contact contact;
-  ASSERT_TRUE(engine::physics::Collisions::ComputeContact(box_a, box_b, contact));
-  engine::physics::Collisions::ResolveElasticCollision(box_a, box_b, contact);
+
+  engine::physics::Collisions::HandleCollision(box_a, box_b);
 
   engine::physics::Contact post_contact;
   EXPECT_FALSE(engine::physics::Collisions::ComputeContact(box_a, box_b, post_contact))
@@ -338,9 +318,7 @@ TEST(BoxBoxResolution, PenetrationCorrection_ProportionalToInverseMass) {
   glm::vec3 pos_a_before = box_a.position;
   glm::vec3 pos_b_before = box_b.position;
 
-  engine::physics::Contact contact;
-  ASSERT_TRUE(engine::physics::Collisions::ComputeContact(box_a, box_b, contact));
-  engine::physics::Collisions::ResolveElasticCollision(box_a, box_b, contact);
+  engine::physics::Collisions::HandleCollision(box_a, box_b);
 
   float disp_a = glm::length(box_a.position - pos_a_before);
   float disp_b = glm::length(box_b.position - pos_b_before);
@@ -351,7 +329,7 @@ TEST(BoxBoxResolution, PenetrationCorrection_ProportionalToInverseMass) {
 }
 
 TEST(BoxBoxResolution, Symmetry_SwappedArguments) {
-  // Run 1: ComputeContact(a, b), ResolveCollision(a, b)
+  // Run 1: HandleCollision(a, b)
   // clang-format off
   auto a1 = engine::physics::BoxBuilder().Build();
   auto b1 = engine::physics::BoxBuilder()
@@ -359,9 +337,8 @@ TEST(BoxBoxResolution, Symmetry_SwappedArguments) {
     .Velocity(-1.0f, 0.0f, 0.0f)
     .Build();
   // clang-format on
-  engine::physics::Contact contact1;
-  ASSERT_TRUE(engine::physics::Collisions::ComputeContact(a1, b1, contact1));
-  engine::physics::Collisions::ResolveElasticCollision(a1, b1, contact1);
+
+  engine::physics::Collisions::HandleCollision(a1, b1);
 
   // Run 2: same setup but swapped argument order
   // clang-format off
@@ -371,9 +348,8 @@ TEST(BoxBoxResolution, Symmetry_SwappedArguments) {
     .Velocity(-1.0f, 0.0f, 0.0f)
     .Build();
   // clang-format on
-  engine::physics::Contact contact2;
-  ASSERT_TRUE(engine::physics::Collisions::ComputeContact(b2, a2, contact2));
-  engine::physics::Collisions::ResolveElasticCollision(b2, a2, contact2);
+
+  engine::physics::Collisions::HandleCollision(b2, a2);
 
   float tol = 1e-3f;
   EXPECT_NEAR(a2.velocity.x, a1.velocity.x, tol);
@@ -396,9 +372,8 @@ TEST(BoxBoxResolution, Symmetry_EqualMassHeadOn_VelocitiesExchange) {
     .Velocity(-1.0f, 0.0f, 0.0f)
     .Build();
   // clang-format on
-  engine::physics::Contact contact;
-  ASSERT_TRUE(engine::physics::Collisions::ComputeContact(box_a, box_b, contact));
-  engine::physics::Collisions::ResolveElasticCollision(box_a, box_b, contact);
+
+  engine::physics::Collisions::HandleCollision(box_a, box_b);
 
   float tol = 1e-3f;
   EXPECT_NEAR(box_a.velocity.x, -1.0f, tol) << "Box A should have box B's original velocity.";
@@ -414,9 +389,8 @@ TEST(BoxBoxResolution, EdgeCase_LargeMassRatio) {
     .Mass(1000.0f)
     .Build();
   // clang-format on
-  engine::physics::Contact contact;
-  ASSERT_TRUE(engine::physics::Collisions::ComputeContact(light, heavy, contact));
-  engine::physics::Collisions::ResolveElasticCollision(light, heavy, contact);
+
+  engine::physics::Collisions::HandleCollision(light, heavy);
 
   EXPECT_NEAR(heavy.velocity.x, -1.0f, 0.01f) << "Heavy box should barely change velocity.";
   EXPECT_LT(light.velocity.x, -1.0f) << "Light box should be moving fast in the negative direction.";
@@ -431,9 +405,8 @@ TEST(BoxBoxResolution, EdgeCase_GlancingCollision) {
     .Velocity(-0.1f, -1.0f, 0.0f)
     .Build();
   // clang-format on
-  engine::physics::Contact contact;
-  ASSERT_TRUE(engine::physics::Collisions::ComputeContact(box_a, box_b, contact));
-  engine::physics::Collisions::ResolveElasticCollision(box_a, box_b, contact);
+
+  engine::physics::Collisions::HandleCollision(box_a, box_b);
 
   // The impulse should be small since the normal-component of relative velocity is small
   float speed_change_a = glm::length(box_a.velocity);
@@ -452,12 +425,14 @@ TEST(BoxBoxResolution, EdgeCase_MultipleContactPoints) {
     .Velocity(-1.0f, 0.0f, 0.0f)
     .Build();
   // clang-format on
+
+  // Use ComputeContact to verify multiple contact points are generated
   engine::physics::Contact contact;
   ASSERT_TRUE(engine::physics::Collisions::ComputeContact(box_a, box_b, contact));
   ASSERT_GT(contact.points.size(), 1u) << "Face-Face should produce multiple contact points.";
 
   glm::vec3 p_before = box_a.mass * box_a.velocity + box_b.mass * box_b.velocity;
-  engine::physics::Collisions::ResolveElasticCollision(box_a, box_b, contact);
+  engine::physics::Collisions::HandleCollision(box_a, box_b);
   glm::vec3 p_after = box_a.mass * box_a.velocity + box_b.mass * box_b.velocity;
 
   float tol = 1e-3f;
@@ -481,9 +456,7 @@ TEST(BoxBoxImmovable, MovableBouncesOffImmovable) {
   glm::vec3 immovable_vel_before = immovable.velocity;
   glm::vec3 immovable_pos_before = immovable.position;
 
-  engine::physics::Contact contact;
-  ASSERT_TRUE(engine::physics::Collisions::ComputeContact(movable, immovable, contact));
-  engine::physics::Collisions::ResolveElasticCollision(movable, immovable, contact);
+  engine::physics::Collisions::HandleCollision(movable, immovable);
 
   EXPECT_GT(movable.velocity.x, 0.0f) << "Movable box should bounce back.";
   TestUtil::ExpectVec3Near(immovable_vel_before, immovable.velocity, "Immovable box velocity should not change");
@@ -503,9 +476,7 @@ TEST(BoxBoxImmovable, PenetrationCorrection_OnlyMovableDisplaced) {
   // clang-format on
   glm::vec3 immovable_pos_before = immovable.position;
 
-  engine::physics::Contact contact;
-  ASSERT_TRUE(engine::physics::Collisions::ComputeContact(movable, immovable, contact));
-  engine::physics::Collisions::ResolveElasticCollision(movable, immovable, contact);
+  engine::physics::Collisions::HandleCollision(movable, immovable);
 
   TestUtil::ExpectVec3Near(immovable_pos_before, immovable.position, "Immovable box should not be displaced");
 
@@ -527,9 +498,7 @@ TEST(BoxBoxImmovable, KineticEnergyConserved_ElasticBounce) {
 
   float ke_before = TotalKE(movable, immovable);
 
-  engine::physics::Contact contact;
-  ASSERT_TRUE(engine::physics::Collisions::ComputeContact(movable, immovable, contact));
-  engine::physics::Collisions::ResolveElasticCollision(movable, immovable, contact);
+  engine::physics::Collisions::HandleCollision(movable, immovable);
 
   float ke_after = TotalKE(movable, immovable);
 
@@ -554,13 +523,8 @@ TEST(BoxBoxImmovable, Symmetry_ArgumentOrder) {
     .Build();
   // clang-format on
 
-  engine::physics::Contact contact1;
-  ASSERT_TRUE(engine::physics::Collisions::ComputeContact(movable1, immovable1, contact1));
-  engine::physics::Collisions::ResolveElasticCollision(movable1, immovable1, contact1);
-
-  engine::physics::Contact contact2;
-  ASSERT_TRUE(engine::physics::Collisions::ComputeContact(immovable2, movable2, contact2));
-  engine::physics::Collisions::ResolveElasticCollision(immovable2, movable2, contact2);
+  engine::physics::Collisions::HandleCollision(movable1, immovable1);
+  engine::physics::Collisions::HandleCollision(immovable2, movable2);
 
   float tol = 1e-3f;
   EXPECT_NEAR(movable1.velocity.x, movable2.velocity.x, tol);
@@ -582,9 +546,25 @@ TEST(BoxBoxImmovable, TwoImmovables_ShouldThrowError) {
     .Mass(0.0f)
     .Build();
   // clang-format on
-  engine::physics::Contact contact;
-  ASSERT_TRUE(engine::physics::Collisions::ComputeContact(immovable_a, immovable_b, contact));
-  EXPECT_THROW(engine::physics::Collisions::ResolveElasticCollision(immovable_a, immovable_b, contact),
-               std::logic_error)
+  EXPECT_THROW(engine::physics::Collisions::HandleCollision(immovable_a, immovable_b), std::logic_error)
       << "Resolving collision between two immovable objects should throw an error.";
+}
+
+// --- HandleCollision: no-contact early return ---
+
+TEST(HandleCollision, NoContact_NothingHappens) {
+  // clang-format off
+  auto box_a = engine::physics::BoxBuilder()
+    .Velocity(1.0f, 0.0f, 0.0f)
+    .Build();
+  auto box_b = engine::physics::BoxBuilder()
+    .Position(5.0f, 0.0f, 0.0f)
+    .Velocity(-1.0f, 0.0f, 0.0f)
+    .Build();
+  // clang-format on
+
+  engine::physics::Collisions::HandleCollision(box_a, box_b);
+
+  EXPECT_EQ(box_a.velocity, glm::vec3(1.0f, 0.0f, 0.0f)) << "No contact, velocity unchanged.";
+  EXPECT_EQ(box_b.velocity, glm::vec3(-1.0f, 0.0f, 0.0f)) << "No contact, velocity unchanged.";
 }
