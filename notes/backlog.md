@@ -7,6 +7,7 @@
 ## On Deck
 - [ ] Performance profiling
 - [ ] FPS counter
+- [ ] Code coverage reports (see code-coverage.md)
 
 ## Awaiting classification
 

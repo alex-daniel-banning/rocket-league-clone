@@ -1,10 +1,13 @@
 #include "engine/physics/contact.hpp"
 
+#include <algorithm>
 #include <gtest/gtest.h>
 
 #include "engine/math.hpp"
 #include "engine/physics/box.hpp"
+#include "engine/physics/box_builder.hpp"
 #include "engine/physics/collisions.hpp"
+#include "print.hpp"
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>
 
@@ -37,6 +40,21 @@ glm::quat GetDiagonalAlignedOrientation(glm::vec3 axis) {
   return glm::rotation(diagonal, axis);
 }
 
+void ExpectPointsEqual(std::vector<glm::vec3> actual, std::vector<glm::vec3> expected, float tol = 1e-5f) {
+  ASSERT_EQ(actual.size(), expected.size());
+  auto cmp = [](const glm::vec3& a, const glm::vec3& b) {
+    if (a.x != b.x) return a.x < b.x;
+    if (a.y != b.y) return a.y < b.y;
+    return a.z < b.z;
+  };
+  std::sort(actual.begin(), actual.end(), cmp);
+  std::sort(expected.begin(), expected.end(), cmp);
+  for (size_t i = 0; i < actual.size(); ++i) {
+    EXPECT_NEAR(actual[i].x, expected[i].x, tol);
+    EXPECT_NEAR(actual[i].y, expected[i].y, tol);
+    EXPECT_NEAR(actual[i].z, expected[i].z, tol);
+  }
+}
 }  // namespace
 
 class BoxBoxContactPoints : public ::testing::TestWithParam<BoxBoxContactPointCase> {};
@@ -131,3 +149,46 @@ INSTANTIATE_TEST_SUITE_P(
                                .label = "CornerFace_Returns1Point"}),
 
     [](const testing::TestParamInfo<BoxBoxContactPointCase>& info) { return info.param.label; });
+
+TEST(BoxBoxContact, EdgeFaceClippingShouldBeIndependentOfArgumentOrder) {
+  auto box_a_1 = engine::physics::BoxBuilder().Build();
+  auto box_b_1 = engine::physics::BoxBuilder()
+                     .Position(1.207f, 0.0f, 0.0f)
+                     .Rotation(glm::angleAxis(glm::radians(45.0f), glm::vec3(0.0f, 1.0f, 0.0f)))
+                     .Build();
+  engine::physics::Contact contact_1;
+  ASSERT_TRUE(engine::physics::Collisions::ComputeContact(box_a_1, box_b_1, contact_1));
+
+  auto box_a_2 = engine::physics::BoxBuilder().Build();
+  auto box_b_2 = engine::physics::BoxBuilder()
+                     .Position(1.207f, 0.0f, 0.0f)
+                     .Rotation(glm::angleAxis(glm::radians(45.0f), glm::vec3(0.0f, 1.0f, 0.0f)))
+                     .Build();
+  engine::physics::Contact contact_2;
+  ASSERT_TRUE(engine::physics::Collisions::ComputeContact(box_b_2, box_a_2, contact_2));
+
+  ExpectPointsEqual(contact_1.points, contact_2.points, 1e-5f);
+}
+
+TEST(BoxBoxContact, CornerFaceClippingShouldBeIndependentOfArgumentOrder) {
+  glm::vec3 position(0.5f + std::sqrt(0.75f) - 0.05f, 0.0f, 0.0f);
+  glm::quat rotation = GetDiagonalAlignedOrientation({1, 0, 0});
+
+  auto box_a_1 = engine::physics::BoxBuilder().Build();
+  auto box_b_1 = engine::physics::BoxBuilder().Position(position).Rotation(rotation).Build();
+  engine::physics::Contact contact_1;
+  ASSERT_TRUE(engine::physics::Collisions::ComputeContact(box_a_1, box_b_1, contact_1));
+  std::cout << "\ncontact_1.points:\n";
+  for (const auto& p : contact_1.points) std::cout << p << '\n';
+  std::cout << "contact_1.normal:" << contact_1.normal << '\n';
+
+  auto box_a_2 = engine::physics::BoxBuilder().Build();
+  auto box_b_2 = engine::physics::BoxBuilder().Position(position).Rotation(rotation).Build();
+  engine::physics::Contact contact_2;
+  ASSERT_TRUE(engine::physics::Collisions::ComputeContact(box_b_2, box_a_2, contact_2));
+  std::cout << "\ncontact_2.points:\n";
+  for (const auto& p : contact_2.points) std::cout << p << '\n';
+  std::cout << "contact_2.normal:" << contact_2.normal << '\n';
+
+  ExpectPointsEqual(contact_1.points, contact_2.points, 1e-5f);
+}
