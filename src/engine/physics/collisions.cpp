@@ -267,11 +267,11 @@ void ResolveBoxSphereCollision(engine::physics::Box& box, engine::physics::Spher
   float impulse_scalar = -(1 + coefficient_of_restitution) * rel_vel_along_normal / effective_mass;
   glm::vec3 impulse_vector = impulse_scalar * n;
 
-  LOG_DEBUG("box-sphere resolve: j=%.4f v_n=%.4f m_eff=%.4f pen=%.4f",
-            impulse_scalar, rel_vel_along_normal, effective_mass, contact.penetration);
+  LOG_DEBUG("box-sphere resolve: j=%.4f v_n=%.4f m_eff=%.4f pen=%.4f", impulse_scalar, rel_vel_along_normal,
+            effective_mass, contact.penetration);
   if (impulse_scalar > 50.0f) {
-    LOG_WARN("box-sphere large impulse: j=%.2f v_n=%.2f m_eff=%.2f",
-             impulse_scalar, rel_vel_along_normal, effective_mass);
+    LOG_WARN("box-sphere large impulse: j=%.2f v_n=%.2f m_eff=%.2f", impulse_scalar, rel_vel_along_normal,
+             effective_mass);
   }
 
   sphere.velocity += impulse_vector * sphere.mass_inv;
@@ -300,8 +300,8 @@ void ResolveBoxBoxCollision(engine::physics::Box& box_a, engine::physics::Box& b
   float j = -(1.0f + coefficient_of_restitution) * v_n / m_eff;
   glm::vec3 impulse = j * contact.normal;
 
-  LOG_DEBUG("box-box resolve: j=%.4f v_n=%.4f m_eff=%.4f contacts=%zu pen=%.4f",
-            j, v_n, m_eff, contact.points.size(), contact.penetration);
+  LOG_DEBUG("box-box resolve: j=%.4f v_n=%.4f m_eff=%.4f contacts=%zu pen=%.4f", j, v_n, m_eff, contact.points.size(),
+            contact.penetration);
   if (std::abs(j) > 50.0f) {
     LOG_WARN("box-box large impulse: j=%.2f v_n=%.2f m_eff=%.2f", j, v_n, m_eff);
   }
