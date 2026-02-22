@@ -19,14 +19,17 @@ inline LogLevel g_log_level = DEFAULT_LOG_LEVEL;
 // Macros perform text substitution at compile time. Each LOG_X call expands
 // to an fprintf guarded by a level check. ##__VA_ARGS__ handles the case
 // where no extra arguments are passed (strips the trailing comma).
+//
+// do { } while(0) wraps the macro into a single statement so it behaves
+// correctly in if/else chains (avoids the dangling-else bug).
 #define LOG_DEBUG(fmt, ...) \
-  if (LogLevel::DEBUG >= g_log_level) fprintf(stderr, "[DEBUG] " fmt "\n", ##__VA_ARGS__)
+  do { if (LogLevel::DEBUG >= g_log_level) fprintf(stderr, "[DEBUG] " fmt "\n", ##__VA_ARGS__); } while(0)
 
 #define LOG_INFO(fmt, ...) \
-  if (LogLevel::INFO >= g_log_level) fprintf(stderr, "[INFO] " fmt "\n", ##__VA_ARGS__)
+  do { if (LogLevel::INFO >= g_log_level) fprintf(stderr, "[INFO] " fmt "\n", ##__VA_ARGS__); } while(0)
 
 #define LOG_WARN(fmt, ...) \
-  if (LogLevel::WARN >= g_log_level) fprintf(stderr, "[WARN] " fmt "\n", ##__VA_ARGS__)
+  do { if (LogLevel::WARN >= g_log_level) fprintf(stderr, "[WARN] " fmt "\n", ##__VA_ARGS__); } while(0)
 
 #define LOG_ERROR(fmt, ...) \
-  if (LogLevel::ERROR >= g_log_level) fprintf(stderr, "[ERROR] " fmt "\n", ##__VA_ARGS__)
+  do { if (LogLevel::ERROR >= g_log_level) fprintf(stderr, "[ERROR] " fmt "\n", ##__VA_ARGS__); } while(0)
