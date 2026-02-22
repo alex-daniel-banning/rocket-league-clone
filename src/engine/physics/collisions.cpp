@@ -1,6 +1,5 @@
 #include "engine/physics/collisions.hpp"
 
-#include <iostream>
 #include <stdexcept>
 
 #define GLM_ENABLE_EXPERIMENTAL
