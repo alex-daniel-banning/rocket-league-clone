@@ -22,14 +22,22 @@ inline LogLevel g_log_level = DEFAULT_LOG_LEVEL;
 //
 // do { } while(0) wraps the macro into a single statement so it behaves
 // correctly in if/else chains (avoids the dangling-else bug).
-#define LOG_DEBUG(fmt, ...) \
-  do { if (LogLevel::DEBUG >= g_log_level) fprintf(stderr, "[DEBUG] " fmt "\n", ##__VA_ARGS__); } while(0)
+#define LOG_DEBUG(fmt, ...)                                                                  \
+  do {                                                                                       \
+    if (LogLevel::DEBUG >= g_log_level) fprintf(stderr, "[DEBUG] " fmt "\n", ##__VA_ARGS__); \
+  } while (0)
 
-#define LOG_INFO(fmt, ...) \
-  do { if (LogLevel::INFO >= g_log_level) fprintf(stderr, "[INFO] " fmt "\n", ##__VA_ARGS__); } while(0)
+#define LOG_INFO(fmt, ...)                                                                 \
+  do {                                                                                     \
+    if (LogLevel::INFO >= g_log_level) fprintf(stderr, "[INFO] " fmt "\n", ##__VA_ARGS__); \
+  } while (0)
 
-#define LOG_WARN(fmt, ...) \
-  do { if (LogLevel::WARN >= g_log_level) fprintf(stderr, "[WARN] " fmt "\n", ##__VA_ARGS__); } while(0)
+#define LOG_WARN(fmt, ...)                                                                 \
+  do {                                                                                     \
+    if (LogLevel::WARN >= g_log_level) fprintf(stderr, "[WARN] " fmt "\n", ##__VA_ARGS__); \
+  } while (0)
 
-#define LOG_ERROR(fmt, ...) \
-  do { if (LogLevel::ERROR >= g_log_level) fprintf(stderr, "[ERROR] " fmt "\n", ##__VA_ARGS__); } while(0)
+#define LOG_ERROR(fmt, ...)                                                                  \
+  do {                                                                                       \
+    if (LogLevel::ERROR >= g_log_level) fprintf(stderr, "[ERROR] " fmt "\n", ##__VA_ARGS__); \
+  } while (0)
