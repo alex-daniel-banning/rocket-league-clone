@@ -1,5 +1,6 @@
 #include "engine/physics/collisions.hpp"
 
+#include <iostream>
 #include <stdexcept>
 
 #define GLM_ENABLE_EXPERIMENTAL
@@ -255,10 +256,11 @@ void ResolveBoxSphereCollision(engine::physics::Box& box, engine::physics::Spher
   glm::mat3 i_world_inv = WorldInverseInertia(box.rotation, box.inertia_tensor_inv);
   float rel_vel_along_normal = glm::dot(v_rel, n);
 
-  // We should never have a situation where a sphere impacts a box, while also
-  // moving farther from it. If we end up running into this, figure out what's
-  // leading to it and how to handle it.
-  assert(rel_vel_along_normal <= 0.0f);
+  // Objects are geometrically penetrating but already separating — this is
+  // valid in multi-body simulation (resolving one contact can leave another
+  // pair overlapping but diverging). Applying an impulse here would pull them
+  // together, so skip.
+  if (rel_vel_along_normal > 0.0f) return;
 
   float effective_mass = sphere.mass_inv + box.mass_inv + AngularMassContribution(i_world_inv, r, n);
 
@@ -291,6 +293,8 @@ void ResolveBoxBoxCollision(engine::physics::Box& box_a, engine::physics::Box& b
   float m_eff = box_a.mass_inv + box_b.mass_inv + AngularMassContribution(i_world_inv_a, r_a, contact.normal) +
                 AngularMassContribution(i_world_inv_b, r_b, contact.normal);
   float v_n = glm::dot(rel_vel, contact.normal);
+  if (v_n < 0.0f) return;  // already separating, skip
+
   float j = -(1.0f + coefficient_of_restitution) * v_n / m_eff;
   glm::vec3 impulse = j * contact.normal;
 
@@ -367,7 +371,8 @@ bool Collisions::ComputeContact(const Box& box_a, const Box& box_b, Contact& out
     if (overlap < penetration) {
       penetration = overlap;
       penetration_axis = axes_to_test[i];
-      // Penetration axis must always point from a to b.
+      // Penetration axis must always point from a to b. Consequence: v_n > 0
+      // means approaching, v_n < 0 means separating (opposite of sphere case).
       if (glm::dot(box_b.position - box_a.position, penetration_axis) < 0) penetration_axis = -penetration_axis;
       if (i < 3)
         axis_source = AxisSource::FACE_A;
@@ -415,10 +420,13 @@ bool Collisions::ComputeContact(const Box& box_a, const Box& box_b, Contact& out
   for (auto& p : contact_points) {
     p = p + sign * (0.5f * penetration * penetration_axis);
   }
+  // Clipping can return empty results in degenerate cases (parallel edges in
+  // ClipEdgeEdge, or floating-point drift pushing all vertices to the wrong
+  // side of the reference face in ClipFaceFace). Skip resolution this substep.
+  if (contact_points.empty()) return false;
   out.points.insert(out.points.end(), contact_points.begin(), contact_points.end());
   out.normal = penetration_axis;
   out.penetration = penetration;
-  assert(out.points.size() > 0);
   return true;
 }
 
