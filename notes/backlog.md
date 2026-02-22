@@ -1,13 +1,15 @@
 # Project Backlog
 
 ## Doing (WIP limit: 3)
+- [ ] Build scene/match that will be useful for performance profiling
 
 ## On Deck
 - [ ] Performance profiling
 - [ ] FPS counter
-- [ ] Debug logging (see logging.md)
+- [ ] Code coverage reports (see code-coverage.md)
 
 ## Awaiting classification
+- [ ] Code Coverage
 
 ## Core Features
 - [ ] Collisions
@@ -49,7 +51,7 @@
     - Regex: '".*"'
       Priority: 4
 - [ ] Use double quotes for project #include directives instead of angle brackets
-- [ ] Use BoxBuilder's for sphere/box collision tests
+- [ ] Use BoxBuilder's for sphere/box collision tests (also put BoxBuilder in the same file as Box, like how Match::Builder is)
 - [ ] Initializing match with objects inside each other might be causing issues (general match initialization error handling)
 - [ ] Tick accumulator death spiral fix? Is it an issue?
 - [ ] Move functions in implementation files to anonymous namespaces
