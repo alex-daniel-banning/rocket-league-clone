@@ -14,13 +14,13 @@
 
 #include "../../demo_common.hpp"
 
-#define GL_CHECK()                                                                                               \
-  do {                                                                                                           \
-    GLenum err;                                                                                                  \
-    while ((err = glGetError()) != GL_NO_ERROR) {                                                                \
+#define GL_CHECK()                                                                                              \
+  do {                                                                                                          \
+    GLenum err;                                                                                                 \
+    while ((err = glGetError()) != GL_NO_ERROR) {                                                               \
       std::cerr << "OpenGL error at " << __FILE__ << ":" << __LINE__ << " -> 0x" << std::hex << err << std::dec \
-                << '\n';                                                                                         \
-    }                                                                                                            \
+                << '\n';                                                                                        \
+    }                                                                                                           \
   } while (0)
 
 int main() {
@@ -99,9 +99,8 @@ int main() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // Shadow pass
-    glm::mat4 light_projection =
-        glm::ortho(-ground_size, ground_size, -ground_size, ground_size, light_projection_near_plane,
-                   light_projection_far_plane);
+    glm::mat4 light_projection = glm::ortho(-ground_size, ground_size, -ground_size, ground_size,
+                                            light_projection_near_plane, light_projection_far_plane);
     glViewport(0, 0, shadow_width, shadow_height);
     glBindFramebuffer(GL_FRAMEBUFFER, depth_map_fbo);
     glClear(GL_DEPTH_BUFFER_BIT);
@@ -142,9 +141,11 @@ int main() {
     for (const engine::physics::Box& box : match.GetBoxes()) renderer.DrawBox(box, model_loading_shader, camera);
 
     // Wireframes
-    for (const engine::physics::Box& wall : match.GetWalls()) renderer.DrawBoxWireframe(wall, model_loading_shader, camera);
+    for (const engine::physics::Box& wall : match.GetWalls())
+      renderer.DrawBoxWireframe(wall, model_loading_shader, camera);
     if (match.GetGround()) renderer.DrawBoxWireframe(*match.GetGround(), model_loading_shader, camera);
-    for (const engine::physics::Box& box : match.GetBoxes()) renderer.DrawBoxWireframe(box, model_loading_shader, camera);
+    for (const engine::physics::Box& box : match.GetBoxes())
+      renderer.DrawBoxWireframe(box, model_loading_shader, camera);
 
     glfwSwapBuffers(window);
     glfwPollEvents();

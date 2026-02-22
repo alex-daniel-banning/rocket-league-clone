@@ -22,9 +22,9 @@ inline LogLevel g_log_level = DEFAULT_LOG_LEVEL;
 //
 // do { } while(0) wraps the macro into a single statement so it behaves
 // correctly in if/else chains (avoids the dangling-else bug).
-#define LOG_TRACE(fmt, ...)                                                                    \
-  do {                                                                                         \
-    if (LogLevel::TRACE >= g_log_level) fprintf(stderr, "[TRACE] " fmt "\n", ##__VA_ARGS__);  \
+#define LOG_TRACE(fmt, ...)                                                                  \
+  do {                                                                                       \
+    if (LogLevel::TRACE >= g_log_level) fprintf(stderr, "[TRACE] " fmt "\n", ##__VA_ARGS__); \
   } while (0)
 
 #define LOG_DEBUG(fmt, ...)                                                                  \
