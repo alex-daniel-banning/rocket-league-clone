@@ -1,10 +1,10 @@
 # Project Backlog
 
 ## Doing (WIP limit: 3)
-- [ ] Build scene/match that will be useful for performance profiling
+- [x] Build scene/match that will be useful for performance profiling
+- [ ] Performance profiling
 
 ## On Deck
-- [ ] Performance profiling
 - [ ] FPS counter
 - [ ] Code coverage reports (see code-coverage.md)
 

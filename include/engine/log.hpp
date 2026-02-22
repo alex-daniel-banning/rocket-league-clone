@@ -1,7 +1,7 @@
 #pragma once
 #include <cstdio>
 
-enum class LogLevel { DEBUG, INFO, WARN, ERROR };
+enum class LogLevel { TRACE, DEBUG, INFO, WARN, ERROR };
 
 // Without `inline`, if two .cpp files both #include this header, each gets
 // its own definition of g_log_level. The linker sees two symbols with the
@@ -22,6 +22,11 @@ inline LogLevel g_log_level = DEFAULT_LOG_LEVEL;
 //
 // do { } while(0) wraps the macro into a single statement so it behaves
 // correctly in if/else chains (avoids the dangling-else bug).
+#define LOG_TRACE(fmt, ...)                                                                  \
+  do {                                                                                       \
+    if (LogLevel::TRACE >= g_log_level) fprintf(stderr, "[TRACE] " fmt "\n", ##__VA_ARGS__); \
+  } while (0)
+
 #define LOG_DEBUG(fmt, ...)                                                                  \
   do {                                                                                       \
     if (LogLevel::DEBUG >= g_log_level) fprintf(stderr, "[DEBUG] " fmt "\n", ##__VA_ARGS__); \

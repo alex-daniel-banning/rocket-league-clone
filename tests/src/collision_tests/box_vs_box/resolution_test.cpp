@@ -445,11 +445,13 @@ TEST(BoxBoxResolution, EdgeCase_MultipleContactPoints) {
 
 TEST(BoxBoxImmovable, MovableBouncesOffImmovable) {
   // clang-format off
+  // Movable at origin moving left (-x), immovable to the left (-0.999) so the
+  // movable is approaching it. After the bounce the velocity flips to +x.
   auto movable = engine::physics::BoxBuilder()
     .Velocity(-1.0f, 0.0f, 0.0f)
     .Build();
   auto immovable = engine::physics::BoxBuilder()
-    .Position(0.999f, 0.0f, 0.0f)
+    .Position(-0.999f, 0.0f, 0.0f)
     .Mass(0.0f)
     .Build();
   // clang-format on
@@ -470,7 +472,7 @@ TEST(BoxBoxImmovable, PenetrationCorrection_OnlyMovableDisplaced) {
     .Velocity(-1.0f, 0.0f, 0.0f)
     .Build();
   auto immovable = engine::physics::BoxBuilder()
-    .Position(0.999f, 0.0f, 0.0f)
+    .Position(-0.999f, 0.0f, 0.0f)
     .Mass(0.0f)
     .Build();
   // clang-format on
