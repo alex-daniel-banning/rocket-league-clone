@@ -1,8 +1,7 @@
 # Project Backlog
 
 ## Doing (WIP limit: 3)
-- [x] Build scene/match that will be useful for performance profiling
-- [ ] Performance profiling
+- [ ] Friction with collisions see friction.md
 
 ## On Deck
 - [ ] FPS counter
@@ -17,7 +16,6 @@
         - [ ] Broad phase (spatial partitioning, AABB)
         - [ ] Sleeping (objects that have settled down into a slow velocity/acceleration get flagged as "sleeping" and skip collisions entirely until something disturbs them)
     - [ ] Tunneling resolution
-    - [ ] Friction with collisions
     - [ ] Standard/Shared/Relative epsilon values
     - [ ] Stress testing
 - [ ] Car system

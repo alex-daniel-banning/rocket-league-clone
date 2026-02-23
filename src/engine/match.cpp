@@ -14,6 +14,8 @@ void Match::Tick(float delta_time) {
     // Define how much damping PER SECOND
     const float linear_damping_per_sec = 0.98f;
     const float angular_damping_per_sec = 0.95f;
+    // const float linear_damping_per_sec = 1.0f;
+    // const float angular_damping_per_sec = 1.0f;
 
     if (ball_) {
       ball_->position += fixed_dt * ball_->velocity;

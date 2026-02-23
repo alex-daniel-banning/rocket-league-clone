@@ -62,7 +62,7 @@ int main() {
                         .Rotation(glm::angleAxis(glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f)))
                         .Mass(0.0f)
                         .Build())
-          .WithBall(engine::physics::Sphere(1.0f, 5.0f, glm::vec3(0.0f, 10.0f, 0.0f), glm::vec3(3.0f, -2.0f, 4.0f)))
+          //.WithBall(engine::physics::Sphere(1.0f, 5.0f, glm::vec3(0.0f, 10.0f, 0.0f), glm::vec3(3.0f, -2.0f, 4.0f)))
           .WithBox(engine::physics::BoxBuilder()
                        .Size(glm::vec3(2.0f))
                        .Position(glm::vec3(-6.0f, 5.0f, 4.0f))
