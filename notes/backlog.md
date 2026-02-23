@@ -1,8 +1,13 @@
 # Project Backlog
 
 ## Doing (WIP limit: 3)
+<<<<<<< Updated upstream
 - [x] Build scene/match that will be useful for performance profiling
 - [ ] Performance profiling
+=======
+- [ ] Friction with collisions (see friction.md)
+- [ ] Box-wall jittering bug (see box-wall-jittering-bug.md)
+>>>>>>> Stashed changes
 
 ## On Deck
 - [ ] FPS counter
