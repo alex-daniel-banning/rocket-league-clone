@@ -280,6 +280,10 @@ void ResolveBoxBoxCollision(engine::physics::Box& box_a, engine::physics::Box& b
   if (box_a.mass_inv == 0.0f && box_b.mass_inv == 0.0f) {
     throw std::logic_error("Two immovable objects should not have collision resolution applied.");
   }
+  LOG_DEBUG("Begin box box resolution. box_a=%s box_b=%s", box_a.name.c_str(), box_b.name.c_str());
+  LOG_DEBUG("contact.normal=(%.4f, %.4f, %.4f)", contact.normal.x, contact.normal.y, contact.normal.z);
+  LOG_DEBUG("contact.penetration=%.4f", contact.penetration);
+  LOG_DEBUG("number of contact.points=%zu", contact.points.size());
 
   glm::vec3 impulse_centroid = CalculateCentroid(contact.points);
   glm::vec3 r_a = impulse_centroid - box_a.position;
@@ -292,7 +296,12 @@ void ResolveBoxBoxCollision(engine::physics::Box& box_a, engine::physics::Box& b
   float m_eff = box_a.mass_inv + box_b.mass_inv + AngularMassContribution(i_world_inv_a, r_a, contact.normal) +
                 AngularMassContribution(i_world_inv_b, r_b, contact.normal);
   float v_n = glm::dot(rel_vel, contact.normal);
-  if (v_n < 0.0f) return;  // already separating, skip
+  if (v_n < 0.0f) {
+    LOG_DEBUG("already separating, skipping resolution v_n=%.4f", v_n);
+    return;  // already separating, skip
+  } else {
+    LOG_DEBUG("continuing with resolution v_n=%.4f", v_n);
+  }
 
   float j = -(1.0f + coefficient_of_restitution) * v_n / m_eff;
   glm::vec3 impulse = j * contact.normal;
@@ -305,6 +314,9 @@ void ResolveBoxBoxCollision(engine::physics::Box& box_a, engine::physics::Box& b
 
   CorrectPenetration(box_a.position, box_a.mass_inv, box_b.position, box_b.mass_inv, contact.normal,
                      contact.penetration);
+  LOG_DEBUG(
+      "after resolution & penetration correction: box_a.position=(%.4f, %.4f, %.4f) box_b.position=(%.4f, %.4f, %.4f)",
+      box_a.position.x, box_a.position.y, box_a.position.z, box_b.position.x, box_b.position.y, box_b.position.z);
 }
 
 };  // namespace
