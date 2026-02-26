@@ -2,11 +2,14 @@
 
 #include <stdexcept>
 
+#include "engine/debug_stepper.hpp"
+
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>
 
 #include "engine/log.hpp"
 
+static unsigned int box_box_collision_count = 0;
 namespace {
 glm::vec3 CalculateCentroid(const std::vector<glm::vec3>& points) {
   assert(points.size() > 0);
@@ -280,6 +283,11 @@ void ResolveBoxBoxCollision(engine::physics::Box& box_a, engine::physics::Box& b
   if (box_a.mass_inv == 0.0f && box_b.mass_inv == 0.0f) {
     throw std::logic_error("Two immovable objects should not have collision resolution applied.");
   }
+  // engine::DebugStepper::pause = true;
+  box_box_collision_count++;
+  LOG_DEBUG("=======================================================");
+  LOG_DEBUG("==========================box_box_collision_count %i=============================",
+            box_box_collision_count);
   LOG_DEBUG("Begin box box resolution. box_a=%s box_b=%s", box_a.name.c_str(), box_b.name.c_str());
   LOG_DEBUG("contact.normal=(%.4f, %.4f, %.4f)", contact.normal.x, contact.normal.y, contact.normal.z);
   LOG_DEBUG("contact.penetration=%.4f", contact.penetration);
@@ -296,6 +304,8 @@ void ResolveBoxBoxCollision(engine::physics::Box& box_a, engine::physics::Box& b
   float m_eff = box_a.mass_inv + box_b.mass_inv + AngularMassContribution(i_world_inv_a, r_a, contact.normal) +
                 AngularMassContribution(i_world_inv_b, r_b, contact.normal);
   float v_n = glm::dot(rel_vel, contact.normal);
+  LOG_DEBUG("v_contact_a=(%0.4f, %0.4f, %0.4f)", v_contact_a.x, v_contact_a.y, v_contact_a.z);
+  LOG_DEBUG("v_contact_b=(%0.4f, %0.4f, %0.4f)", v_contact_b.x, v_contact_b.y, v_contact_b.z);
   if (v_n < 0.0f) {
     LOG_DEBUG("already separating, skipping resolution v_n=%.4f", v_n);
     return;  // already separating, skip
@@ -308,15 +318,56 @@ void ResolveBoxBoxCollision(engine::physics::Box& box_a, engine::physics::Box& b
 
   LOG_DEBUG("box-box resolve: j=%.4f v_n=%.4f m_eff=%.4f contacts=%zu pen=%.4f", j, v_n, m_eff, contact.points.size(),
             contact.penetration);
+  LOG_DEBUG(
+      "before resolution, before penetration correction: box_a.position=(%.4f, %.4f, %.4f) box_b.position=(%.4f, %.4f, "
+      "%.4f)",
+      box_a.position.x, box_a.position.y, box_a.position.z, box_b.position.x, box_b.position.y, box_b.position.z);
+  LOG_DEBUG(
+      "before resolution, before penetration correction: box_a.velocity=(%.4f, %.4f, %.4f) box_b.velocity=(%.4f, "
+      "%.4f,%.4f)",
+      box_a.velocity.x, box_a.velocity.y, box_a.velocity.z, box_b.velocity.x, box_b.velocity.y, box_b.velocity.z);
+  LOG_DEBUG(
+      "before resolution, before penetration correction: box_a.angular_velocity=(%.4f, %.4f, %.4f) "
+      "box_b.angular_velocity=(%.4f, "
+      "%.4f,%.4f)",
+      box_a.angular_velocity.x, box_a.angular_velocity.y, box_a.angular_velocity.z, box_b.angular_velocity.x,
+      box_b.angular_velocity.y, box_b.angular_velocity.z);
 
   ApplyImpulse(box_a.velocity, box_a.mass_inv, box_a.angular_velocity, i_world_inv_a, r_a, impulse);
   ApplyImpulse(box_b.velocity, box_b.mass_inv, box_b.angular_velocity, i_world_inv_b, r_b, -impulse);
 
+  LOG_DEBUG(
+      "after resolution, before penetration correction: box_a.position=(%.4f, %.4f, %.4f) box_b.position=(%.4f, %.4f, "
+      "%.4f)",
+      box_a.position.x, box_a.position.y, box_a.position.z, box_b.position.x, box_b.position.y, box_b.position.z);
+  LOG_DEBUG(
+      "after resolution, before penetration correction: box_a.velocity=(%.4f, %.4f, %.4f) box_b.velocity=(%.4f, "
+      "%.4f,%.4f)",
+      box_a.velocity.x, box_a.velocity.y, box_a.velocity.z, box_b.velocity.x, box_b.velocity.y, box_b.velocity.z);
+  LOG_DEBUG(
+      "after resolution, before penetration correction: box_a.angular_velocity=(%.4f, %.4f, %.4f) "
+      "box_b.angular_velocity=(%.4f, "
+      "%.4f,%.4f)",
+      box_a.angular_velocity.x, box_a.angular_velocity.y, box_a.angular_velocity.z, box_b.angular_velocity.x,
+      box_b.angular_velocity.y, box_b.angular_velocity.z);
   CorrectPenetration(box_a.position, box_a.mass_inv, box_b.position, box_b.mass_inv, contact.normal,
                      contact.penetration);
   LOG_DEBUG(
-      "after resolution & penetration correction: box_a.position=(%.4f, %.4f, %.4f) box_b.position=(%.4f, %.4f, %.4f)",
+      "after resolution, after penetration correction: box_a.position=(%.4f, %.4f, %.4f) box_b.position=(%.4f, %.4f, "
+      "%.4f)",
       box_a.position.x, box_a.position.y, box_a.position.z, box_b.position.x, box_b.position.y, box_b.position.z);
+  LOG_DEBUG(
+      "after resolution, after penetration correction: box_a.velocity=(%.4f, %.4f, %.4f) "
+      "box_b.velocity=(%.4f, "
+      "%.4f,%.4f)",
+      box_a.velocity.x, box_a.velocity.y, box_a.velocity.z, box_b.velocity.x, box_b.velocity.y, box_b.velocity.z);
+  LOG_DEBUG(
+      "after resolution, after penetration correction: box_a.angular_velocity=(%.4f, %.4f, %.4f) "
+      "box_b.angular_velocity=(%.4f, "
+      "%.4f,%.4f)",
+      box_a.angular_velocity.x, box_a.angular_velocity.y, box_a.angular_velocity.z, box_b.angular_velocity.x,
+      box_b.angular_velocity.y, box_b.angular_velocity.z);
+  LOG_DEBUG("=======================================================");
 }
 
 };  // namespace

@@ -12,6 +12,7 @@
 #include <iostream>
 
 #include "../demo_common.hpp"
+#include "engine/debug_stepper.hpp"
 #include "engine/log.hpp"
 #include "engine/physics/box.hpp"
 
@@ -26,6 +27,7 @@
 
 static void DebugMarker(GLFWwindow* window, int key, int scancode, int action, int mods) {
   if (key == GLFW_KEY_L && action == GLFW_PRESS) LOG_INFO("=== MARKER ===");
+  if (key == GLFW_KEY_C && action == GLFW_PRESS) engine::DebugStepper::pause = false;
 };
 
 const std::unordered_map<std::string, glm::vec3> name_to_color = {
@@ -149,7 +151,8 @@ int main() {
     delta_time = current_frame - last_frame;
     last_frame = current_frame;
     ProcessInput(window, camera);
-    match.Tick(delta_time);
+    float delta_time_debug = 1.0f / 120.0f;
+    match.Tick(delta_time_debug);
 
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -201,6 +204,8 @@ int main() {
         std::cerr << "No key found: " << box.name << '\n';
       renderer.DrawBox(box, model_loading_shader, camera);
     }
+    for (const engine::physics::Box& wall : match.GetWalls())
+      renderer.DrawBoxWireframe(wall, model_loading_shader, camera);
     for (const engine::physics::Box& box : match.GetBoxes())
       renderer.DrawBoxWireframe(box, model_loading_shader, camera);
 

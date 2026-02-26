@@ -1,5 +1,6 @@
 #include "engine/match.hpp"
 
+#include "engine/debug_stepper.hpp"
 #include "engine/log.hpp"
 #include "engine/physics/box.hpp"
 #include "engine/physics/collisions.hpp"
@@ -10,6 +11,7 @@ void Match::Tick(float delta_time) {
   accumulator_ += delta_time;
   int substeps = 0;
   while (accumulator_ >= fixed_dt) {
+    if (DebugStepper::pause) return;
     substeps++;
     // Define how much damping PER SECOND
     const float linear_damping_per_sec = 0.98f;
@@ -22,7 +24,10 @@ void Match::Tick(float delta_time) {
       car.position += fixed_dt * car.velocity;
       glm::quat q = car.rotation;
       glm::vec3 w = car.angular_velocity;
-      car.rotation = glm::normalize(q + (0.5f * fixed_dt * q * glm::quat(0, w.x, w.y, w.z)));
+      // Before (body-space formula - wrong for world-space w):
+      // car.rotation = glm::normalize(q + (0.5f * fixed_dt * q * glm::quat(0, w.x, w.y, w.z)));
+      // After (world-space formula):
+      car.rotation = glm::normalize(q + (0.5f * fixed_dt * glm::quat(0, w.x, w.y, w.z) * q));
     }
     HandleCollisions();
 
