@@ -12,8 +12,6 @@
 #include <iostream>
 
 #include "../demo_common.hpp"
-#include "engine/debug_stepper.hpp"
-#include "engine/log.hpp"
 #include "engine/physics/box.hpp"
 
 #define GL_CHECK()                                                                                              \
@@ -24,11 +22,6 @@
                 << '\n';                                                                                        \
     }                                                                                                           \
   } while (0)
-
-static void DebugMarker(GLFWwindow* window, int key, int scancode, int action, int mods) {
-  if (key == GLFW_KEY_L && action == GLFW_PRESS) LOG_INFO("=== MARKER ===");
-  if (key == GLFW_KEY_C && action == GLFW_PRESS) engine::DebugStepper::pause = false;
-};
 
 const std::unordered_map<std::string, glm::vec3> name_to_color = {
     {"Red Box", glm::vec3(1.0f, 0.0f, 0.0f)},    {"Blue Box", glm::vec3(0.0f, 0.0f, 1.0f)},
@@ -91,45 +84,44 @@ int main() {
                        .AngularVelocity(glm::vec3(1.0f, 3.0f, -2.0f))
                        .Name("Red Box")
                        .Build())
-          //.WithBox(engine::physics::BoxBuilder()
-          //             .Size(glm::vec3(2.0f))
-          //             .Position(glm::vec3(5.0f, 8.0f, -5.0f))
-          //             .Mass(15.0f)
-          //             .Velocity(glm::vec3(-3.0f, -4.0f, 2.0f))
-          //             .Name("Blue Box")
-          //             .Build())
-          //.WithBox(engine::physics::BoxBuilder()
-          //             .Size(glm::vec3(2.0f))
-          //             .Position(glm::vec3(2.0f, 14.0f, 3.0f))
-          //             .Mass(15.0f)
-          //             .Velocity(glm::vec3(-2.0f, 3.0f, -5.0f))
-          //             .Name("Yellow Box")
-          //             .Build())
-          //.WithBox(engine::physics::BoxBuilder()
-          //             .Size(glm::vec3(2.0f))
-          //             .Position(glm::vec3(-4.0f, 12.0f, -4.0f))
-          //             .Mass(15.0f)
-          //             .Velocity(glm::vec3(5.0f, -2.0f, 3.0f))
-          //             .Name("Green Box")
-          //             .Build())
-          //.WithBox(engine::physics::BoxBuilder()
-          //             .Size(glm::vec3(2.0f))
-          //             .Position(glm::vec3(6.0f, 6.0f, 6.0f))
-          //             .Mass(15.0f)
-          //             .Velocity(glm::vec3(-4.0f, 2.0f, -3.0f))
-          //             .Name("Orange Box")
-          //             .Build())
-          //.WithBox(engine::physics::BoxBuilder()
-          //             .Size(glm::vec3(2.0f))
-          //             .Position(glm::vec3(-3.0f, 17.0f, 2.0f))
-          //             .Mass(15.0f)
-          //             .Velocity(glm::vec3(2.0f, -5.0f, 4.0f))
-          //             .Name("Purple Box")
-          //             .Build())
+          .WithBox(engine::physics::BoxBuilder()
+                       .Size(glm::vec3(2.0f))
+                       .Position(glm::vec3(5.0f, 8.0f, -5.0f))
+                       .Mass(15.0f)
+                       .Velocity(glm::vec3(-3.0f, -4.0f, 2.0f))
+                       .Name("Blue Box")
+                       .Build())
+          .WithBox(engine::physics::BoxBuilder()
+                       .Size(glm::vec3(2.0f))
+                       .Position(glm::vec3(2.0f, 14.0f, 3.0f))
+                       .Mass(15.0f)
+                       .Velocity(glm::vec3(-2.0f, 3.0f, -5.0f))
+                       .Name("Yellow Box")
+                       .Build())
+          .WithBox(engine::physics::BoxBuilder()
+                       .Size(glm::vec3(2.0f))
+                       .Position(glm::vec3(-4.0f, 12.0f, -4.0f))
+                       .Mass(15.0f)
+                       .Velocity(glm::vec3(5.0f, -2.0f, 3.0f))
+                       .Name("Green Box")
+                       .Build())
+          .WithBox(engine::physics::BoxBuilder()
+                       .Size(glm::vec3(2.0f))
+                       .Position(glm::vec3(6.0f, 6.0f, 6.0f))
+                       .Mass(15.0f)
+                       .Velocity(glm::vec3(-4.0f, 2.0f, -3.0f))
+                       .Name("Orange Box")
+                       .Build())
+          .WithBox(engine::physics::BoxBuilder()
+                       .Size(glm::vec3(2.0f))
+                       .Position(glm::vec3(-3.0f, 17.0f, 2.0f))
+                       .Mass(15.0f)
+                       .Velocity(glm::vec3(2.0f, -5.0f, 4.0f))
+                       .Name("Purple Box")
+                       .Build())
           .Build();
 
   auto [window, mode, screen_width, screen_height] = InitWindow("perf demo");
-  glfwSetKeyCallback(window, DebugMarker);
   glEnable(GL_DEPTH_TEST);
 
   engine::render::Camera camera(glm::vec3(30.0f, 20.0f, 30.0f), glm::vec3(0.0f, 1.0f, 0.0f), -135.0f, -20.0f);
@@ -151,8 +143,7 @@ int main() {
     delta_time = current_frame - last_frame;
     last_frame = current_frame;
     ProcessInput(window, camera);
-    float delta_time_debug = 1.0f / 120.0f;
-    match.Tick(delta_time_debug);
+    match.Tick(delta_time);
 
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
