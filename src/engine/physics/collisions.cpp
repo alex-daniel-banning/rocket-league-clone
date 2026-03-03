@@ -7,7 +7,6 @@
 
 #include "engine/log.hpp"
 
-static unsigned int box_box_collision_count = 0;
 namespace {
 glm::vec3 CalculateCentroid(const std::vector<glm::vec3>& points) {
   assert(points.size() > 0);
@@ -281,6 +280,7 @@ void ResolveBoxBoxCollision(engine::physics::Box& box_a, engine::physics::Box& b
   if (box_a.mass_inv == 0.0f && box_b.mass_inv == 0.0f) {
     throw std::logic_error("Two immovable objects should not have collision resolution applied.");
   }
+
   glm::vec3 impulse_centroid = CalculateCentroid(contact.points);
   glm::vec3 r_a = impulse_centroid - box_a.position;
   glm::vec3 r_b = impulse_centroid - box_b.position;
