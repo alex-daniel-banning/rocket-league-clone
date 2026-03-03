@@ -8,6 +8,7 @@ add_library(engine STATIC
     src/engine/glad.c
     src/engine/stb_image.cpp
     src/engine/match.cpp
+    src/engine/debug_stepper.cpp
     src/engine/physics/collisions.cpp
     src/engine/render/camera.cpp
     src/engine/render/shader.cpp

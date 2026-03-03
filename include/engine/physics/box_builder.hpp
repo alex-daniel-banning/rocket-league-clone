@@ -44,9 +44,13 @@ class BoxBuilder {
     angular_velocity_ = glm::vec3(x, y, z);
     return *this;
   }
+  BoxBuilder& Name(const std::string& name) {
+    name_ = name;
+    return *this;
+  }
 
   engine::physics::Box Build() const {
-    return engine::physics::Box(size_, position_, velocity_, mass_, rotation_, angular_velocity_);
+    return engine::physics::Box(size_, position_, velocity_, mass_, rotation_, angular_velocity_, name_);
   }
 
  private:
@@ -56,5 +60,6 @@ class BoxBuilder {
   float mass_ = 1.0f;
   glm::quat rotation_ = glm::quat(glm::vec3(0.0f));
   glm::vec3 angular_velocity_ = glm::vec3(0.0f);
+  std::string name_;
 };
 }  // namespace engine::physics

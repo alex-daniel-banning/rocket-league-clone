@@ -1,6 +1,7 @@
 #pragma once
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
+#include <string>
 
 namespace engine::physics {
 
@@ -13,13 +14,14 @@ struct Box {
   glm::vec3 angular_velocity = glm::vec3(0.0f);
   const glm::mat3 inertia_tensor;
   const glm::mat3 inertia_tensor_inv;
+  const std::string name;
 
  public:
   const glm::vec3& Size() const { return size_; }
   const glm::vec3& HalfExtents() const { return half_extents_; }
 
   explicit Box(glm::vec3 si, glm::vec3 pos = glm::vec3(0.0f), glm::vec3 vel = glm::vec3(0.0f), float m = 1.0f,
-               glm::quat r = glm::quat(glm::vec3(0.0f)), glm::vec3 w = glm::vec3())
+               glm::quat r = glm::quat(glm::vec3(0.0f)), glm::vec3 w = glm::vec3(), std::string name = "")
       : size_(si),
         half_extents_(si * 0.5f),
         position(pos),
@@ -29,7 +31,8 @@ struct Box {
         inertia_tensor(ComputeInertia(si, m)),
         inertia_tensor_inv(ComputeInertiaInverse(ComputeInertia(si, m))),
         rotation(r),
-        angular_velocity(w) {}
+        angular_velocity(w),
+        name(name) {}
 
  private:
   glm::vec3 size_ = glm::vec3(1.0f);
