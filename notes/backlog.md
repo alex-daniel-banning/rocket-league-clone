@@ -17,6 +17,7 @@
 - [ ] Code Coverage
 
 ## Core Features
+- [ ] Physics threading / physics server (see physics-threading.md)
 - [ ] Collisions
     - [ ] Optimization
         - [ ] Broad phase (spatial partitioning, AABB)
