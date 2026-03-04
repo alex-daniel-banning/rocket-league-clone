@@ -1,0 +1,53 @@
+[DEBUG] box-box resolve: j=-10.2114 v_n=1.7218 m_eff=0.2529 contacts=1 pen=0.0467
+[DEBUG] box-box resolve: j=-0.3215 v_n=0.0816 m_eff=0.2538 contacts=1 pen=0.0017
+[DEBUG] box-sphere resolve: j=0.4083 v_n=-0.0817 m_eff=0.2000 pen=0.0017
+[DEBUG] box-box resolve: j=-9.8239 v_n=1.6560 m_eff=0.2528 contacts=1 pen=0.0305
+[DEBUG] box-box resolve: j=-5.4984 v_n=0.9288 m_eff=0.2534 contacts=1 pen=0.0466
+[DEBUG] box-box resolve: j=-0.3217 v_n=0.0816 m_eff=0.2538 contacts=1 pen=0.0017
+[DEBUG] box-sphere resolve: j=0.4083 v_n=-0.0817 m_eff=0.2000 pen=0.0017
+[DEBUG] box-box resolve: j=-0.3216 v_n=0.0816 m_eff=0.2539 contacts=1 pen=0.0017
+[DEBUG] box-sphere resolve: j=0.4083 v_n=-0.0817 m_eff=0.2000 pen=0.0017
+[DEBUG] box-box resolve: j=-0.3212 v_n=0.0816 m_eff=0.2541 contacts=1 pen=0.0017
+[DEBUG] box-sphere resolve: j=0.4083 v_n=-0.0817 m_eff=0.2000 pen=0.0017
+[DEBUG] box-box resolve: j=-0.3205 v_n=0.0815 m_eff=0.2544 contacts=1 pen=0.0017
+[DEBUG] box-sphere resolve: j=0.4083 v_n=-0.0817 m_eff=0.2000 pen=0.0017
+[DEBUG] box-box resolve: j=-24.6836 v_n=1.0980 m_eff=0.0667 contacts=4 pen=0.0338
+[DEBUG] box-box resolve: j=-0.3196 v_n=0.0814 m_eff=0.2548 contacts=1 pen=0.0017
+[DEBUG] box-sphere resolve: j=0.4083 v_n=-0.0817 m_eff=0.2000 pen=0.0017
+[DEBUG] box-box resolve: j=-10.3917 v_n=1.7558 m_eff=0.2534 contacts=1 pen=0.0378
+[DEBUG] box-box resolve: j=-0.3185 v_n=0.0813 m_eff=0.2553 contacts=1 pen=0.0017
+[DEBUG] box-sphere resolve: j=0.4083 v_n=-0.0817 m_eff=0.2000 pen=0.0017
+[DEBUG] box-box resolve: j=-9.7136 v_n=1.6392 m_eff=0.2531 contacts=1 pen=0.0299
+[DEBUG] box-box resolve: j=-0.3170 v_n=0.0811 m_eff=0.2560 contacts=1 pen=0.0017
+[DEBUG] box-sphere resolve: j=0.4083 v_n=-0.0817 m_eff=0.2000 pen=0.0017
+[DEBUG] box-box resolve: j=-0.3154 v_n=0.0810 m_eff=0.2567 contacts=1 pen=0.0017
+[DEBUG] box-sphere resolve: j=0.4083 v_n=-0.0817 m_eff=0.2000 pen=0.0017
+[DEBUG] box-box resolve: j=-9.7621 v_n=1.6508 m_eff=0.2537 contacts=1 pen=0.0274
+[DEBUG] box-sphere resolve: j=0.4083 v_n=-0.0817 m_eff=0.2000 pen=0.0017
+[DEBUG] box-sphere resolve: j=0.4083 v_n=-0.0817 m_eff=0.2000 pen=0.0017
+[DEBUG] box-sphere resolve: j=0.4083 v_n=-0.0817 m_eff=0.2000 pen=0.0017
+[DEBUG] box-sphere resolve: j=0.4083 v_n=-0.0817 m_eff=0.2000 pen=0.0017
+[DEBUG] box-sphere resolve: j=0.4083 v_n=-0.0817 m_eff=0.2000 pen=0.0017
+[DEBUG] box-sphere resolve: j=0.4083 v_n=-0.0817 m_eff=0.2000 pen=0.0017
+[DEBUG] box-box resolve: j=-9.9667 v_n=1.6796 m_eff=0.2528 contacts=1 pen=0.0415
+[DEBUG] box-box resolve: j=-10.6098 v_n=1.7889 m_eff=0.2529 contacts=1 pen=0.0338
+[DEBUG] box-box resolve: j=-7.9711 v_n=1.3559 m_eff=0.2552 contacts=1 pen=0.0485
+[DEBUG] box-sphere resolve: j=0.4083 v_n=-0.0817 m_eff=0.2000 pen=0.0017
+[DEBUG] box-box resolve: j=-25.4792 v_n=1.1339 m_eff=0.0668 contacts=4 pen=0.0469
+[DEBUG] box-sphere resolve: j=0.4083 v_n=-0.0817 m_eff=0.2000 pen=0.0017
+[DEBUG] box-box resolve: j=-9.7582 v_n=1.6493 m_eff=0.2535 contacts=1 pen=0.0320
+[DEBUG] box-sphere resolve: j=0.4083 v_n=-0.0817 m_eff=0.2000 pen=0.0017
+[DEBUG] box-sphere resolve: j=0.4083 v_n=-0.0817 m_eff=0.2000 pen=0.0017
+[DEBUG] box-sphere resolve: j=0.4083 v_n=-0.0817 m_eff=0.2000 pen=0.0017
+[DEBUG] box-sphere resolve: j=0.4083 v_n=-0.0817 m_eff=0.2000 pen=0.0017
+[DEBUG] box-sphere resolve: j=0.4083 v_n=-0.0817 m_eff=0.2000 pen=0.0017
+[DEBUG] box-box resolve: j=-10.0867 v_n=1.7029 m_eff=0.2532 contacts=1 pen=0.0273
+[DEBUG] box-sphere resolve: j=0.4083 v_n=-0.0817 m_eff=0.2000 pen=0.0017
+[DEBUG] box-box resolve: j=-9.6745 v_n=1.6366 m_eff=0.2538 contacts=1 pen=0.0252
+[DEBUG] box-box resolve: j=-20.5500 v_n=0.9147 m_eff=0.0668 contacts=4 pen=0.0452
+[DEBUG] box-box resolve: j=-25.1385 v_n=1.1177 m_eff=0.0667 contacts=4 pen=0.0232
+[DEBUG] box-sphere resolve: j=0.4083 v_n=-0.0817 m_eff=0.2000 pen=0.0017
+[DEBUG] box-sphere resolve: j=0.4083 v_n=-0.0817 m_eff=0.2000 pen=0.0017
+[DEBUG] box-box resolve: j=-9.7947 v_n=1.6504 m_eff=0.2528 contacts=1 pen=0.0351
+[DEBUG] box-sphere resolve: j=0.4083 v_n=-0.0817 m_eff=0.2000 pen=0.0017
+[DEBUG] box-sphere resolve: j=0.4083 v_n=-0.0817 m_eff=0.2000 pen=0.0017

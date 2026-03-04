@@ -223,8 +223,9 @@ std::vector<glm::vec3> ClipCornerToFace(const engine::physics::Box& box_ref, con
 void CorrectPenetration(glm::vec3& position_a, float inv_mass_a, glm::vec3& position_b, float inv_mass_b,
                         const glm::vec3& normal, float penetration) {
   if (penetration <= 0.0f) return;
-  const float separation_slop = 1e-3f;
-  float total_correction = penetration + separation_slop;
+  // const float separation_slop = 1e-3f;
+  // float total_correction = std::max(0.0f, penetration - separation_slop);
+  float total_correction = std::max(0.0f, penetration);
   float total_inv_mass = inv_mass_a + inv_mass_b;
   position_a -= normal * (total_correction / total_inv_mass) * inv_mass_a;
   position_b += normal * (total_correction / total_inv_mass) * inv_mass_b;
@@ -263,7 +264,9 @@ void ResolveBoxSphereCollision(engine::physics::Box& box, engine::physics::Spher
 
   float effective_mass = sphere.mass_inv + box.mass_inv + AngularMassContribution(i_world_inv, r, n);
 
-  float impulse_scalar = -(1 + coefficient_of_restitution) * rel_vel_along_normal / effective_mass;
+  const float k_bounce_threshold = 2.0f * 9.8f * (1.0f / 120.0f);
+  float e = (std::abs(rel_vel_along_normal) < k_bounce_threshold) ? 0.0f : coefficient_of_restitution;
+  float impulse_scalar = -(1 + e) * rel_vel_along_normal / effective_mass;
   glm::vec3 impulse_vector = impulse_scalar * n;
 
   LOG_DEBUG("box-sphere resolve: j=%.4f v_n=%.4f m_eff=%.4f pen=%.4f", impulse_scalar, rel_vel_along_normal,
@@ -294,7 +297,9 @@ void ResolveBoxBoxCollision(engine::physics::Box& box_a, engine::physics::Box& b
   float v_n = glm::dot(rel_vel, contact.normal);
   if (v_n < 0.0f) return;  // already separating, skip
 
-  float j = -(1.0f + coefficient_of_restitution) * v_n / m_eff;
+  const float k_bounce_threshold = 2.0f * 9.8f * (1.0f / 120.0f);
+  float e = (std::abs(v_n) < k_bounce_threshold) ? 0.0f : coefficient_of_restitution;
+  float j = -(1.0f + e) * v_n / m_eff;
   glm::vec3 impulse = j * contact.normal;
 
   LOG_DEBUG("box-box resolve: j=%.4f v_n=%.4f m_eff=%.4f contacts=%zu pen=%.4f", j, v_n, m_eff, contact.points.size(),

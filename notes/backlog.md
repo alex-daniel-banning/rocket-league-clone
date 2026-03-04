@@ -1,8 +1,8 @@
 # Project Backlog
 
 ## Doing (WIP limit: 3)
-- [ ] Gravity
-    - [ ] Fine-tune damping values
+- [ ] Ground jittering
+    [ ] Implement raycasted suspension
 
 ## On Deck
 - [ ] See if car is rendering properly still
@@ -20,6 +20,9 @@
     - [ ] Standard/Shared/Relative epsilon values
     - [ ] Stress testing
 - [ ] Car system
+    - [ ] Suspension (see `notes/raycasted-suspension.md`)
+        - [ ] Raycasted spring+damper per wheel — replaces car-ground collision, fixes box jitter
+        - [ ] Tune k, c, rest_length parameters
     - [ ] Steering/wheel system
     - [ ] Render hitbox and model
     - [ ] Jumping
