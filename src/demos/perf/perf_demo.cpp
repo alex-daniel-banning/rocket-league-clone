@@ -138,13 +138,36 @@ int main() {
                                               engine::PathManager::GlobalAsset("shaders/model_loading.frag").c_str());
   engine::render::Renderer renderer(screen_width, screen_height);
 
+  float smoothed_physics_ms = 0.0f;
+  float smoothed_render_ms = 0.0f;
+  float fps_title_timer = 0.0f;
+  constexpr float k_fps_alpha = 0.1f;
+  constexpr float k_fps_title_interval = 0.5f;
+  glfwSwapInterval(0);
+
   while (!glfwWindowShouldClose(window)) {
     float current_frame = glfwGetTime();
     delta_time = current_frame - last_frame;
     last_frame = current_frame;
-    ProcessInput(window, camera);
-    match.Tick(delta_time);
 
+    fps_title_timer += delta_time;
+    if (fps_title_timer >= k_fps_title_interval) {
+      int render_fps = smoothed_render_ms > 0.0f ? static_cast<int>(1000.0f / smoothed_render_ms) : 0;
+      glfwSetWindowTitle(window, ("perf demo | render-only: " + std::to_string(render_fps) + " FPS (" +
+                                  std::to_string(smoothed_render_ms).substr(0, 4) +
+                                  "ms) | physics: " + std::to_string(smoothed_physics_ms).substr(0, 7) + "ms")
+                                     .c_str());
+      fps_title_timer = 0.0f;
+    }
+
+    ProcessInput(window, camera);
+
+    double physics_start = glfwGetTime();
+    match.Tick(delta_time);
+    float physics_ms = static_cast<float>((glfwGetTime() - physics_start) * 1000.0);
+    smoothed_physics_ms = k_fps_alpha * physics_ms + (1.0f - k_fps_alpha) * smoothed_physics_ms;
+
+    double render_start = glfwGetTime();
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -201,6 +224,9 @@ int main() {
       renderer.DrawBoxWireframe(box, model_loading_shader, camera);
 
     glfwSwapBuffers(window);
+    float render_ms = static_cast<float>((glfwGetTime() - render_start) * 1000.0);
+    smoothed_render_ms = k_fps_alpha * render_ms + (1.0f - k_fps_alpha) * smoothed_render_ms;
+
     glfwPollEvents();
   }
 
