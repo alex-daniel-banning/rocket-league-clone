@@ -4,6 +4,7 @@
 #include "engine/physics/box.hpp"
 #include "engine/physics/collisions.hpp"
 
+static constexpr glm::vec3 gravity = glm::vec3(0.0f, -9.8f, 0.0f);
 namespace engine {
 
 void Match::Tick(float delta_time) {
@@ -25,8 +26,9 @@ void Match::Tick(float delta_time) {
       car.rotation = glm::normalize(q + (0.5f * fixed_dt * glm::quat(0, w.x, w.y, w.z) * q));
     }
     HandleCollisions();
+    ApplyGravity();
 
-    // Convert to per-frame damping
+    // --- Damping ---
     float linear_damp = std::pow(linear_damping_per_sec, fixed_dt);
     float angular_damp = std::pow(angular_damping_per_sec, fixed_dt);
     if (ball_) {
@@ -82,6 +84,13 @@ void Match::HandleCollisions() {
   for (physics::Box& car : boxes_) {
     physics::Collisions::HandleCollision(car, *ground_);
   }
+}
+
+void Match::ApplyGravity() {
+  for (physics::Box& car : boxes_) {
+    car.velocity += fixed_dt * gravity;
+  }
+  if (ball_) ball_->velocity += fixed_dt * gravity;
 }
 
 }  // namespace engine
