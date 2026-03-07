@@ -8,8 +8,7 @@
 // Sphere position (1.999, 0, 0) with radius 1 just barely penetrates the face.
 
 TEST(Friction_SphereBox, ZeroFriction_TangentialVelocityUnchanged) {
-  engine::physics::Box box =
-      engine::physics::BoxBuilder().Size(glm::vec3(2.0f)).Mass(0.0f).Build();
+  engine::physics::Box box = engine::physics::BoxBuilder().Size(glm::vec3(2.0f)).Mass(0.0f).Build();
   engine::physics::Sphere sphere(1.0f, 1.0f, glm::vec3(1.999f, 0.0f, 0.0f), glm::vec3(-2.0f, 0.0f, 3.0f));
 
   float v_z_before = sphere.velocity.z;
@@ -19,8 +18,7 @@ TEST(Friction_SphereBox, ZeroFriction_TangentialVelocityUnchanged) {
 }
 
 TEST(Friction_SphereBox, NonZeroFriction_TangentialVelocityReduced) {
-  engine::physics::Box box =
-      engine::physics::BoxBuilder().Size(glm::vec3(2.0f)).Mass(0.0f).Build();
+  engine::physics::Box box = engine::physics::BoxBuilder().Size(glm::vec3(2.0f)).Mass(0.0f).Build();
   engine::physics::Sphere sphere(1.0f, 1.0f, glm::vec3(1.999f, 0.0f, 0.0f), glm::vec3(-2.0f, 0.0f, 3.0f));
 
   float v_z_before = sphere.velocity.z;
@@ -32,8 +30,7 @@ TEST(Friction_SphereBox, NonZeroFriction_TangentialVelocityReduced) {
 
 TEST(Friction_SphereBox, HigherFriction_MoreTangentialReduction) {
   auto run = [](float mu) {
-    engine::physics::Box box =
-        engine::physics::BoxBuilder().Size(glm::vec3(2.0f)).Mass(0.0f).Build();
+    engine::physics::Box box = engine::physics::BoxBuilder().Size(glm::vec3(2.0f)).Mass(0.0f).Build();
     engine::physics::Sphere sphere(1.0f, 1.0f, glm::vec3(1.999f, 0.0f, 0.0f), glm::vec3(-2.0f, 0.0f, 3.0f));
     engine::physics::Collisions::HandleCollision(box, sphere, 0.0f, mu);
     return sphere.velocity.z;
@@ -45,8 +42,7 @@ TEST(Friction_SphereBox, HigherFriction_MoreTangentialReduction) {
 // Sphere slides in +Z along the +X face of a movable box.
 // The friction torque at the contact point should spin the box about -Y.
 TEST(Friction_SphereBox, Friction_GeneratesBoxAngularVelocity) {
-  engine::physics::Box box =
-      engine::physics::BoxBuilder().Size(glm::vec3(1.0f)).Mass(5.0f).Build();
+  engine::physics::Box box = engine::physics::BoxBuilder().Size(glm::vec3(1.0f)).Mass(5.0f).Build();
   engine::physics::Sphere sphere(1.0f, 1.0f, glm::vec3(1.499f, 0.0f, 0.0f), glm::vec3(-2.0f, 0.0f, 3.0f));
 
   engine::physics::Collisions::HandleCollision(box, sphere, 0.0f, 1.0f);
@@ -62,8 +58,7 @@ TEST(Friction_SphereBox, Friction_GeneratesBoxAngularVelocity) {
 // friction from fully arresting the slide. Tangential speed should be barely
 // reduced rather than zeroed.
 TEST(Friction_SphereBox, CoulombClamp_LimitsFrictionImpulse) {
-  engine::physics::Box box =
-      engine::physics::BoxBuilder().Size(glm::vec3(2.0f)).Mass(0.0f).Build();
+  engine::physics::Box box = engine::physics::BoxBuilder().Size(glm::vec3(2.0f)).Mass(0.0f).Build();
   // v_normal = 0.1 (below bounce threshold → e=0, j_n ≈ 0.1)
   // v_tangential = 10.0 (large)
   // mu = 0.5 → friction bound = 0.5 * 0.1 = 0.05
@@ -83,10 +78,8 @@ TEST(Friction_SphereBox, CoulombClamp_LimitsFrictionImpulse) {
 
 TEST(Friction_BoxBox, ZeroFriction_TangentialVelocityUnchanged) {
   auto box_a = engine::physics::BoxBuilder().Build();
-  auto box_b = engine::physics::BoxBuilder()
-                   .Position(0.999f, 0.0f, 0.0f)
-                   .Velocity(glm::vec3(-1.0f, 0.0f, 3.0f))
-                   .Build();
+  auto box_b =
+      engine::physics::BoxBuilder().Position(0.999f, 0.0f, 0.0f).Velocity(glm::vec3(-1.0f, 0.0f, 3.0f)).Build();
 
   float v_z_b_before = box_b.velocity.z;
   float v_z_a_before = box_a.velocity.z;
@@ -98,10 +91,8 @@ TEST(Friction_BoxBox, ZeroFriction_TangentialVelocityUnchanged) {
 
 TEST(Friction_BoxBox, NonZeroFriction_TangentialVelocityReduced) {
   auto box_a = engine::physics::BoxBuilder().Build();
-  auto box_b = engine::physics::BoxBuilder()
-                   .Position(0.999f, 0.0f, 0.0f)
-                   .Velocity(glm::vec3(-1.0f, 0.0f, 3.0f))
-                   .Build();
+  auto box_b =
+      engine::physics::BoxBuilder().Position(0.999f, 0.0f, 0.0f).Velocity(glm::vec3(-1.0f, 0.0f, 3.0f)).Build();
 
   float v_z_b_before = box_b.velocity.z;
   engine::physics::Collisions::HandleCollision(box_a, box_b, 0.0f, 0.5f);

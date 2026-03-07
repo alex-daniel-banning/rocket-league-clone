@@ -1,7 +1,6 @@
 # Project Backlog
 
 ## Doing (WIP limit: 3)
-- [ ] Friction with collisions (see friction.md)
 
 ## On Deck
 - [ ] Ground jittering
