@@ -66,5 +66,6 @@ class Match {
   std::vector<physics::Box> walls_;
 
   void HandleCollisions();
+  void ApplyGravity();
 };
 }  // namespace engine

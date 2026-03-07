@@ -1,20 +1,13 @@
 # Project Backlog
 
 ## Doing (WIP limit: 3)
-<<<<<<< Updated upstream
-- [x] Build scene/match that will be useful for performance profiling
-- [ ] Performance profiling
-=======
-- [ ] Friction with collisions (see friction.md)
-- [ ] Box-wall jittering bug (see box-wall-jittering-bug.md)
->>>>>>> Stashed changes
+- [ ] Ground jittering
 
 ## On Deck
-- [ ] FPS counter
-- [ ] Code coverage reports (see code-coverage.md)
+- [ ] Implement raycasted suspension
+- [ ] See if car is rendering properly still
 
 ## Awaiting classification
-- [ ] Code Coverage
 
 ## Core Features
 - [ ] Physics threading / physics server (see physics-threading.md)
@@ -23,17 +16,19 @@
         - [ ] Broad phase (spatial partitioning, AABB)
         - [ ] Sleeping (objects that have settled down into a slow velocity/acceleration get flagged as "sleeping" and skip collisions entirely until something disturbs them)
     - [ ] Tunneling resolution
-    - [ ] Friction with collisions
+    - [ ] Friction with collisions (see friction.md)
     - [ ] Standard/Shared/Relative epsilon values
     - [ ] Stress testing
 - [ ] Car system
+    - [ ] Suspension (see `notes/raycasted-suspension.md`)
+        - [ ] Raycasted spring+damper per wheel — replaces car-ground collision, fixes box jitter
+        - [ ] Tune k, c, rest_length parameters
     - [ ] Steering/wheel system
     - [ ] Render hitbox and model
     - [ ] Jumping
     - [ ] Rocket boost
     - [ ] Dodging
     - [ ] Air roll/steering
-- [ ] Gravity
 - [ ] Menu system
     - [ ] Pause Menu
     - [ ] Main Menu
@@ -64,6 +59,7 @@
 - [ ] Clean up plane class. It shouldn't use getters and setters because especially because the fields should be const
 
 ## Misc (env, tooling, etc.)
+- [ ] Code coverage reports (see code-coverage.md)
 - [ ] Consider refactoring main function/file
 - [ ] What to do with stale demo files
 - [ ] Find dead/unused code (static analysis or link-time optimization flags)

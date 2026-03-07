@@ -4,6 +4,7 @@
 #include "engine/physics/box.hpp"
 #include "engine/physics/collisions.hpp"
 
+static constexpr glm::vec3 gravity = glm::vec3(0.0f, -9.8f, 0.0f);
 namespace engine {
 
 void Match::Tick(float delta_time) {
@@ -11,9 +12,7 @@ void Match::Tick(float delta_time) {
   int substeps = 0;
   while (accumulator_ >= fixed_dt) {
     substeps++;
-    // Define how much damping PER SECOND
-    const float linear_damping_per_sec = 0.98f;
-    const float angular_damping_per_sec = 0.95f;
+    ApplyGravity();
 
     if (ball_) {
       ball_->position += fixed_dt * ball_->velocity;
@@ -26,7 +25,9 @@ void Match::Tick(float delta_time) {
     }
     HandleCollisions();
 
-    // Convert to per-frame damping
+    // --- Damping ---
+    const float linear_damping_per_sec = 0.98f;
+    const float angular_damping_per_sec = 0.98f;
     float linear_damp = std::pow(linear_damping_per_sec, fixed_dt);
     float angular_damp = std::pow(angular_damping_per_sec, fixed_dt);
     if (ball_) {
@@ -54,34 +55,41 @@ void Match::HandleCollisions() {
   if (ball_) {
     // Ball v Wall collisions
     for (physics::Box wall : walls_) {
-      physics::Collisions::HandleCollision(wall, *ball_);
+      physics::Collisions::HandleCollision(wall, *ball_, 0.5f);
     }
     // Ball v Ground collisions
     if (ground_) {
-      physics::Collisions::HandleCollision(*ground_, *ball_);
+      physics::Collisions::HandleCollision(*ground_, *ball_, 0.5f);
     }
     // Ball v Car collisions
     for (physics::Box& car : boxes_) {
-      physics::Collisions::HandleCollision(car, *ball_);
+      physics::Collisions::HandleCollision(car, *ball_, 0.5f);
     }
   }
 
   // Car v Car collisions
   for (unsigned int i = 0; i < boxes_.size() - 1; i++) {
     for (unsigned int j = i + 1; j < boxes_.size(); j++) {
-      physics::Collisions::HandleCollision(boxes_[i], boxes_[j]);
+      physics::Collisions::HandleCollision(boxes_[i], boxes_[j], 0.5f);
     }
   }
   // Car v Wall collisions
   for (physics::Box& car : boxes_) {
     for (physics::Box& wall : walls_) {
-      physics::Collisions::HandleCollision(car, wall);
+      physics::Collisions::HandleCollision(car, wall, 0.5f);
     }
   }
   // Car v Ground collisions
   for (physics::Box& car : boxes_) {
-    physics::Collisions::HandleCollision(car, *ground_);
+    physics::Collisions::HandleCollision(car, *ground_, 0.5f);
   }
+}
+
+void Match::ApplyGravity() {
+  for (physics::Box& car : boxes_) {
+    car.velocity += fixed_dt * gravity;
+  }
+  if (ball_) ball_->velocity += fixed_dt * gravity;
 }
 
 }  // namespace engine
