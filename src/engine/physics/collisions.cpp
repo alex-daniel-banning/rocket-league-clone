@@ -223,8 +223,6 @@ std::vector<glm::vec3> ClipCornerToFace(const engine::physics::Box& box_ref, con
 void CorrectPenetration(glm::vec3& position_a, float inv_mass_a, glm::vec3& position_b, float inv_mass_b,
                         const glm::vec3& normal, float penetration) {
   if (penetration <= 0.0f) return;
-  // const float separation_slop = 1e-3f;
-  // float total_correction = std::max(0.0f, penetration - separation_slop);
   float total_correction = std::max(0.0f, penetration);
   float total_inv_mass = inv_mass_a + inv_mass_b;
   position_a -= normal * (total_correction / total_inv_mass) * inv_mass_a;

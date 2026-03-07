@@ -2,9 +2,9 @@
 
 ## Doing (WIP limit: 3)
 - [ ] Ground jittering
-    [ ] Implement raycasted suspension
 
 ## On Deck
+- [ ] Implement raycasted suspension
 - [ ] See if car is rendering properly still
 
 ## Awaiting classification

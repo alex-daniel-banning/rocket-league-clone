@@ -27,7 +27,7 @@ void Match::Tick(float delta_time) {
 
     // --- Damping ---
     const float linear_damping_per_sec = 0.98f;
-    const float angular_damping_per_sec = 0.1f;
+    const float angular_damping_per_sec = 0.98f;
     float linear_damp = std::pow(linear_damping_per_sec, fixed_dt);
     float angular_damp = std::pow(angular_damping_per_sec, fixed_dt);
     if (ball_) {
