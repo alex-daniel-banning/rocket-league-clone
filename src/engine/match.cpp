@@ -55,33 +55,33 @@ void Match::HandleCollisions() {
   if (ball_) {
     // Ball v Wall collisions
     for (physics::Box wall : walls_) {
-      physics::Collisions::HandleCollision(wall, *ball_, 0.5f);
+      physics::Collisions::HandleCollision(wall, *ball_, 0.5f, 0.3f);
     }
     // Ball v Ground collisions
     if (ground_) {
-      physics::Collisions::HandleCollision(*ground_, *ball_, 0.5f);
+      physics::Collisions::HandleCollision(*ground_, *ball_, 0.5f, 0.3f);
     }
     // Ball v Car collisions
     for (physics::Box& car : boxes_) {
-      physics::Collisions::HandleCollision(car, *ball_, 0.5f);
+      physics::Collisions::HandleCollision(car, *ball_, 0.5f, 0.3f);
     }
   }
 
   // Car v Car collisions
   for (unsigned int i = 0; i < boxes_.size() - 1; i++) {
     for (unsigned int j = i + 1; j < boxes_.size(); j++) {
-      physics::Collisions::HandleCollision(boxes_[i], boxes_[j], 0.5f);
+      physics::Collisions::HandleCollision(boxes_[i], boxes_[j], 0.5f, 0.5f);
     }
   }
   // Car v Wall collisions
   for (physics::Box& car : boxes_) {
     for (physics::Box& wall : walls_) {
-      physics::Collisions::HandleCollision(car, wall, 0.5f);
+      physics::Collisions::HandleCollision(car, wall, 0.5f, 0.5f);
     }
   }
   // Car v Ground collisions
   for (physics::Box& car : boxes_) {
-    physics::Collisions::HandleCollision(car, *ground_, 0.5f);
+    physics::Collisions::HandleCollision(car, *ground_, 0.5f, 0.7f);
   }
 }
 

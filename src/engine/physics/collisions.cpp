@@ -245,7 +245,8 @@ void ApplyImpulse(glm::vec3& velocity, float mass_inv, glm::vec3& angular_veloci
 }
 
 void ResolveBoxSphereCollision(engine::physics::Box& box, engine::physics::Sphere& sphere,
-                               const engine::physics::Contact& contact, float coefficient_of_restitution) {
+                               const engine::physics::Contact& contact, float coefficient_of_restitution,
+                               float friction) {
   // This is all from the perspective of the sphere
   glm::vec3 omega = box.angular_velocity;
   glm::vec3 r = contact.points[0] - box.position;
@@ -273,11 +274,23 @@ void ResolveBoxSphereCollision(engine::physics::Box& box, engine::physics::Spher
   sphere.velocity += impulse_vector * sphere.mass_inv;
   ApplyImpulse(box.velocity, box.mass_inv, box.angular_velocity, i_world_inv, r, -impulse_vector);
 
+  // --- Friction ---
+  glm::vec3 v_tangential = v_rel - rel_vel_along_normal * n;
+  float v_t_mag = glm::length(v_tangential);
+  if (friction > 0.0f && v_t_mag > 1e-6f) {
+    glm::vec3 t = v_tangential / v_t_mag;
+    float m_eff_t = sphere.mass_inv + box.mass_inv + AngularMassContribution(i_world_inv, r, t);
+    float j_friction = glm::clamp(-v_t_mag / m_eff_t, -friction * impulse_scalar, friction * impulse_scalar);
+    glm::vec3 friction_impulse = j_friction * t;
+    sphere.velocity += friction_impulse * sphere.mass_inv;
+    ApplyImpulse(box.velocity, box.mass_inv, box.angular_velocity, i_world_inv, r, -friction_impulse);
+  }
+
   CorrectPenetration(box.position, box.mass_inv, sphere.position, sphere.mass_inv, contact.normal, contact.penetration);
 }
 
 void ResolveBoxBoxCollision(engine::physics::Box& box_a, engine::physics::Box& box_b,
-                            const engine::physics::Contact& contact, float coefficient_of_restitution) {
+                            const engine::physics::Contact& contact, float coefficient_of_restitution, float friction) {
   if (box_a.mass_inv == 0.0f && box_b.mass_inv == 0.0f) {
     throw std::logic_error("Two immovable objects should not have collision resolution applied.");
   }
@@ -305,6 +318,19 @@ void ResolveBoxBoxCollision(engine::physics::Box& box_a, engine::physics::Box& b
 
   ApplyImpulse(box_a.velocity, box_a.mass_inv, box_a.angular_velocity, i_world_inv_a, r_a, impulse);
   ApplyImpulse(box_b.velocity, box_b.mass_inv, box_b.angular_velocity, i_world_inv_b, r_b, -impulse);
+
+  // --- Friction ---
+  glm::vec3 v_tangential = rel_vel - v_n * contact.normal;
+  float v_t_mag = glm::length(v_tangential);
+  if (friction > 0.0f && v_t_mag > 1e-6f) {
+    glm::vec3 t = v_tangential / v_t_mag;
+    float m_eff_t = box_a.mass_inv + box_b.mass_inv + AngularMassContribution(i_world_inv_a, r_a, t) +
+                    AngularMassContribution(i_world_inv_b, r_b, t);
+    float j_friction = glm::clamp(-v_t_mag / m_eff_t, -friction * std::abs(j), friction * std::abs(j));
+    glm::vec3 friction_impulse = j_friction * t;
+    ApplyImpulse(box_a.velocity, box_a.mass_inv, box_a.angular_velocity, i_world_inv_a, r_a, friction_impulse);
+    ApplyImpulse(box_b.velocity, box_b.mass_inv, box_b.angular_velocity, i_world_inv_b, r_b, -friction_impulse);
+  }
 
   CorrectPenetration(box_a.position, box_a.mass_inv, box_b.position, box_b.mass_inv, contact.normal,
                      contact.penetration);
@@ -338,10 +364,10 @@ bool Collisions::ComputeContact(const Box& box, const Sphere& sphere, Contact& o
   return true;
 };
 
-void Collisions::HandleCollision(Box& box, Sphere& sphere, float restitution) {
+void Collisions::HandleCollision(Box& box, Sphere& sphere, float restitution, float friction) {
   Contact contact;
   if (!ComputeContact(box, sphere, contact)) return;
-  ResolveBoxSphereCollision(box, sphere, contact, restitution);
+  ResolveBoxSphereCollision(box, sphere, contact, restitution, friction);
 }
 
 bool Collisions::ComputeContact(const Box& box_a, const Box& box_b, Contact& out) {
@@ -432,10 +458,10 @@ bool Collisions::ComputeContact(const Box& box_a, const Box& box_b, Contact& out
   return true;
 }
 
-void Collisions::HandleCollision(Box& box_a, Box& box_b, float restitution) {
+void Collisions::HandleCollision(Box& box_a, Box& box_b, float restitution, float friction) {
   Contact contact;
   if (!ComputeContact(box_a, box_b, contact)) return;
-  ResolveBoxBoxCollision(box_a, box_b, contact, restitution);
+  ResolveBoxBoxCollision(box_a, box_b, contact, restitution, friction);
 }
 
 }  // namespace engine::physics
