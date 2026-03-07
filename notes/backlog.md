@@ -1,9 +1,13 @@
 # Project Backlog
 
 ## Doing (WIP limit: 3)
-- [ ] Ground jittering
+- [ ] Friction with collisions (see friction.md)
 
 ## On Deck
+- [ ] Ground jittering
+    [ ] Debug (using stepper) to find the following information:
+        [ ] Confirm that it's the penetration correction that is causing the jittering.
+            [ ] Set up a box to start in the jitter state (on ground, barely not parallel to ground)
 - [ ] Implement raycasted suspension
 - [ ] See if car is rendering properly still
 
@@ -16,7 +20,6 @@
         - [ ] Broad phase (spatial partitioning, AABB)
         - [ ] Sleeping (objects that have settled down into a slow velocity/acceleration get flagged as "sleeping" and skip collisions entirely until something disturbs them)
     - [ ] Tunneling resolution
-    - [ ] Friction with collisions (see friction.md)
     - [ ] Standard/Shared/Relative epsilon values
     - [ ] Stress testing
 - [ ] Car system
