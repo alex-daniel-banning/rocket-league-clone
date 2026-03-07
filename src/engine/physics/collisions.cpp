@@ -290,8 +290,7 @@ void ResolveBoxSphereCollision(engine::physics::Box& box, engine::physics::Spher
 }
 
 void ResolveBoxBoxCollision(engine::physics::Box& box_a, engine::physics::Box& box_b,
-                            const engine::physics::Contact& contact, float coefficient_of_restitution,
-                            float friction) {
+                            const engine::physics::Contact& contact, float coefficient_of_restitution, float friction) {
   if (box_a.mass_inv == 0.0f && box_b.mass_inv == 0.0f) {
     throw std::logic_error("Two immovable objects should not have collision resolution applied.");
   }
