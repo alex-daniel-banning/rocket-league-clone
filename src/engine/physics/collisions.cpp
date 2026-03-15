@@ -505,8 +505,7 @@ bool Collisions::ComputeContact(const Box& box_a, const Box& box_b, Contact& out
     const auto& ref_box = a_clips_b ? box_a : box_b;
     const auto& ref_axes = a_clips_b ? axes_a : axes_b;
     float support = 0.0f;
-    for (int j = 0; j < 3; j++)
-      support += std::abs(glm::dot(ref_axes[j], penetration_axis)) * ref_box.HalfExtents()[j];
+    for (int j = 0; j < 3; j++) support += std::abs(glm::dot(ref_axes[j], penetration_axis)) * ref_box.HalfExtents()[j];
     ref_face_proj = glm::dot(ref_box.position, penetration_axis) + sign * support;
   }
 
@@ -514,9 +513,8 @@ bool Collisions::ComputeContact(const Box& box_a, const Box& box_b, Contact& out
     contact_points = ReduceManifold(contact_points, penetration_axis, sign, ref_face_proj);
 
   for (auto& p : contact_points) {
-    float depth = (axis_source == AxisSource::EDGE_EDGE)
-                      ? penetration
-                      : sign * (ref_face_proj - glm::dot(p, penetration_axis));
+    float depth =
+        (axis_source == AxisSource::EDGE_EDGE) ? penetration : sign * (ref_face_proj - glm::dot(p, penetration_axis));
     p = p + sign * (0.5f * penetration * penetration_axis);
     out.points.push_back({p, depth});
   }
