@@ -35,24 +35,32 @@ std::string FormatPoints(const std::vector<glm::vec3>& points) {
   return oss.str();
 }
 
+std::vector<glm::vec3> ExtractPositions(const std::vector<engine::physics::ContactPoint>& points) {
+  std::vector<glm::vec3> out;
+  out.reserve(points.size());
+  for (const auto& cp : points) out.push_back(cp.position);
+  return out;
+}
+
 glm::quat GetDiagonalAlignedOrientation(glm::vec3 axis) {
   glm::vec3 diagonal = glm::normalize(glm::vec3(1, 1, 1));
   return glm::rotation(diagonal, axis);
 }
 
-void ExpectPointsEqual(std::vector<glm::vec3> actual, std::vector<glm::vec3> expected, float tol = 1e-5f) {
+void ExpectPointsEqual(std::vector<engine::physics::ContactPoint> actual,
+                       std::vector<engine::physics::ContactPoint> expected, float tol = 1e-5f) {
   ASSERT_EQ(actual.size(), expected.size());
-  auto cmp = [](const glm::vec3& a, const glm::vec3& b) {
-    if (a.x != b.x) return a.x < b.x;
-    if (a.y != b.y) return a.y < b.y;
-    return a.z < b.z;
+  auto cmp = [](const engine::physics::ContactPoint& a, const engine::physics::ContactPoint& b) {
+    if (a.position.x != b.position.x) return a.position.x < b.position.x;
+    if (a.position.y != b.position.y) return a.position.y < b.position.y;
+    return a.position.z < b.position.z;
   };
   std::sort(actual.begin(), actual.end(), cmp);
   std::sort(expected.begin(), expected.end(), cmp);
   for (size_t i = 0; i < actual.size(); ++i) {
-    EXPECT_NEAR(actual[i].x, expected[i].x, tol);
-    EXPECT_NEAR(actual[i].y, expected[i].y, tol);
-    EXPECT_NEAR(actual[i].z, expected[i].z, tol);
+    EXPECT_NEAR(actual[i].position.x, expected[i].position.x, tol);
+    EXPECT_NEAR(actual[i].position.y, expected[i].position.y, tol);
+    EXPECT_NEAR(actual[i].position.z, expected[i].position.z, tol);
   }
 }
 }  // namespace
@@ -67,6 +75,7 @@ bool ContainsPoint(const std::vector<glm::vec3>& points, glm::vec3 target, float
   return false;
 }
 
+
 TEST_P(BoxBoxContactPoints, _) {
   const auto& c = GetParam();
   engine::physics::Box box_a(glm::vec3(1.0f), c.box_a_position, glm::vec3(0.0f), 1.0f, c.box_a_rotation);
@@ -77,13 +86,15 @@ TEST_P(BoxBoxContactPoints, _) {
 
   ASSERT_EQ(contact.points.size(), c.expected_point_count);
 
+  std::vector<glm::vec3> actual_positions = ExtractPositions(contact.points);
+
   std::vector<glm::vec3> extra;
-  for (const auto& actual : contact.points)
-    if (!ContainsPoint(c.expected_points, actual)) extra.push_back(actual);
+  for (const auto& pos : actual_positions)
+    if (!ContainsPoint(c.expected_points, pos)) extra.push_back(pos);
 
   std::vector<glm::vec3> missing;
   for (const auto& expected : c.expected_points)
-    if (!ContainsPoint(contact.points, expected)) missing.push_back(expected);
+    if (!ContainsPoint(actual_positions, expected)) missing.push_back(expected);
 
   EXPECT_TRUE(missing.empty()) << c.label << "\nMissing: " << FormatPoints(missing);
   EXPECT_TRUE(extra.empty()) << c.label << "\nExtra: " << FormatPoints(extra);
@@ -170,6 +181,61 @@ TEST(BoxBoxContact, EdgeFaceClippingShouldBeIndependentOfArgumentOrder) {
   ExpectPointsEqual(contact_1.points, contact_2.points, 1e-5f);
 }
 
+// --- Per-point penetration depth tests ---
+
+TEST(BoxBoxContact, PerPointDepthsArePositive) {
+  auto box_a = engine::physics::BoxBuilder().Build();
+  auto box_b = engine::physics::BoxBuilder().Position(0.9f, 0.0f, 0.0f).Build();
+  engine::physics::Contact contact;
+  ASSERT_TRUE(engine::physics::Collisions::ComputeContact(box_a, box_b, contact));
+  ASSERT_FALSE(contact.points.empty());
+  for (const auto& cp : contact.points) EXPECT_GT(cp.penetration, 0.0f);
+}
+
+TEST(BoxBoxContact, FlatFaceFacePerPointDepthsAreUniform) {
+  auto box_a = engine::physics::BoxBuilder().Build();
+  auto box_b = engine::physics::BoxBuilder().Position(0.9f, 0.0f, 0.0f).Build();
+  engine::physics::Contact contact;
+  ASSERT_TRUE(engine::physics::Collisions::ComputeContact(box_a, box_b, contact));
+  ASSERT_FALSE(contact.points.empty());
+  for (const auto& cp : contact.points) EXPECT_NEAR(cp.penetration, contact.penetration, 1e-5f);
+}
+
+TEST(BoxBoxContact, TiltedFaceFacePerPointDepthsVary) {
+  // box_b tilted 5° around Z: upper corners penetrate deeper than lower corners
+  auto box_a = engine::physics::BoxBuilder().Build();
+  auto box_b = engine::physics::BoxBuilder()
+                   .Position(0.9f, 0.0f, 0.0f)
+                   .Rotation(glm::angleAxis(glm::radians(5.0f), glm::vec3(0.0f, 0.0f, 1.0f)))
+                   .Build();
+  engine::physics::Contact contact;
+  ASSERT_TRUE(engine::physics::Collisions::ComputeContact(box_a, box_b, contact));
+  ASSERT_GE(contact.points.size(), 2u);
+  float min_d = contact.points[0].penetration;
+  float max_d = contact.points[0].penetration;
+  for (const auto& cp : contact.points) {
+    min_d = std::min(min_d, cp.penetration);
+    max_d = std::max(max_d, cp.penetration);
+  }
+  EXPECT_GT(max_d - min_d, 1e-4f);
+}
+
+// --- Manifold reduction test ---
+
+// box_b rotated 45° around X produces a diamond-shaped incident face whose
+// 4 corners all fall outside the reference face. Sutherland-Hodgman returns
+// 8 intersection points; the manifold should be reduced to at most 4.
+TEST(BoxBoxContact, FaceFaceRotated45DegReducesToFourPoints) {
+  auto box_a = engine::physics::BoxBuilder().Build();
+  auto box_b = engine::physics::BoxBuilder()
+                   .Position(0.9f, 0.0f, 0.0f)
+                   .Rotation(glm::angleAxis(glm::radians(45.0f), glm::vec3(1.0f, 0.0f, 0.0f)))
+                   .Build();
+  engine::physics::Contact contact;
+  ASSERT_TRUE(engine::physics::Collisions::ComputeContact(box_a, box_b, contact));
+  EXPECT_LE(contact.points.size(), 4u);
+}
+
 TEST(BoxBoxContact, CornerFaceClippingShouldBeIndependentOfArgumentOrder) {
   glm::vec3 position(0.5f + std::sqrt(0.75f) - 0.05f, 0.0f, 0.0f);
   glm::quat rotation = GetDiagonalAlignedOrientation({1, 0, 0});
@@ -179,7 +245,7 @@ TEST(BoxBoxContact, CornerFaceClippingShouldBeIndependentOfArgumentOrder) {
   engine::physics::Contact contact_1;
   ASSERT_TRUE(engine::physics::Collisions::ComputeContact(box_a_1, box_b_1, contact_1));
   std::cout << "\ncontact_1.points:\n";
-  for (const auto& p : contact_1.points) std::cout << p << '\n';
+  for (const auto& cp : contact_1.points) std::cout << cp.position << '\n';
   std::cout << "contact_1.normal:" << contact_1.normal << '\n';
 
   auto box_a_2 = engine::physics::BoxBuilder().Build();
@@ -187,7 +253,7 @@ TEST(BoxBoxContact, CornerFaceClippingShouldBeIndependentOfArgumentOrder) {
   engine::physics::Contact contact_2;
   ASSERT_TRUE(engine::physics::Collisions::ComputeContact(box_b_2, box_a_2, contact_2));
   std::cout << "\ncontact_2.points:\n";
-  for (const auto& p : contact_2.points) std::cout << p << '\n';
+  for (const auto& cp : contact_2.points) std::cout << cp.position << '\n';
   std::cout << "contact_2.normal:" << contact_2.normal << '\n';
 
   ExpectPointsEqual(contact_1.points, contact_2.points, 1e-5f);
