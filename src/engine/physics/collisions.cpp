@@ -8,11 +8,11 @@
 #include "engine/log.hpp"
 
 namespace {
-glm::vec3 CalculateCentroid(const std::vector<glm::vec3>& points) {
+glm::vec3 CalculateCentroid(const std::vector<engine::physics::ContactPoint>& points) {
   assert(points.size() > 0);
-  if (points.size() == 1) return points[0];
+  if (points.size() == 1) return points[0].position;
   glm::vec3 sum(0.0f);
-  for (const auto& p : points) sum += p;
+  for (const auto& cp : points) sum += cp.position;
   return sum / static_cast<float>(points.size());
 }
 
@@ -220,6 +220,54 @@ std::vector<glm::vec3> ClipCornerToFace(const engine::physics::Box& box_ref, con
   return {corner};
 };
 
+std::vector<glm::vec3> ReduceManifold(const std::vector<glm::vec3>& points, const glm::vec3& axis, float sign,
+                                      float ref_face_proj) {
+  auto point_depth = [&](const glm::vec3& p) { return sign * (ref_face_proj - glm::dot(p, axis)); };
+  auto area2 = [](const glm::vec3& a, const glm::vec3& b, const glm::vec3& c) {
+    return glm::length(glm::cross(b - a, c - a));
+  };
+
+  const size_t n = points.size();
+
+  // 1. Deepest point
+  size_t i0 = 0;
+  for (size_t i = 1; i < n; i++)
+    if (point_depth(points[i]) > point_depth(points[i0])) i0 = i;
+
+  // 2. Farthest from i0
+  size_t i1 = (i0 != 0) ? 0 : 1;
+  for (size_t i = 0; i < n; i++) {
+    if (i == i0) continue;
+    if (glm::length2(points[i] - points[i0]) > glm::length2(points[i1] - points[i0])) i1 = i;
+  }
+
+  // 3. Maximise triangle area with i0, i1
+  size_t i2 = n;
+  float max_area = -1.0f;
+  for (size_t i = 0; i < n; i++) {
+    if (i == i0 || i == i1) continue;
+    float a = area2(points[i0], points[i1], points[i]);
+    if (a > max_area) {
+      max_area = a;
+      i2 = i;
+    }
+  }
+
+  // 4. Maximise quad area beyond the existing triangle
+  size_t i3 = n;
+  float max_ext = -1.0f;
+  for (size_t i = 0; i < n; i++) {
+    if (i == i0 || i == i1 || i == i2) continue;
+    float ext = area2(points[i0], points[i1], points[i]) + area2(points[i0], points[i2], points[i]);
+    if (ext > max_ext) {
+      max_ext = ext;
+      i3 = i;
+    }
+  }
+
+  return {points[i0], points[i1], points[i2], points[i3]};
+}
+
 void CorrectPenetration(glm::vec3& position_a, float inv_mass_a, glm::vec3& position_b, float inv_mass_b,
                         const glm::vec3& normal, float penetration) {
   if (penetration <= 0.0f) return;
@@ -249,7 +297,7 @@ void ResolveBoxSphereCollision(engine::physics::Box& box, engine::physics::Spher
                                float friction) {
   // This is all from the perspective of the sphere
   glm::vec3 omega = box.angular_velocity;
-  glm::vec3 r = contact.points[0] - box.position;
+  glm::vec3 r = contact.points[0].position - box.position;
   glm::vec3 v_rel = sphere.velocity - (box.velocity + glm::cross(omega, r));
   glm::vec3 n = contact.normal;
   glm::mat3 i_world_inv = WorldInverseInertia(box.rotation, box.inertia_tensor_inv);
@@ -360,7 +408,7 @@ bool Collisions::ComputeContact(const Box& box, const Sphere& sphere, Contact& o
   }
   out.normal = glm::normalize(v_box_surface_to_sphere_center);
   out.penetration = sphere.radius - std::sqrt(distance_squared);
-  out.points.push_back(closest_point);
+  out.points.push_back({closest_point, out.penetration});
   return true;
 };
 
@@ -443,16 +491,33 @@ bool Collisions::ComputeContact(const Box& box_a, const Box& box_b, Contact& out
     }
   }
 
-  // Clip in the correct direction.
-  const float sign = a_clips_b ? 1.0f : -1.0f;
-  for (auto& p : contact_points) {
-    p = p + sign * (0.5f * penetration * penetration_axis);
-  }
   // Clipping can return empty results in degenerate cases (parallel edges in
   // ClipEdgeEdge, or floating-point drift pushing all vertices to the wrong
   // side of the reference face in ClipFaceFace). Skip resolution this substep.
   if (contact_points.empty()) return false;
-  out.points.insert(out.points.end(), contact_points.begin(), contact_points.end());
+
+  // Compute per-point depths from raw (pre-offset) positions.
+  // For face/corner contacts, project each point against the reference face.
+  // For edge-edge the midpoint has no face to project against; use overall penetration.
+  const float sign = a_clips_b ? 1.0f : -1.0f;
+  float ref_face_proj = 0.0f;
+  if (axis_source != AxisSource::EDGE_EDGE) {
+    const auto& ref_box = a_clips_b ? box_a : box_b;
+    const auto& ref_axes = a_clips_b ? axes_a : axes_b;
+    float support = 0.0f;
+    for (int j = 0; j < 3; j++) support += std::abs(glm::dot(ref_axes[j], penetration_axis)) * ref_box.HalfExtents()[j];
+    ref_face_proj = glm::dot(ref_box.position, penetration_axis) + sign * support;
+  }
+
+  if (axis_source != AxisSource::EDGE_EDGE && contact_points.size() > 4)
+    contact_points = ReduceManifold(contact_points, penetration_axis, sign, ref_face_proj);
+
+  for (auto& p : contact_points) {
+    float depth =
+        (axis_source == AxisSource::EDGE_EDGE) ? penetration : sign * (ref_face_proj - glm::dot(p, penetration_axis));
+    p = p + sign * (0.5f * penetration * penetration_axis);
+    out.points.push_back({p, depth});
+  }
   out.normal = penetration_axis;
   out.penetration = penetration;
   return true;

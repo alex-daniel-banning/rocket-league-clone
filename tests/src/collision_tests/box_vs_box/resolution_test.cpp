@@ -254,7 +254,7 @@ TEST(BoxBoxResolution, CoefficientOfRestitution_PerfectlyInelastic) {
 
   // Compute relative contact-point velocity along the normal after resolution
   glm::vec3 centroid(0.0f);
-  for (const auto& p : contact.points) centroid += p;
+  for (const auto& cp : contact.points) centroid += cp.position;
   centroid /= static_cast<float>(contact.points.size());
 
   glm::vec3 r_a = centroid - box_a.position;
