@@ -75,7 +75,6 @@ bool ContainsPoint(const std::vector<glm::vec3>& points, glm::vec3 target, float
   return false;
 }
 
-
 TEST_P(BoxBoxContactPoints, _) {
   const auto& c = GetParam();
   engine::physics::Box box_a(glm::vec3(1.0f), c.box_a_position, glm::vec3(0.0f), 1.0f, c.box_a_rotation);
