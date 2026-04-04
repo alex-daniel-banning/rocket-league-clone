@@ -1,0 +1,149 @@
+// ============================================
+// DATA STRUCTURES
+// ============================================
+
+struct RigidBody:
+    position        // vec3
+    orientation     // quaternion
+    velocity        // vec3 linear velocity
+    angularVelocity // vec3 angular velocity
+    mass            // scalar
+    invMass         // 1/mass (0 if static)
+    inertia         // mat3 inertia tensor
+    invInertia      // inverse inertia tensor (world space)
+
+struct Constraint:
+    bodyA, bodyB           // references to rigid bodies
+    jacobian               // the J matrix (varies by constraint type)
+    bias                   // the 'b' term
+    effectiveMass          // cached J * M^-1 * J^T
+    accumulatedImpulse     // for warm starting
+    
+// ============================================
+// PRE-SOLVE: Compute Jacobians & Effective Mass
+// ============================================
+
+function PreSolve(constraints[], dt):
+    for each constraint in constraints:
+        // Compute Jacobian based on constraint type
+        // (contact, distance joint, hinge, etc.)
+        constraint.jacobian = ComputeJacobian(constraint)
+        
+        // Compute bias term (includes Baumgarte stabilization)
+        positionError = ComputePositionError(constraint)
+        constraint.bias = -(BAUMGARTE / dt) * positionError
+        
+        // Compute effective mass: J * M^-1 * J^T
+        // For a single constraint row, this is a scalar
+        constraint.effectiveMass = ComputeEffectiveMass(constraint)
+        
+        // Warm start: apply last frame's accumulated impulse
+        ApplyImpulse(constraint, constraint.accumulatedImpulse)
+
+// ============================================
+// SOLVE: The Sequential Impulse Loop
+// ============================================
+
+function Solve(constraints[], iterations):
+    for i = 1 to iterations:
+        for each constraint in constraints:
+            // Compute current velocity at constraint (JV)
+            JV = ComputeJV(constraint)
+            
+            // Compute lambda: λ = -(JV + b) / effectiveMass
+            lambda = -(JV + constraint.bias) / constraint.effectiveMass
+            
+            // For inequality constraints (contacts), clamp lambda
+            if constraint.isContact:
+                oldAccum = constraint.accumulatedImpulse
+                constraint.accumulatedImpulse = max(0, oldAccum + lambda)
+                lambda = constraint.accumulatedImpulse - oldAccum
+            else:
+                constraint.accumulatedImpulse += lambda
+            
+            // Apply impulse to both bodies
+            ApplyImpulse(constraint, lambda)
+
+// ============================================
+// APPLY IMPULSE: ΔV = M^-1 * J^T * λ
+// ============================================
+
+function ApplyImpulse(constraint, lambda):
+    A = constraint.bodyA
+    B = constraint.bodyB
+    J = constraint.jacobian
+    
+    // J = [J_vA, J_wA, J_vB, J_wB] (each is vec3)
+    // ΔV = M^-1 * J^T * λ
+    
+    // Body A (impulse is applied in opposite direction)
+    A.velocity        += A.invMass * J.vA * lambda
+    A.angularVelocity += A.invInertia * J.wA * lambda
+    
+    // Body B
+    B.velocity        += B.invMass * J.vB * lambda
+    B.angularVelocity += B.invInertia * J.wB * lambda
+
+// ============================================
+// COMPUTE JV: Dot product of Jacobian and velocity vector
+// ============================================
+
+function ComputeJV(constraint):
+    A = constraint.bodyA
+    B = constraint.bodyB
+    J = constraint.jacobian
+    
+    // JV = J_vA · vA + J_wA · ωA + J_vB · vB + J_wB · ωB
+    return dot(J.vA, A.velocity) + dot(J.wA, A.angularVelocity) +
+           dot(J.vB, B.velocity) + dot(J.wB, B.angularVelocity)
+
+// ============================================
+// COMPUTE EFFECTIVE MASS: J * M^-1 * J^T
+// ============================================
+
+function ComputeEffectiveMass(constraint):
+    A = constraint.bodyA
+    B = constraint.bodyB
+    J = constraint.jacobian
+    
+    // effectiveMass = J_vA · (invMassA * J_vA) + J_wA · (invInertiaA * J_wA)
+    //               + J_vB · (invMassB * J_vB) + J_wB · (invInertiaB * J_wB)
+    return A.invMass * dot(J.vA, J.vA) + dot(J.wA, A.invInertia * J.wA) +
+           B.invMass * dot(J.vB, J.vB) + dot(J.wB, B.invInertia * J.wB)
+
+// ============================================
+// EXAMPLE: Contact Constraint Jacobian
+// ============================================
+
+function ComputeContactJacobian(contact):
+    n = contact.normal        // points from A to B
+    rA = contact.point - A.position  // contact point relative to A
+    rB = contact.point - B.position  // contact point relative to B
+    
+    jacobian.vA = -n
+    jacobian.wA = -cross(rA, n)
+    jacobian.vB = n
+    jacobian.wB = cross(rB, n)
+    
+    return jacobian
+
+// ============================================
+// MAIN PHYSICS STEP
+// ============================================
+
+function PhysicsStep(bodies[], constraints[], dt):
+    // 1. Apply external forces (gravity, etc.)
+    for each body in bodies:
+        body.velocity += gravity * dt
+    
+    // 2. Pre-solve constraints (compute Jacobians, warm start)
+    PreSolve(constraints, dt)
+    
+    // 3. Iteratively solve constraints
+    Solve(constraints, SOLVER_ITERATIONS)  // typically 4-10 iterations
+    
+    // 4. Integrate positions
+    for each body in bodies:
+        body.position += body.velocity * dt
+        body.orientation += 0.5 * quaternion(body.angularVelocity) * body.orientation * dt
+        body.orientation.normalize()

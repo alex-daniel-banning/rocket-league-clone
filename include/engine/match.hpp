@@ -7,6 +7,8 @@
 #include <optional>
 #include <vector>
 
+#include "engine/physics/constraint_solver.hpp"
+
 namespace engine {
 class Match {
  public:
@@ -55,7 +57,11 @@ class Match {
  private:
   Match(std::optional<physics::Sphere> ball, std::optional<physics::Box> ground, std::vector<physics::Box> walls,
         std::vector<physics::Box> boxes)
-      : ball_(ball), initial_ball_(ball), ground_(ground), boxes_(boxes), initial_boxes_(boxes), walls_(walls) {}
+      : ball_(ball), initial_ball_(ball), ground_(ground), boxes_(boxes), initial_boxes_(boxes), walls_(walls) {
+    // TODO, continue here...
+    // constraint_solver_ =  // pass in list of bodies to constraint constructor. Constructor is responsible for
+    // creating the map (can always be refactored if I need the ID's elsewhere.)
+  }
 
   static constexpr float fixed_dt = 1.0f / 120.0f;
   float accumulator_ = 0.0f;
@@ -65,9 +71,10 @@ class Match {
   std::vector<physics::Box> boxes_;
   std::optional<physics::Box> ground_;
   std::vector<physics::Box> walls_;
+  physics::ConstraintSolver constraint_solver_;
 
   void HandleCollisions();
   void ApplyGravity();
-  std::vector<ContactConstraint> GenerateContactConstraints();
+  std::vector<ContactConstraint> GenerateContactConstraints(float dt);
 };
 }  // namespace engine

@@ -1,5 +1,6 @@
 #include "engine/match.hpp"
 
+#include <cassert>
 #include <glm/gtc/quaternion.hpp>
 
 #include "engine/log.hpp"
@@ -21,7 +22,7 @@ glm::mat3 WorldInverseInertia(const glm::quat& rotation, const glm::mat3& inerti
 // TODO, move into more appropriate class
 void GenerateConstraintsFromContact(const engine::physics::Contact& contact, const glm::vec3& pos_a, float mass_inv_a,
                                     const glm::mat3& i_world_inv_a, const glm::vec3& pos_b, float mass_inv_b,
-                                    const glm::mat3& i_world_inv_b, std::vector<ContactConstraint>& out) {
+                                    const glm::mat3& i_world_inv_b, float dt, std::vector<ContactConstraint>& out) {
   glm::vec3 n = contact.normal;
   for (const auto& cp : contact.points) {
     glm::vec3 r_a = cp.position - pos_a;
@@ -35,8 +36,10 @@ void GenerateConstraintsFromContact(const engine::physics::Contact& contact, con
     ContactConstraint cc;
     cc.jacobian = {-n.x, -n.y, -n.z, -r_a_cross_n.x, -r_a_cross_n.y, -r_a_cross_n.z,
                    n.x,  n.y,  n.z,  r_b_cross_n.x,  r_b_cross_n.y,  r_b_cross_n.z};
-    cc.bias = 0.0f;
-    cc.effective_mass = (w > 0.0f) ? 1.0f / w : 0.0f;  // TODO, Why is it 0 when w is <= 0?
+    assert(cp.penetration >= 0.0f && "contact point penetration should always be positive");
+    float baumgarte = 0.2f;
+    cc.bias = -(baumgarte / dt) * -cp.penetration;
+    cc.effective_mass = (w > 0.0f) ? 1.0f / w : 0.0f;
     cc.accumulated_impulse = 0.0f;
     out.push_back(cc);
   }
@@ -92,12 +95,13 @@ void Match::Tick(float delta_time) {
     substeps++;
     ApplyGravity();
 
-    std::vector<ContactConstraint> contact_constraints = GenerateContactConstraints();
-    // Presolve (compute Jacobians, warm start)
-    physics::ConstraintSolver::Presolve(contact_constraints, fixed_dt);
+    std::vector<ContactConstraint> contact_constraints = GenerateContactConstraints(fixed_dt);
+    // Presolve (warm starting TODO)
+    physics::ConstraintSolver::PreSolve(contact_constraints, fixed_dt);
 
     // Iteratively solve constraints
-    ConstraintSolver::Solve(constraints, SOLVER_ITERATIONS);
+    constexpr int solver_iterations = 10;
+    physics::ConstraintSolver::Solve(contact_constraints, solver_iterations);
 
     // Iterate positions
     if (ball_) {
@@ -110,6 +114,7 @@ void Match::Tick(float delta_time) {
       car.rotation = glm::normalize(q + (0.5f * fixed_dt * glm::quat(0, w.x, w.y, w.z) * q));
     }
 
+    /* Leave out damping for now, until I have sequential impulse working.
     // --- Damping ---
     const float linear_damping_per_sec = 0.98f;
     const float angular_damping_per_sec = 0.98f;
@@ -122,6 +127,7 @@ void Match::Tick(float delta_time) {
       car.velocity *= linear_damp;
       car.angular_velocity *= angular_damp;
     }
+    */
 
     accumulator_ -= fixed_dt;
   }
@@ -177,7 +183,7 @@ void Match::ApplyGravity() {
   if (ball_) ball_->velocity += fixed_dt * gravity;
 }
 
-std::vector<ContactConstraint> Match::GenerateContactConstraints() {
+std::vector<ContactConstraint> Match::GenerateContactConstraints(float dt) {
   std::vector<ContactConstraint> constraints;
   static const glm::mat3 zero_inertia(0.0f);
 
@@ -188,7 +194,7 @@ std::vector<ContactConstraint> Match::GenerateContactConstraints() {
       if (physics::Collisions::ComputeContact(wall, *ball_, contact)) {
         glm::mat3 i_wall = WorldInverseInertia(wall.rotation, wall.inertia_tensor_inv);
         GenerateConstraintsFromContact(contact, wall.position, wall.mass_inv, i_wall, ball_->position, ball_->mass_inv,
-                                       zero_inertia, constraints);
+                                       zero_inertia, dt, constraints);
       }
     }
     // Ball v Ground
@@ -197,7 +203,7 @@ std::vector<ContactConstraint> Match::GenerateContactConstraints() {
       if (physics::Collisions::ComputeContact(*ground_, *ball_, contact)) {
         glm::mat3 i_ground = WorldInverseInertia(ground_->rotation, ground_->inertia_tensor_inv);
         GenerateConstraintsFromContact(contact, ground_->position, ground_->mass_inv, i_ground, ball_->position,
-                                       ball_->mass_inv, zero_inertia, constraints);
+                                       ball_->mass_inv, zero_inertia, dt, constraints);
       }
     }
     // Ball v Car
@@ -206,7 +212,7 @@ std::vector<ContactConstraint> Match::GenerateContactConstraints() {
       if (physics::Collisions::ComputeContact(car, *ball_, contact)) {
         glm::mat3 i_car = WorldInverseInertia(car.rotation, car.inertia_tensor_inv);
         GenerateConstraintsFromContact(contact, car.position, car.mass_inv, i_car, ball_->position, ball_->mass_inv,
-                                       zero_inertia, constraints);
+                                       zero_inertia, dt, constraints);
       }
     }
   }
@@ -219,7 +225,7 @@ std::vector<ContactConstraint> Match::GenerateContactConstraints() {
         glm::mat3 i_a = WorldInverseInertia(boxes_[i].rotation, boxes_[i].inertia_tensor_inv);
         glm::mat3 i_b = WorldInverseInertia(boxes_[j].rotation, boxes_[j].inertia_tensor_inv);
         GenerateConstraintsFromContact(contact, boxes_[i].position, boxes_[i].mass_inv, i_a, boxes_[j].position,
-                                       boxes_[j].mass_inv, i_b, constraints);
+                                       boxes_[j].mass_inv, i_b, dt, constraints);
       }
     }
   }
@@ -231,7 +237,7 @@ std::vector<ContactConstraint> Match::GenerateContactConstraints() {
         glm::mat3 i_car = WorldInverseInertia(car.rotation, car.inertia_tensor_inv);
         glm::mat3 i_wall = WorldInverseInertia(wall.rotation, wall.inertia_tensor_inv);
         GenerateConstraintsFromContact(contact, car.position, car.mass_inv, i_car, wall.position, wall.mass_inv, i_wall,
-                                       constraints);
+                                       dt, constraints);
       }
     }
   }
@@ -243,7 +249,7 @@ std::vector<ContactConstraint> Match::GenerateContactConstraints() {
         glm::mat3 i_car = WorldInverseInertia(car.rotation, car.inertia_tensor_inv);
         glm::mat3 i_ground = WorldInverseInertia(ground_->rotation, ground_->inertia_tensor_inv);
         GenerateConstraintsFromContact(contact, car.position, car.mass_inv, i_car, ground_->position, ground_->mass_inv,
-                                       i_ground, constraints);
+                                       i_ground, dt, constraints);
       }
     }
   }
