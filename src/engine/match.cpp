@@ -97,11 +97,11 @@ void Match::Tick(float delta_time) {
 
     std::vector<ContactConstraint> contact_constraints = GenerateContactConstraints(fixed_dt);
     // Presolve (warm starting TODO)
-    physics::ConstraintSolver::PreSolve(contact_constraints, fixed_dt);
+    constraint_solver_.PreSolve(contact_constraints, fixed_dt);
 
     // Iteratively solve constraints
     constexpr int solver_iterations = 10;
-    physics::ConstraintSolver::Solve(contact_constraints, solver_iterations);
+    constraint_solver_.Solve(contact_constraints, solver_iterations);
 
     // Iterate positions
     if (ball_) {

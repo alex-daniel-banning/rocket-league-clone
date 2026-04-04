@@ -57,11 +57,13 @@ class Match {
  private:
   Match(std::optional<physics::Sphere> ball, std::optional<physics::Box> ground, std::vector<physics::Box> walls,
         std::vector<physics::Box> boxes)
-      : ball_(ball), initial_ball_(ball), ground_(ground), boxes_(boxes), initial_boxes_(boxes), walls_(walls) {
-    // TODO, continue here...
-    // constraint_solver_ =  // pass in list of bodies to constraint constructor. Constructor is responsible for
-    // creating the map (can always be refactored if I need the ID's elsewhere.)
-  }
+      : ball_(ball),
+        initial_ball_(ball),
+        ground_(ground),
+        boxes_(boxes),
+        initial_boxes_(boxes),
+        walls_(walls),
+        constraint_solver_(BuildBodyList(ball_, ground_, walls_, boxes_)) {}
 
   static constexpr float fixed_dt = 1.0f / 120.0f;
   float accumulator_ = 0.0f;
@@ -72,6 +74,18 @@ class Match {
   std::optional<physics::Box> ground_;
   std::vector<physics::Box> walls_;
   physics::ConstraintSolver constraint_solver_;
+
+  static std::vector<physics::ConstraintSolver::Body> BuildBodyList(std::optional<physics::Sphere>& ball,
+                                                                    std::optional<physics::Box>& ground,
+                                                                    std::vector<physics::Box>& walls,
+                                                                    std::vector<physics::Box>& boxes) {
+    std::vector<physics::ConstraintSolver::Body> bodies;
+    if (ball) bodies.push_back(&*ball);
+    if (ground) bodies.push_back(&*ground);
+    for (auto& w : walls) bodies.push_back(&w);
+    for (auto& b : boxes) bodies.push_back(&b);
+    return bodies;
+  }
 
   void HandleCollisions();
   void ApplyGravity();
