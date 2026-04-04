@@ -10,6 +10,7 @@ add_library(engine STATIC
     src/engine/match.cpp
     src/engine/debug_stepper.cpp
     src/engine/physics/collisions.cpp
+    src/engine/physics/constraint_solver.cpp
     src/engine/render/camera.cpp
     src/engine/render/shader.cpp
     src/engine/render/mesh.cpp

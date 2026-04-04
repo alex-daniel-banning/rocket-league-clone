@@ -1,6 +1,7 @@
 #pragma once
 
 #include <engine/physics/box.hpp>
+#include <engine/physics/contact_constraint.hpp>
 #include <engine/physics/plane.hpp>
 #include <engine/physics/sphere.hpp>
 #include <optional>
@@ -67,5 +68,6 @@ class Match {
 
   void HandleCollisions();
   void ApplyGravity();
+  std::vector<ContactConstraint> GenerateContactConstraints();
 };
 }  // namespace engine
