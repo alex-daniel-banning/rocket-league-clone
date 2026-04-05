@@ -1,10 +1,8 @@
-Sequential Impulse
-[x] Constraint struct
-[x] Store constraints in a list (for now create the list each frame)
-[x] Finish Presolve (position error / Baumgarte bias)
-[x] Implement Solve + Apply Impulse + Compute JV
-[x] (Wire up body references) Store the bodies in a map for the constraint solver to access
-    - `std::unordered_map<int, std::variant<physics::Box*, physics::Sphere*>>` in Match
-    - Solver looks up bodies by ID from ContactConstraint::body_a_id / body_b_id
-    - Use `std::visit` with generic lambda to apply impulses uniformly (works once Sphere has angular_velocity)
-[x] Add angular_velocity and inertia_tensor_inv to Sphere
+[ ] Redo HandleCollision tests for constraint solver (see notes/handle-collision-test-scenarios.md)
+[ ] Jacobian is unpacked in ApplyImpulse and ComputeJV, consider a helper method
+[ ] add restitution to bias
+[ ] BUG: bodies map passed by value in Solve/ComputeJV/ApplyImpulse/GenerateConstraintsFromContact — velocity changes thrown away. Pass by & or const&.
+[ ] BUG: contact.body_a_id / body_b_id never set on Contact before passing to GenerateConstraintsFromContact (uninitialized)
+[ ] body_a_id / body_b_id type mismatch: ContactConstraint uses long, Contact and body map use int. Make consistent (int).
+[ ] Stale include in match.cpp: "engine/physics/constraint_solver.hpp" should be "engine/physics/contact_constraint_solver.hpp"
+[ ] Delete or convert damping block comment to a TODO

@@ -1,8 +1,9 @@
+#include "engine/physics/contact_constraint_solver.hpp"
+
 #include <algorithm>
 #include <unordered_map>
 
 #include "engine/physics/contact_constraint.hpp"
-#include "engine/physics/contact_constraint_solver.hpp"
 #include "glm/ext/vector_float3.hpp"
 #include "glm/geometric.hpp"
 

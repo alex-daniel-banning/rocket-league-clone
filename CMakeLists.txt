@@ -10,7 +10,7 @@ add_library(engine STATIC
     src/engine/match.cpp
     src/engine/debug_stepper.cpp
     src/engine/physics/collisions.cpp
-    src/engine/physics/constraint_solver.cpp
+    src/engine/physics/contact_constraint_solver.cpp
     src/engine/render/camera.cpp
     src/engine/render/shader.cpp
     src/engine/render/mesh.cpp
@@ -41,12 +41,9 @@ set(TEST_SRC tests/src)
 add_executable(tests 
     ${TEST_SRC}/plane_orientation_test.cpp
     ${TEST_SRC}/test_util.cpp
-    ${TEST_SRC}/collision_tests/conservation_laws_test.cpp
     ${TEST_SRC}/collision_tests/box_vs_box/detection_test.cpp
-    ${TEST_SRC}/collision_tests/box_vs_box/resolution_test.cpp
     ${TEST_SRC}/collision_tests/box_vs_box/contact_test.cpp
     ${TEST_SRC}/collision_tests/sphere_vs_box_test.cpp
-    ${TEST_SRC}/collision_tests/friction_test.cpp
 )
 
 target_link_libraries(tests PRIVATE engine gtest gtest_main)

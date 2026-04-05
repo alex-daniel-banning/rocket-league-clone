@@ -388,35 +388,31 @@ void ResolveBoxBoxCollision(engine::physics::Box& box_a, engine::physics::Box& b
 
 namespace engine::physics {
 
-bool Collisions::ComputeContact(const Box& box, const Sphere& sphere, Contact& out) {
-  glm::vec3 sphere_to_box = sphere.position - box.position;
+bool Collisions::ComputeContact(const Box& box_a, const Sphere& sphere_b, Contact& out) {
+  glm::vec3 sphere_to_box = sphere_b.position - box_a.position;
 
-  glm::vec3 closest_point = box.position;
-  std::array<glm::vec3, 3> obb_axes = {box.rotation * glm::vec3(1.0f, 0.0f, 0.0f),
-                                       box.rotation * glm::vec3(0.0f, 1.0f, 0.0f),
-                                       box.rotation * glm::vec3(0.0f, 0.0f, 1.0f)};
+  glm::vec3 closest_point = box_a.position;
+  std::array<glm::vec3, 3> obb_axes = {box_a.rotation * glm::vec3(1.0f, 0.0f, 0.0f),
+                                       box_a.rotation * glm::vec3(0.0f, 1.0f, 0.0f),
+                                       box_a.rotation * glm::vec3(0.0f, 0.0f, 1.0f)};
   for (unsigned int i = 0; i < 3; i++) {
     float distance = glm::dot(sphere_to_box, obb_axes[i]);
-    distance = glm::clamp(distance, -box.HalfExtents()[i], box.HalfExtents()[i]);
+    distance = glm::clamp(distance, -box_a.HalfExtents()[i], box_a.HalfExtents()[i]);
     closest_point = closest_point + (distance * obb_axes[i]);
   }
-  glm::vec3 v_box_surface_to_sphere_center = sphere.position - closest_point;
+  glm::vec3 v_box_surface_to_sphere_center = sphere_b.position - closest_point;
   float distance_squared = glm::dot(v_box_surface_to_sphere_center, v_box_surface_to_sphere_center);
-  bool collides = distance_squared < sphere.radius * sphere.radius;
+  bool collides = distance_squared < sphere_b.radius * sphere_b.radius;
   if (!collides) {
     return false;
   }
+  out.body_a_id = box_a.GetId();
+  out.body_b_id = sphere_b.GetId();
   out.normal = glm::normalize(v_box_surface_to_sphere_center);
-  out.penetration = sphere.radius - std::sqrt(distance_squared);
+  out.penetration = sphere_b.radius - std::sqrt(distance_squared);
   out.points.push_back({closest_point, out.penetration});
   return true;
 };
-
-void Collisions::HandleCollision(Box& box, Sphere& sphere, float restitution, float friction) {
-  Contact contact;
-  if (!ComputeContact(box, sphere, contact)) return;
-  ResolveBoxSphereCollision(box, sphere, contact, restitution, friction);
-}
 
 bool Collisions::ComputeContact(const Box& box_a, const Box& box_b, Contact& out) {
   const float epsilon = 1e-6f;

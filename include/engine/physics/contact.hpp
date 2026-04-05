@@ -11,6 +11,8 @@ struct ContactPoint {
 struct Contact {
   glm::vec3 normal;
   std::vector<ContactPoint> points;
-  float penetration;  // overall penetration; used by current resolver until PR 2
+  float penetration;  // TODO, deprecated. Overall penetration; used by current resolver until PR 2
+  int body_a_id;
+  int body_b_id;
 };
 }  // namespace engine::physics
