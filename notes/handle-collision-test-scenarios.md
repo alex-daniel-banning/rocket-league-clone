@@ -35,48 +35,6 @@ Parameterized across three scenarios (Approaching, SameDirection, OffCenter):
 
 ---
 
-## Box vs Box (`box_vs_box/resolution_test.cpp`)
-
-### Basic Resolution
-- **HeadOnCollision_ProducesNoRotation** — Head-on produces no angular velocity; velocities exchange correctly.
-- **LighterBoxMovesFaster** — 1kg vs 3kg: lighter box gets more velocity.
-- **SameDirectionCollision** — Faster box catches slower box: faster slows down, slower speeds up.
-- **ZeroRelativeVelocity_ShouldCreateNoImpulse** — Matched velocities produce no impulse.
-- **OffCenterImpact_ProducesAngularVelocity** — Off-center hit produces rotation in both boxes.
-- **RotationOnlyCollision** — Spinning box hits stationary box: rotation transfers, linear velocity induced.
-
-### Symmetry
-- **OrientationIndependence** — Same collision rotated by arbitrary quaternion produces same speed magnitudes.
-- **ContactTypeEquivalence** — Face-face, edge-face, and corner-face produce similar impulses for symmetric head-on.
-- **Symmetry_SwappedArguments** — HandleCollision(a,b) == HandleCollision(b,a).
-- **Symmetry_EqualMassHeadOn_VelocitiesExchange** — Equal mass head-on: velocities swap exactly.
-
-### Coefficient of Restitution
-- **CoefficientOfRestitution_Elastic** (e=1) — Total KE conserved.
-- **CoefficientOfRestitution_PerfectlyInelastic** (e=0) — Relative contact-point velocity along normal is zero after collision.
-- **CoefficientOfRestitution_Partial** (e=0.5) — Momentum conserved, KE decreases.
-
-### Penetration Correction
-- **PenetrationCorrection_FullySeparated** — Bodies no longer overlap after resolution.
-- **PenetrationCorrection_ProportionalToInverseMass** — Lighter body displaced proportionally more.
-
-### Edge Cases
-- **EdgeCase_LargeMassRatio** — 1:1000 mass ratio: heavy box barely changes, light box flung away.
-- **EdgeCase_GlancingCollision** — Small normal component: small impulse, tangential velocity mostly retained.
-- **EdgeCase_MultipleContactPoints** — Face-face multi-point: momentum still conserved.
-
-### Immovable Box (mass=0)
-- **MovableBouncesOffImmovable** — Movable bounces; immovable unchanged.
-- **PenetrationCorrection_OnlyMovableDisplaced** — Only movable displaced.
-- **KineticEnergyConserved_ElasticBounce** — KE conserved.
-- **Symmetry_ArgumentOrder** — Argument order doesn't matter.
-- **TwoImmovables_ShouldThrowError** — Two immovable boxes colliding throws logic_error.
-
-### No Contact
-- **NoContact_NothingHappens** — Non-overlapping boxes: no velocity change.
-
----
-
 ## Friction (`friction_test.cpp`)
 
 ### Sphere vs Box Friction
