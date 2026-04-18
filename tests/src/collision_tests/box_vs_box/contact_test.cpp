@@ -243,17 +243,11 @@ TEST(BoxBoxContact, CornerFaceClippingShouldBeIndependentOfArgumentOrder) {
   auto box_b_1 = engine::physics::BoxBuilder().Position(position).Rotation(rotation).Build();
   engine::physics::Contact contact_1;
   ASSERT_TRUE(engine::physics::Collisions::ComputeContact(box_a_1, box_b_1, contact_1));
-  std::cout << "\ncontact_1.points:\n";
-  for (const auto& cp : contact_1.points) std::cout << cp.position << '\n';
-  std::cout << "contact_1.normal:" << contact_1.normal << '\n';
 
   auto box_a_2 = engine::physics::BoxBuilder().Build();
   auto box_b_2 = engine::physics::BoxBuilder().Position(position).Rotation(rotation).Build();
   engine::physics::Contact contact_2;
   ASSERT_TRUE(engine::physics::Collisions::ComputeContact(box_b_2, box_a_2, contact_2));
-  std::cout << "\ncontact_2.points:\n";
-  for (const auto& cp : contact_2.points) std::cout << cp.position << '\n';
-  std::cout << "contact_2.normal:" << contact_2.normal << '\n';
 
   ExpectPointsEqual(contact_1.points, contact_2.points, 1e-5f);
 }

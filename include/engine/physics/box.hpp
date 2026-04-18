@@ -27,7 +27,7 @@ struct Box {
 
   Box() = delete;
   explicit Box(glm::vec3 si, glm::vec3 pos = glm::vec3(0.0f), glm::vec3 vel = glm::vec3(0.0f), float m = 1.0f,
-               glm::quat r = glm::quat(glm::vec3(0.0f)), glm::vec3 w = glm::vec3(), std::string name = "")
+               glm::quat r = glm::quat(glm::vec3(0.0f)), glm::vec3 w = glm::vec3(), std::string name = "", int id = -1)
       : size_(si),
         half_extents_(si * 0.5f),
         position(pos),
@@ -38,10 +38,11 @@ struct Box {
         inertia_tensor_inv(ComputeInertiaInverse(ComputeInertia(si, m))),
         rotation(r),
         angular_velocity(w),
-        name(name) {}
+        name(name),
+        id_(id) {}
 
  private:
-  int id_ = -1;
+  int id_;
   friend class engine::Match;
   glm::vec3 size_ = glm::vec3(1.0f);
   glm::vec3 half_extents_ = glm::vec3(0.5f);

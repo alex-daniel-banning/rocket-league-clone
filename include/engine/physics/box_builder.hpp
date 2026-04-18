@@ -54,7 +54,7 @@ class BoxBuilder {
   }
 
   engine::physics::Box Build() const {
-    return engine::physics::Box(size_, position_, velocity_, mass_, rotation_, angular_velocity_, name_);
+    return engine::physics::Box(size_, position_, velocity_, mass_, rotation_, angular_velocity_, name_, id_);
   }
 
  private:

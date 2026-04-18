@@ -1,4 +1,5 @@
 # Collision System Refactor
+[x] Jacobian is unpacked in ApplyImpulse and ComputeJV, consider a helper method
 
 **Motivation:** Jittering/instability with resting positions (boxes on ground).
 

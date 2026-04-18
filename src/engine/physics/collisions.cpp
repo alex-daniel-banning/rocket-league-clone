@@ -1,5 +1,6 @@
 #include "engine/physics/collisions.hpp"
 
+#include <iostream>
 #include <stdexcept>
 
 #define GLM_ENABLE_EXPERIMENTAL
@@ -514,6 +515,8 @@ bool Collisions::ComputeContact(const Box& box_a, const Box& box_b, Contact& out
     p = p + sign * (0.5f * penetration * penetration_axis);
     out.points.push_back({p, depth});
   }
+  out.body_a_id = box_a.GetId();
+  out.body_b_id = box_b.GetId();
   out.normal = penetration_axis;
   out.penetration = penetration;
   return true;
