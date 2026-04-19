@@ -25,7 +25,7 @@ void Match::Tick(float delta_time) {
     physics::ContactConstraintSolver::PreSolve(bodies_, contact_constraints, fixed_dt);
 
     // Iteratively solve constraints
-    constexpr int solver_iterations = 30;
+    constexpr int solver_iterations = 10;
     physics::ContactConstraintSolver::Solve(bodies_, contact_constraints, solver_iterations);
 
     // Iterate positions
@@ -39,7 +39,6 @@ void Match::Tick(float delta_time) {
       car.rotation = glm::normalize(q + (0.5f * fixed_dt * glm::quat(0, w.x, w.y, w.z) * q));
     }
 
-    /* Leave out damping for now, until I have sequential impulse working.
     // --- Damping ---
     const float linear_damping_per_sec = 0.98f;
     const float angular_damping_per_sec = 0.98f;
@@ -52,7 +51,6 @@ void Match::Tick(float delta_time) {
       car.velocity *= linear_damp;
       car.angular_velocity *= angular_damp;
     }
-    */
 
     accumulator_ -= fixed_dt;
   }

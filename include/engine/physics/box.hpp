@@ -18,7 +18,7 @@ struct Box {
   glm::vec3 angular_velocity;
   const glm::mat3 inertia_tensor;
   const glm::mat3 inertia_tensor_inv;
-  const std::string name;  // TODO, remove? we have ID now
+  const std::string name;
 
  public:
   int GetId() const { return id_; }

@@ -20,7 +20,6 @@ Contact MakeContact(int id_a, int id_b, glm::vec3 normal, std::vector<ContactPoi
   c.body_b_id = id_b;
   c.normal = normal;
   c.points = std::move(points);
-  c.penetration = c.points.empty() ? 0.0f : c.points[0].penetration;
   return c;
 }
 

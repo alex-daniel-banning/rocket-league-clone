@@ -197,7 +197,8 @@ TEST(BoxBoxContact, FlatFaceFacePerPointDepthsAreUniform) {
   engine::physics::Contact contact;
   ASSERT_TRUE(engine::physics::Collisions::ComputeContact(box_a, box_b, contact));
   ASSERT_FALSE(contact.points.empty());
-  for (const auto& cp : contact.points) EXPECT_NEAR(cp.penetration, contact.penetration, 1e-5f);
+  float first_penetration_value = contact.points[0].penetration;
+  for (const auto& cp : contact.points) EXPECT_NEAR(cp.penetration, first_penetration_value, 1e-5f);
 }
 
 TEST(BoxBoxContact, TiltedFaceFacePerPointDepthsVary) {

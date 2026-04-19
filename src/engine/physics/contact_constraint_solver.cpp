@@ -19,6 +19,22 @@ glm::mat3 WorldInverseInertia(const glm::quat& rotation, const glm::mat3& inerti
   return rot * inertia_tensor_inv * glm::transpose(rot);
 }
 
+struct JacobianComponents {
+  glm::vec3 j_v_a;
+  glm::vec3 j_w_a;
+  glm::vec3 j_v_b;
+  glm::vec3 j_w_b;
+};
+
+JacobianComponents UnpackJacobian(const ContactConstraint& cc) {
+  return {
+      glm::vec3(cc.jacobian[0], cc.jacobian[1], cc.jacobian[2]),
+      glm::vec3(cc.jacobian[3], cc.jacobian[4], cc.jacobian[5]),
+      glm::vec3(cc.jacobian[6], cc.jacobian[7], cc.jacobian[8]),
+      glm::vec3(cc.jacobian[9], cc.jacobian[10], cc.jacobian[11]),
+  };
+}
+
 }  // namespace
 
 void engine::physics::ContactConstraintSolver::GenerateFromContact(const Contact& contact,
@@ -102,10 +118,7 @@ float engine::physics::ContactConstraintSolver::ComputeJV(std::unordered_map<int
   const glm::vec3 v_b = std::visit([](auto* body) { return body->velocity; }, bodies[b]);
   const glm::vec3 w_b = std::visit([](auto* body) { return body->angular_velocity; }, bodies[b]);
 
-  const glm::vec3 j_v_a = glm::vec3(cc.jacobian[0], cc.jacobian[1], cc.jacobian[2]);
-  const glm::vec3 j_w_a = glm::vec3(cc.jacobian[3], cc.jacobian[4], cc.jacobian[5]);
-  const glm::vec3 j_v_b = glm::vec3(cc.jacobian[6], cc.jacobian[7], cc.jacobian[8]);
-  const glm::vec3 j_w_b = glm::vec3(cc.jacobian[9], cc.jacobian[10], cc.jacobian[11]);
+  const auto [j_v_a, j_w_a, j_v_b, j_w_b] = UnpackJacobian(cc);
 
   return glm::dot(j_v_a, v_a) + glm::dot(j_w_a, w_a) + glm::dot(j_v_b, v_b) + glm::dot(j_w_b, w_b);
 };
@@ -115,21 +128,18 @@ void engine::physics::ContactConstraintSolver::ApplyImpulse(std::unordered_map<i
   const int a = cc.body_a_id;
   const int b = cc.body_b_id;
 
-  const glm::vec3 j_v_a = glm::vec3(cc.jacobian[0], cc.jacobian[1], cc.jacobian[2]);
-  const glm::vec3 j_w_a = glm::vec3(cc.jacobian[3], cc.jacobian[4], cc.jacobian[5]);
-  const glm::vec3 j_v_b = glm::vec3(cc.jacobian[6], cc.jacobian[7], cc.jacobian[8]);
-  const glm::vec3 j_w_b = glm::vec3(cc.jacobian[9], cc.jacobian[10], cc.jacobian[11]);
+  const auto j = UnpackJacobian(cc);
 
   std::visit(
       [&](auto* body) {
-        body->velocity += body->mass_inv * j_v_a * lambda;
-        body->angular_velocity += cc.i_world_inv_a * j_w_a * lambda;
+        body->velocity += body->mass_inv * j.j_v_a * lambda;
+        body->angular_velocity += cc.i_world_inv_a * j.j_w_a * lambda;
       },
       bodies[a]);
   std::visit(
       [&](auto* body) {
-        body->velocity += body->mass_inv * j_v_b * lambda;
-        body->angular_velocity += cc.i_world_inv_b * j_w_b * lambda;
+        body->velocity += body->mass_inv * j.j_v_b * lambda;
+        body->angular_velocity += cc.i_world_inv_b * j.j_w_b * lambda;
       },
       bodies[b]);
 }
