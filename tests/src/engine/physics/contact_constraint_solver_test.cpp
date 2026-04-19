@@ -6,6 +6,7 @@
 #include "engine/physics/box_builder.hpp"
 #include "engine/physics/collisions.hpp"
 #include "engine/physics/contact.hpp"
+#include "engine/physics/sphere.hpp"
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>
 
@@ -28,9 +29,25 @@ struct SolverResult {
 };
 
 SolverResult RunSolver(Box& a, Box& b, const Contact& contact, float restitution = 1.0f, float baumgarte = 0.0f,
-                       int iterations = 10) {
+                       int iterations = 10);
+SolverResult RunSolver(Sphere& a, int id_a, Box& b, const Contact& contact, float restitution = 1.0f,
+                       float baumgarte = 0.0f, int iterations = 10);
+
+SolverResult RunSolver(Box& a, Box& b, const Contact& contact, float restitution, float baumgarte, int iterations) {
   std::unordered_map<int, Body> bodies;
   bodies[a.GetId()] = &a;
+  bodies[b.GetId()] = &b;
+  std::vector<ContactConstraint> constraints;
+  float dt = 1.0f / 120.0f;
+  ContactConstraintSolver::GenerateFromContact(contact, bodies, dt, constraints, restitution, baumgarte);
+  ContactConstraintSolver::Solve(bodies, constraints, iterations);
+  return {bodies};
+}
+
+SolverResult RunSolver(Sphere& a, int id_a, Box& b, const Contact& contact, float restitution, float baumgarte,
+                       int iterations) {
+  std::unordered_map<int, Body> bodies;
+  bodies[id_a] = &a;
   bodies[b.GetId()] = &b;
   std::vector<ContactConstraint> constraints;
   float dt = 1.0f / 120.0f;
@@ -225,13 +242,11 @@ TEST(BoxBoxRestitution, Elastic_ConservesKineticEnergy) {
   glm::vec3 midpoint(0, 0, 0);
   Contact contact = MakeContact(1, 2, glm::vec3(0, -1, 0), {{midpoint, 0.02f}});
 
-  float ke_before = 0.5f * a.mass * glm::dot(a.velocity, a.velocity) +
-                    0.5f * b.mass * glm::dot(b.velocity, b.velocity);
+  float ke_before = 0.5f * a.mass * glm::dot(a.velocity, a.velocity) + 0.5f * b.mass * glm::dot(b.velocity, b.velocity);
 
   RunSolver(a, b, contact, 1.0f);
 
-  float ke_after = 0.5f * a.mass * glm::dot(a.velocity, a.velocity) +
-                   0.5f * b.mass * glm::dot(b.velocity, b.velocity);
+  float ke_after = 0.5f * a.mass * glm::dot(a.velocity, a.velocity) + 0.5f * b.mass * glm::dot(b.velocity, b.velocity);
 
   EXPECT_NEAR(ke_before, ke_after, 1e-3f);
 }
@@ -256,14 +271,12 @@ TEST(BoxBoxRestitution, Partial_MomentumConservedAndEnergyDecreases) {
   Contact contact = MakeContact(1, 2, glm::vec3(0, -1, 0), {{midpoint, 0.02f}});
 
   glm::vec3 momentum_before = a.mass * a.velocity + b.mass * b.velocity;
-  float ke_before = 0.5f * a.mass * glm::dot(a.velocity, a.velocity) +
-                    0.5f * b.mass * glm::dot(b.velocity, b.velocity);
+  float ke_before = 0.5f * a.mass * glm::dot(a.velocity, a.velocity) + 0.5f * b.mass * glm::dot(b.velocity, b.velocity);
 
   RunSolver(a, b, contact, 0.5f);
 
   glm::vec3 momentum_after = a.mass * a.velocity + b.mass * b.velocity;
-  float ke_after = 0.5f * a.mass * glm::dot(a.velocity, a.velocity) +
-                   0.5f * b.mass * glm::dot(b.velocity, b.velocity);
+  float ke_after = 0.5f * a.mass * glm::dot(a.velocity, a.velocity) + 0.5f * b.mass * glm::dot(b.velocity, b.velocity);
 
   EXPECT_NEAR(momentum_before.y, momentum_after.y, 1e-3f);
   EXPECT_LT(ke_after, ke_before);
@@ -454,6 +467,87 @@ TEST(BoxBoxNoContact, NothingHappens) {
   // No contact means no constraints generated — velocities unchanged
   EXPECT_NEAR(a.velocity.y, -1.0f, 1e-6f);
   EXPECT_NEAR(b.velocity.y, 1.0f, 1e-6f);
+}
+
+TEST(SphereBoxResolution, ElasticBounceOffImmovable) {
+  Sphere sphere(1.0f, 10.0f, glm::vec3(0, 1.99f, 0), glm::vec3(0, -1, 0));
+  Box ground = BoxBuilder().Size(2.0f).Position(0, 0, 0).Mass(0).Id(2).Build();
+  glm::vec3 contact_point(0, 1.0f, 0);
+  Contact contact = MakeContact(1, 2, glm::vec3(0, -1, 0), {{contact_point, 0.01f}});
+
+  RunSolver(sphere, 1, ground, contact);
+
+  float eps = 1e-4f;
+  EXPECT_NEAR(sphere.velocity.y, 1.0f, eps);
+  EXPECT_NEAR(ground.velocity.y, 0.0f, 1e-6f);
+  EXPECT_NEAR(glm::length(ground.angular_velocity), 0.0f, 1e-6f);
+}
+
+TEST(SphereBoxResolution, MomentumConservation) {
+  Sphere sphere(1.0f, 5.0f, glm::vec3(0, 1.99f, 0), glm::vec3(0, -2, 0));
+  Box box = BoxBuilder().Size(2.0f).Position(0, 0, 0).Mass(10).Velocity(0, 1, 0).Id(2).Build();
+  glm::vec3 contact_point(0, 1.0f, 0);
+  Contact contact = MakeContact(1, 2, glm::vec3(0, -1, 0), {{contact_point, 0.01f}});
+
+  glm::vec3 momentum_before = sphere.mass * sphere.velocity + box.mass * box.velocity;
+
+  RunSolver(sphere, 1, box, contact);
+
+  glm::vec3 momentum_after = sphere.mass * sphere.velocity + box.mass * box.velocity;
+  float eps = 1e-3f;
+  EXPECT_NEAR(momentum_before.x, momentum_after.x, eps);
+  EXPECT_NEAR(momentum_before.y, momentum_after.y, eps);
+  EXPECT_NEAR(momentum_before.z, momentum_after.z, eps);
+}
+
+TEST(SphereBoxResolution, PartialRestitution_EnergyDecreases) {
+  Sphere sphere(1.0f, 5.0f, glm::vec3(0, 1.99f, 0), glm::vec3(0, -2, 0));
+  Box box = BoxBuilder().Size(2.0f).Position(0, 0, 0).Mass(10).Velocity(0, 1, 0).Id(2).Build();
+  glm::vec3 contact_point(0, 1.0f, 0);
+  Contact contact = MakeContact(1, 2, glm::vec3(0, -1, 0), {{contact_point, 0.01f}});
+
+  glm::vec3 momentum_before = sphere.mass * sphere.velocity + box.mass * box.velocity;
+  float ke_before = 0.5f * sphere.mass * glm::dot(sphere.velocity, sphere.velocity) +
+                    0.5f * box.mass * glm::dot(box.velocity, box.velocity);
+
+  RunSolver(sphere, 1, box, contact, 0.5f);
+
+  glm::vec3 momentum_after = sphere.mass * sphere.velocity + box.mass * box.velocity;
+  float ke_after = 0.5f * sphere.mass * glm::dot(sphere.velocity, sphere.velocity) +
+                   0.5f * box.mass * glm::dot(box.velocity, box.velocity);
+
+  EXPECT_NEAR(momentum_before.y, momentum_after.y, 1e-3f);
+  EXPECT_LT(ke_after, ke_before);
+}
+
+TEST(SphereBoxResolution, PenetrationCorrection) {
+  Sphere sphere(1.0f, 10.0f, glm::vec3(0, 1.9f, 0));
+  Box ground = BoxBuilder().Size(2.0f).Position(0, 0, 0).Mass(0).Id(2).Build();
+  glm::vec3 contact_point(0, 1.0f, 0);
+  Contact contact = MakeContact(1, 2, glm::vec3(0, -1, 0), {{contact_point, 0.1f}});
+
+  RunSolver(sphere, 1, ground, contact, 0.0f, 0.2f);
+
+  EXPECT_GT(sphere.velocity.y, 1e-4f);
+  EXPECT_NEAR(ground.velocity.y, 0.0f, 1e-6f);
+}
+
+TEST(SphereBoxResolution, ContactNormalOrderSymmetry) {
+  // Normal from sphere(id=1) to box(id=2)
+  Sphere s1(1.0f, 5.0f, glm::vec3(0, 1.99f, 0), glm::vec3(0, -2, 0));
+  Box b1 = BoxBuilder().Size(2.0f).Position(0, 0, 0).Mass(10).Velocity(0, 1, 0).Id(2).Build();
+  Contact c1 = MakeContact(1, 2, glm::vec3(0, -1, 0), {{glm::vec3(0, 1.0f, 0), 0.01f}});
+  RunSolver(s1, 1, b1, c1);
+
+  // Normal from box(id=1) to sphere(id=2) — swapped IDs
+  Sphere s2(1.0f, 5.0f, glm::vec3(0, 1.99f, 0), glm::vec3(0, -2, 0));
+  Box b2 = BoxBuilder().Size(2.0f).Position(0, 0, 0).Mass(10).Velocity(0, 1, 0).Id(1).Build();
+  Contact c2 = MakeContact(1, 2, glm::vec3(0, 1, 0), {{glm::vec3(0, 1.0f, 0), 0.01f}});
+  RunSolver(s2, 2, b2, c2);
+
+  float eps = 1e-3f;
+  EXPECT_NEAR(s1.velocity.y, s2.velocity.y, eps);
+  EXPECT_NEAR(b1.velocity.y, b2.velocity.y, eps);
 }
 
 }  // namespace engine::physics

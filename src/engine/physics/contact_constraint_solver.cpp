@@ -60,7 +60,6 @@ void engine::physics::ContactConstraintSolver::GenerateFromContact(const Contact
     cc.jacobian = {-n.x, -n.y, -n.z, -r_a_cross_n.x, -r_a_cross_n.y, -r_a_cross_n.z,
                    n.x,  n.y,  n.z,  r_b_cross_n.x,  r_b_cross_n.y,  r_b_cross_n.z};
     assert(cp.penetration >= 0.0f && "contact point penetration should always be positive");
-    // float restitution_term = (std::abs(v_n) > 9.8f * dt) ? restitution * v_n : 0.0f;
     float restitution_term = (std::abs(v_n) > 9.8f * dt) ? restitution * v_n : 0.0f;
     float p_slop = 0.002f;
     cc.bias = -(baumgarte / dt) * std::max(0.0f, cp.penetration - p_slop) + restitution_term;
@@ -95,16 +94,7 @@ void engine::physics::ContactConstraintSolver::Solve(std::unordered_map<int, Bod
 
 float engine::physics::ContactConstraintSolver::ComputeJV(std::unordered_map<int, Body>& bodies,
                                                           const ContactConstraint& cc) {
-  //    A = constraint.bodyA
-  //    B = constraint.bodyB
-  //    J = constraint.jacobian
-  //
-  //    // JV = J_vA · vA + J_wA · ωA + J_vB · vB + J_wB · ωB
-  //    return dot(J.vA, A.velocity) + dot(J.wA, A.angularVelocity) +
-  //           dot(J.vB, B.velocity) + dot(J.wB, B.angularVelocity)
-
   // contact normal should point from A to B. Velocity of body A should be negative.
-
   const int a = cc.body_a_id;
   const int b = cc.body_b_id;
   const glm::vec3 v_a = std::visit([](auto* body) { return body->velocity; }, bodies[a]);

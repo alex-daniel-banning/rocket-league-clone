@@ -16,19 +16,22 @@ struct Sphere {
   glm::vec3 position;
   glm::vec3 velocity;
   glm::quat rotation;
-  glm::vec3 angular_velocity;  // unused as of now
+  glm::vec3 angular_velocity;
   const glm::mat3 inertia_tensor;
   const glm::mat3 inertia_tensor_inv;
 
   Sphere() = delete;
-  Sphere(float r, float m, glm::vec3 pos, glm::vec3 vel = glm::vec3(0.0f))
+  Sphere(float r, float m, glm::vec3 pos, glm::vec3 vel = glm::vec3(0.0f), glm::quat rot = glm::quat(),
+         glm::vec3 ang_vel = glm::vec3())
       : radius(r),
         mass(m),
         mass_inv(1.0f / m),
         position(pos),
         velocity(vel),
         inertia_tensor(GenerateInertiaTensor(m, r)),
-        inertia_tensor_inv(GenerateInertiaTensorInverse(m, r)) {}
+        inertia_tensor_inv(GenerateInertiaTensorInverse(m, r)),
+        rotation(rot),
+        angular_velocity(ang_vel) {}
   int GetId() const { return id_; }
 
  private:
