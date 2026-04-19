@@ -1,10 +1,15 @@
 #include "engine/match.hpp"
 
+#include <glm/gtc/quaternion.hpp>
+
 #include "engine/log.hpp"
 #include "engine/physics/box.hpp"
 #include "engine/physics/collisions.hpp"
+#include "engine/physics/contact_constraint.hpp"
+#include "engine/physics/contact_constraint_solver.hpp"
 
 static constexpr glm::vec3 gravity = glm::vec3(0.0f, -9.8f, 0.0f);
+
 namespace engine {
 
 void Match::Tick(float delta_time) {
@@ -14,6 +19,15 @@ void Match::Tick(float delta_time) {
     substeps++;
     ApplyGravity();
 
+    std::vector<ContactConstraint> contact_constraints = GenerateContactConstraints(fixed_dt);
+    // Presolve (warm starting TODO)
+    physics::ContactConstraintSolver::PreSolve(bodies_, contact_constraints, fixed_dt);
+
+    // Iteratively solve constraints
+    constexpr int solver_iterations = 10;
+    physics::ContactConstraintSolver::Solve(bodies_, contact_constraints, solver_iterations);
+
+    // Iterate positions
     if (ball_) {
       ball_->position += fixed_dt * ball_->velocity;
     }
@@ -23,7 +37,6 @@ void Match::Tick(float delta_time) {
       glm::vec3 w = car.angular_velocity;
       car.rotation = glm::normalize(q + (0.5f * fixed_dt * glm::quat(0, w.x, w.y, w.z) * q));
     }
-    HandleCollisions();
 
     // --- Damping ---
     const float linear_damping_per_sec = 0.98f;
@@ -51,45 +64,79 @@ void Match::Reset() {
   boxes_ = {initial_boxes_.begin(), initial_boxes_.end()};
 }
 
-void Match::HandleCollisions() {
-  if (ball_) {
-    // Ball v Wall collisions
-    for (physics::Box wall : walls_) {
-      physics::Collisions::HandleCollision(wall, *ball_, 0.5f, 0.3f);
-    }
-    // Ball v Ground collisions
-    if (ground_) {
-      physics::Collisions::HandleCollision(*ground_, *ball_, 0.5f, 0.3f);
-    }
-    // Ball v Car collisions
-    for (physics::Box& car : boxes_) {
-      physics::Collisions::HandleCollision(car, *ball_, 0.5f, 0.3f);
-    }
-  }
-
-  // Car v Car collisions
-  for (unsigned int i = 0; i < boxes_.size() - 1; i++) {
-    for (unsigned int j = i + 1; j < boxes_.size(); j++) {
-      physics::Collisions::HandleCollision(boxes_[i], boxes_[j], 0.5f, 0.5f);
-    }
-  }
-  // Car v Wall collisions
-  for (physics::Box& car : boxes_) {
-    for (physics::Box& wall : walls_) {
-      physics::Collisions::HandleCollision(car, wall, 0.5f, 0.5f);
-    }
-  }
-  // Car v Ground collisions
-  for (physics::Box& car : boxes_) {
-    physics::Collisions::HandleCollision(car, *ground_, 0.5f, 0.7f);
-  }
-}
-
 void Match::ApplyGravity() {
   for (physics::Box& car : boxes_) {
     car.velocity += fixed_dt * gravity;
   }
   if (ball_) ball_->velocity += fixed_dt * gravity;
+}
+
+std::vector<ContactConstraint> Match::GenerateContactConstraints(float dt) {
+  std::vector<ContactConstraint> constraints;
+
+  float baumgarte = 0.02f;
+  float restitution = 0.3f;
+  if (ball_) {
+    // Ball v Wall
+    for (const physics::Box& wall : walls_) {
+      physics::Contact contact;
+      if (physics::collisions::ComputeContact(wall, *ball_, contact)) {
+        physics::ContactConstraintSolver::GenerateFromContact(contact, bodies_, dt, constraints, restitution,
+                                                              baumgarte);
+      }
+    }
+    // Ball v Ground
+    if (ground_) {
+      physics::Contact contact;
+      if (physics::collisions::ComputeContact(*ground_, *ball_, contact)) {
+        physics::ContactConstraintSolver::GenerateFromContact(contact, bodies_, dt, constraints, restitution,
+                                                              baumgarte);
+      }
+    }
+    // Ball v Car
+    for (const physics::Box& car : boxes_) {
+      physics::Contact contact;
+      if (physics::collisions::ComputeContact(car, *ball_, contact)) {
+        physics::ContactConstraintSolver::GenerateFromContact(contact, bodies_, dt, constraints, restitution,
+                                                              baumgarte);
+      }
+    }
+  }
+
+  // Car v Car
+  if (boxes_.size() > 1) {
+    for (unsigned int i = 0; i < boxes_.size() - 1; i++) {
+      for (unsigned int j = i + 1; j < boxes_.size(); j++) {
+        physics::Contact contact;
+        if (physics::collisions::ComputeContact(boxes_[i], boxes_[j], contact)) {
+          physics::ContactConstraintSolver::GenerateFromContact(contact, bodies_, dt, constraints, restitution,
+                                                                baumgarte);
+        }
+      }
+    }
+  }
+  // Car v Wall
+  for (const physics::Box& car : boxes_) {
+    for (const physics::Box& wall : walls_) {
+      physics::Contact contact;
+      if (physics::collisions::ComputeContact(car, wall, contact)) {
+        physics::ContactConstraintSolver::GenerateFromContact(contact, bodies_, dt, constraints, restitution,
+                                                              baumgarte);
+      }
+    }
+  }
+  // Car v Ground
+  if (ground_) {
+    for (const physics::Box& car : boxes_) {
+      physics::Contact contact;
+      if (physics::collisions::ComputeContact(car, *ground_, contact)) {
+        physics::ContactConstraintSolver::GenerateFromContact(contact, bodies_, dt, constraints, restitution,
+                                                              baumgarte);
+      }
+    }
+  }
+
+  return constraints;
 }
 
 }  // namespace engine

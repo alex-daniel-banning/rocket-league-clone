@@ -61,8 +61,11 @@ int main() {
                           .Mass(0.0f)
                           .Build())
           .WithWalls(walls)
-          .WithBox(engine::physics::Box(glm::vec3(5.0f), glm::vec3(0.0f, 3.0f, 0.0f), glm::vec3(0.0f), 30.0f,
-                                        glm::quat(), glm::vec3(0.0f, 0.0f, 0.0f)))
+          .WithBox(engine::physics::BoxBuilder()
+                       .Size(glm::vec3(5.0f))
+                       .Position(glm::vec3(0.0f, 3.0f, 0.0f))
+                       .Mass(30.0f)
+                       .Build())
           .Build();
 
   auto [window, mode, screen_width, screen_height] = InitWindow("sphere v box OBB demo");

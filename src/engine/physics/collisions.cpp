@@ -1,11 +1,7 @@
 #include "engine/physics/collisions.hpp"
 
-#include <stdexcept>
-
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>
-
-#include "engine/log.hpp"
 
 namespace {
 glm::vec3 CalculateCentroid(const std::vector<engine::physics::ContactPoint>& points) {
@@ -267,158 +263,36 @@ std::vector<glm::vec3> ReduceManifold(const std::vector<glm::vec3>& points, cons
 
   return {points[i0], points[i1], points[i2], points[i3]};
 }
-
-void CorrectPenetration(glm::vec3& position_a, float inv_mass_a, glm::vec3& position_b, float inv_mass_b,
-                        const glm::vec3& normal, float penetration) {
-  if (penetration <= 0.0f) return;
-  float total_correction = std::max(0.0f, penetration);
-  float total_inv_mass = inv_mass_a + inv_mass_b;
-  position_a -= normal * (total_correction / total_inv_mass) * inv_mass_a;
-  position_b += normal * (total_correction / total_inv_mass) * inv_mass_b;
-}
-
-glm::mat3 WorldInverseInertia(const glm::quat& rotation, const glm::mat3& inertia_tensor_inv) {
-  glm::mat3 rot = glm::toMat3(rotation);
-  return rot * inertia_tensor_inv * glm::transpose(rot);
-}
-
-float AngularMassContribution(const glm::mat3& i_world_inv, const glm::vec3& r, const glm::vec3& n) {
-  return glm::dot(n, glm::cross(i_world_inv * glm::cross(r, n), r));
-}
-
-void ApplyImpulse(glm::vec3& velocity, float mass_inv, glm::vec3& angular_velocity, const glm::mat3& i_world_inv,
-                  const glm::vec3& r, const glm::vec3& impulse) {
-  velocity += impulse * mass_inv;
-  angular_velocity += i_world_inv * glm::cross(r, impulse);
-}
-
-void ResolveBoxSphereCollision(engine::physics::Box& box, engine::physics::Sphere& sphere,
-                               const engine::physics::Contact& contact, float coefficient_of_restitution,
-                               float friction) {
-  // This is all from the perspective of the sphere
-  glm::vec3 omega = box.angular_velocity;
-  glm::vec3 r = contact.points[0].position - box.position;
-  glm::vec3 v_rel = sphere.velocity - (box.velocity + glm::cross(omega, r));
-  glm::vec3 n = contact.normal;
-  glm::mat3 i_world_inv = WorldInverseInertia(box.rotation, box.inertia_tensor_inv);
-  float rel_vel_along_normal = glm::dot(v_rel, n);
-
-  // Objects are geometrically penetrating but already separating — this is
-  // valid in multi-body simulation (resolving one contact can leave another
-  // pair overlapping but diverging). Applying an impulse here would pull them
-  // together, so skip.
-  if (rel_vel_along_normal > 0.0f) return;
-
-  float effective_mass = sphere.mass_inv + box.mass_inv + AngularMassContribution(i_world_inv, r, n);
-
-  const float k_bounce_threshold = 2.0f * 9.8f * (1.0f / 120.0f);
-  float e = (std::abs(rel_vel_along_normal) < k_bounce_threshold) ? 0.0f : coefficient_of_restitution;
-  float impulse_scalar = -(1 + e) * rel_vel_along_normal / effective_mass;
-  glm::vec3 impulse_vector = impulse_scalar * n;
-
-  LOG_DEBUG("box-sphere resolve: j=%.4f v_n=%.4f m_eff=%.4f pen=%.4f", impulse_scalar, rel_vel_along_normal,
-            effective_mass, contact.penetration);
-
-  sphere.velocity += impulse_vector * sphere.mass_inv;
-  ApplyImpulse(box.velocity, box.mass_inv, box.angular_velocity, i_world_inv, r, -impulse_vector);
-
-  // --- Friction ---
-  glm::vec3 v_tangential = v_rel - rel_vel_along_normal * n;
-  float v_t_mag = glm::length(v_tangential);
-  if (friction > 0.0f && v_t_mag > 1e-6f) {
-    glm::vec3 t = v_tangential / v_t_mag;
-    float m_eff_t = sphere.mass_inv + box.mass_inv + AngularMassContribution(i_world_inv, r, t);
-    float j_friction = glm::clamp(-v_t_mag / m_eff_t, -friction * impulse_scalar, friction * impulse_scalar);
-    glm::vec3 friction_impulse = j_friction * t;
-    sphere.velocity += friction_impulse * sphere.mass_inv;
-    ApplyImpulse(box.velocity, box.mass_inv, box.angular_velocity, i_world_inv, r, -friction_impulse);
-  }
-
-  CorrectPenetration(box.position, box.mass_inv, sphere.position, sphere.mass_inv, contact.normal, contact.penetration);
-}
-
-void ResolveBoxBoxCollision(engine::physics::Box& box_a, engine::physics::Box& box_b,
-                            const engine::physics::Contact& contact, float coefficient_of_restitution, float friction) {
-  if (box_a.mass_inv == 0.0f && box_b.mass_inv == 0.0f) {
-    throw std::logic_error("Two immovable objects should not have collision resolution applied.");
-  }
-
-  glm::vec3 impulse_centroid = CalculateCentroid(contact.points);
-  glm::vec3 r_a = impulse_centroid - box_a.position;
-  glm::vec3 r_b = impulse_centroid - box_b.position;
-  glm::vec3 v_contact_a = box_a.velocity + glm::cross(box_a.angular_velocity, r_a);
-  glm::vec3 v_contact_b = box_b.velocity + glm::cross(box_b.angular_velocity, r_b);
-  glm::vec3 rel_vel = v_contact_a - v_contact_b;
-  glm::mat3 i_world_inv_a = WorldInverseInertia(box_a.rotation, box_a.inertia_tensor_inv);
-  glm::mat3 i_world_inv_b = WorldInverseInertia(box_b.rotation, box_b.inertia_tensor_inv);
-  float m_eff = box_a.mass_inv + box_b.mass_inv + AngularMassContribution(i_world_inv_a, r_a, contact.normal) +
-                AngularMassContribution(i_world_inv_b, r_b, contact.normal);
-  float v_n = glm::dot(rel_vel, contact.normal);
-  if (v_n < 0.0f) return;  // already separating, skip
-
-  const float k_bounce_threshold = 2.0f * 9.8f * (1.0f / 120.0f);
-  float e = (std::abs(v_n) < k_bounce_threshold) ? 0.0f : coefficient_of_restitution;
-  float j = -(1.0f + e) * v_n / m_eff;
-  glm::vec3 impulse = j * contact.normal;
-
-  LOG_DEBUG("box-box resolve: j=%.4f v_n=%.4f m_eff=%.4f contacts=%zu pen=%.4f", j, v_n, m_eff, contact.points.size(),
-            contact.penetration);
-
-  ApplyImpulse(box_a.velocity, box_a.mass_inv, box_a.angular_velocity, i_world_inv_a, r_a, impulse);
-  ApplyImpulse(box_b.velocity, box_b.mass_inv, box_b.angular_velocity, i_world_inv_b, r_b, -impulse);
-
-  // --- Friction ---
-  glm::vec3 v_tangential = rel_vel - v_n * contact.normal;
-  float v_t_mag = glm::length(v_tangential);
-  if (friction > 0.0f && v_t_mag > 1e-6f) {
-    glm::vec3 t = v_tangential / v_t_mag;
-    float m_eff_t = box_a.mass_inv + box_b.mass_inv + AngularMassContribution(i_world_inv_a, r_a, t) +
-                    AngularMassContribution(i_world_inv_b, r_b, t);
-    float j_friction = glm::clamp(-v_t_mag / m_eff_t, -friction * std::abs(j), friction * std::abs(j));
-    glm::vec3 friction_impulse = j_friction * t;
-    ApplyImpulse(box_a.velocity, box_a.mass_inv, box_a.angular_velocity, i_world_inv_a, r_a, friction_impulse);
-    ApplyImpulse(box_b.velocity, box_b.mass_inv, box_b.angular_velocity, i_world_inv_b, r_b, -friction_impulse);
-  }
-
-  CorrectPenetration(box_a.position, box_a.mass_inv, box_b.position, box_b.mass_inv, contact.normal,
-                     contact.penetration);
-}
-
 };  // namespace
 
 namespace engine::physics {
 
-bool Collisions::ComputeContact(const Box& box, const Sphere& sphere, Contact& out) {
-  glm::vec3 sphere_to_box = sphere.position - box.position;
+bool collisions::ComputeContact(const Box& box_a, const Sphere& sphere_b, Contact& out) {
+  glm::vec3 sphere_to_box = sphere_b.position - box_a.position;
 
-  glm::vec3 closest_point = box.position;
-  std::array<glm::vec3, 3> obb_axes = {box.rotation * glm::vec3(1.0f, 0.0f, 0.0f),
-                                       box.rotation * glm::vec3(0.0f, 1.0f, 0.0f),
-                                       box.rotation * glm::vec3(0.0f, 0.0f, 1.0f)};
+  glm::vec3 closest_point = box_a.position;
+  std::array<glm::vec3, 3> obb_axes = {box_a.rotation * glm::vec3(1.0f, 0.0f, 0.0f),
+                                       box_a.rotation * glm::vec3(0.0f, 1.0f, 0.0f),
+                                       box_a.rotation * glm::vec3(0.0f, 0.0f, 1.0f)};
   for (unsigned int i = 0; i < 3; i++) {
     float distance = glm::dot(sphere_to_box, obb_axes[i]);
-    distance = glm::clamp(distance, -box.HalfExtents()[i], box.HalfExtents()[i]);
+    distance = glm::clamp(distance, -box_a.HalfExtents()[i], box_a.HalfExtents()[i]);
     closest_point = closest_point + (distance * obb_axes[i]);
   }
-  glm::vec3 v_box_surface_to_sphere_center = sphere.position - closest_point;
+  glm::vec3 v_box_surface_to_sphere_center = sphere_b.position - closest_point;
   float distance_squared = glm::dot(v_box_surface_to_sphere_center, v_box_surface_to_sphere_center);
-  bool collides = distance_squared < sphere.radius * sphere.radius;
+  bool collides = distance_squared < sphere_b.radius * sphere_b.radius;
   if (!collides) {
     return false;
   }
+  out.body_a_id = box_a.GetId();
+  out.body_b_id = sphere_b.GetId();
   out.normal = glm::normalize(v_box_surface_to_sphere_center);
-  out.penetration = sphere.radius - std::sqrt(distance_squared);
-  out.points.push_back({closest_point, out.penetration});
+  out.points.push_back({closest_point, sphere_b.radius - std::sqrt(distance_squared)});
   return true;
 };
 
-void Collisions::HandleCollision(Box& box, Sphere& sphere, float restitution, float friction) {
-  Contact contact;
-  if (!ComputeContact(box, sphere, contact)) return;
-  ResolveBoxSphereCollision(box, sphere, contact, restitution, friction);
-}
-
-bool Collisions::ComputeContact(const Box& box_a, const Box& box_b, Contact& out) {
+bool collisions::ComputeContact(const Box& box_a, const Box& box_b, Contact& out) {
   const float epsilon = 1e-6f;
   float penetration = std::numeric_limits<float>::max();
   glm::vec3 penetration_axis;
@@ -518,15 +392,10 @@ bool Collisions::ComputeContact(const Box& box_a, const Box& box_b, Contact& out
     p = p + sign * (0.5f * penetration * penetration_axis);
     out.points.push_back({p, depth});
   }
+  out.body_a_id = box_a.GetId();
+  out.body_b_id = box_b.GetId();
   out.normal = penetration_axis;
-  out.penetration = penetration;
   return true;
-}
-
-void Collisions::HandleCollision(Box& box_a, Box& box_b, float restitution, float friction) {
-  Contact contact;
-  if (!ComputeContact(box_a, box_b, contact)) return;
-  ResolveBoxBoxCollision(box_a, box_b, contact, restitution, friction);
 }
 
 }  // namespace engine::physics

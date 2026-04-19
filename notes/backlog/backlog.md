@@ -1,6 +1,8 @@
 # Project Backlog
 
 ## Doing (WIP limit: 3)
+- [ ] Split impulse
+- [ ] Warm starting
 
 ## On Deck
 - [ ] Ground jittering

@@ -3,25 +3,31 @@
 #include <glm/gtc/quaternion.hpp>
 #include <string>
 
+namespace engine {
+class Match;
+}
+
 namespace engine::physics {
 
 struct Box {
-  glm::vec3 position = glm::vec3(0.0f);
-  glm::vec3 velocity = glm::vec3(0.0f);
+  glm::vec3 position;
+  glm::vec3 velocity;
   const float mass = 1.0f;
   const float mass_inv;
-  glm::quat rotation = glm::quat(glm::vec3(0.0f));
-  glm::vec3 angular_velocity = glm::vec3(0.0f);
+  glm::quat rotation;
+  glm::vec3 angular_velocity;
   const glm::mat3 inertia_tensor;
   const glm::mat3 inertia_tensor_inv;
   const std::string name;
 
  public:
+  int GetId() const { return id_; }
   const glm::vec3& Size() const { return size_; }
   const glm::vec3& HalfExtents() const { return half_extents_; }
 
+  Box() = delete;
   explicit Box(glm::vec3 si, glm::vec3 pos = glm::vec3(0.0f), glm::vec3 vel = glm::vec3(0.0f), float m = 1.0f,
-               glm::quat r = glm::quat(glm::vec3(0.0f)), glm::vec3 w = glm::vec3(), std::string name = "")
+               glm::quat r = glm::quat(glm::vec3(0.0f)), glm::vec3 w = glm::vec3(), std::string name = "", int id = -1)
       : size_(si),
         half_extents_(si * 0.5f),
         position(pos),
@@ -32,9 +38,12 @@ struct Box {
         inertia_tensor_inv(ComputeInertiaInverse(ComputeInertia(si, m))),
         rotation(r),
         angular_velocity(w),
-        name(name) {}
+        name(name),
+        id_(id) {}
 
  private:
+  int id_;
+  friend class engine::Match;
   glm::vec3 size_ = glm::vec3(1.0f);
   glm::vec3 half_extents_ = glm::vec3(0.5f);
 

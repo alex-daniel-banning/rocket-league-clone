@@ -1,10 +1,13 @@
 #pragma once
 
-#include <engine/physics/box.hpp>
-#include <engine/physics/plane.hpp>
-#include <engine/physics/sphere.hpp>
 #include <optional>
+#include <unordered_map>
 #include <vector>
+
+#include "engine/physics/body.hpp"
+#include "engine/physics/box.hpp"
+#include "engine/physics/contact_constraint.hpp"
+#include "engine/physics/sphere.hpp"
 
 namespace engine {
 class Match {
@@ -52,10 +55,6 @@ class Match {
   void Reset();
 
  private:
-  Match(std::optional<physics::Sphere> ball, std::optional<physics::Box> ground, std::vector<physics::Box> walls,
-        std::vector<physics::Box> boxes)
-      : ball_(ball), initial_ball_(ball), ground_(ground), boxes_(boxes), initial_boxes_(boxes), walls_(walls) {}
-
   static constexpr float fixed_dt = 1.0f / 120.0f;
   float accumulator_ = 0.0f;
   const std::optional<physics::Sphere> initial_ball_;
@@ -64,8 +63,44 @@ class Match {
   std::vector<physics::Box> boxes_;
   std::optional<physics::Box> ground_;
   std::vector<physics::Box> walls_;
+  std::unordered_map<int, physics::Body> bodies_;
 
-  void HandleCollisions();
+  Match(std::optional<physics::Sphere> ball, std::optional<physics::Box> ground, std::vector<physics::Box> walls,
+        std::vector<physics::Box> boxes)
+      : ball_(ball),
+        initial_ball_(ball),
+        ground_(ground),
+        boxes_(boxes),
+        initial_boxes_(boxes),
+        walls_(walls),
+        bodies_(BuildBodyMap(ball_, ground_, walls_, boxes_)) {}
+
+  std::unordered_map<int, physics::Body> BuildBodyMap(std::optional<physics::Sphere>& ball,
+                                                      std::optional<physics::Box>& ground,
+                                                      std::vector<physics::Box>& walls,
+                                                      std::vector<physics::Box>& boxes) {
+    std::unordered_map<int, physics::Body> bodies;
+    int next_id = 0;
+    if (ball) {
+      ball->id_ = next_id++;
+      bodies[ball->GetId()] = &ball.value();
+    }
+    if (ground) {
+      ground->id_ = next_id++;
+      bodies[ground->GetId()] = &ground.value();
+    }
+    for (auto& w : walls) {
+      w.id_ = next_id++;
+      bodies[w.GetId()] = &w;
+    }
+    for (auto& b : boxes) {
+      b.id_ = next_id++;
+      bodies[b.GetId()] = &b;
+    }
+    return bodies;
+  }
+
   void ApplyGravity();
+  std::vector<ContactConstraint> GenerateContactConstraints(float dt);
 };
 }  // namespace engine
