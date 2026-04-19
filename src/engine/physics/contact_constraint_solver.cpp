@@ -38,8 +38,8 @@ JacobianComponents UnpackJacobian(const ContactConstraint& cc) {
 }  // namespace
 
 void engine::physics::ContactConstraintSolver::GenerateFromContact(const Contact& contact,
-                                                                   std::unordered_map<int, Body> bodies, float dt,
-                                                                   std::vector<ContactConstraint>& out,
+                                                                   const std::unordered_map<int, Body>& bodies,
+                                                                   float dt, std::vector<ContactConstraint>& out,
                                                                    float restitution, float baumgarte) {
   glm::vec3 n = contact.normal;
   auto [pos_a, rot_a, inv_i_a, inv_m_a, vel_a, w_a] = std::visit(
@@ -47,14 +47,14 @@ void engine::physics::ContactConstraintSolver::GenerateFromContact(const Contact
         return std::tuple(body->position, body->rotation, body->inertia_tensor_inv, body->mass_inv, body->velocity,
                           body->angular_velocity);
       },
-      bodies[contact.body_a_id]);
+      bodies.at(contact.body_a_id));
   const glm::mat3 i_world_inv_a = WorldInverseInertia(rot_a, inv_i_a);
   auto [pos_b, rot_b, inv_i_b, inv_m_b, vel_b, w_b] = std::visit(
       [](auto* body) {
         return std::tuple(body->position, body->rotation, body->inertia_tensor_inv, body->mass_inv, body->velocity,
                           body->angular_velocity);
       },
-      bodies[contact.body_b_id]);
+      bodies.at(contact.body_b_id));
   const glm::mat3 i_world_inv_b = WorldInverseInertia(rot_b, inv_i_b);
 
   for (const auto& cp : contact.points) {
@@ -131,6 +131,7 @@ void engine::physics::ContactConstraintSolver::Solve(std::unordered_map<int, Bod
       ApplyPseudoImpulse(bodies, cc, p_delta);
     }
   }
+  previous_constraints_ = contact_constraints;
 }
 
 float engine::physics::ContactConstraintSolver::ComputeJV(std::unordered_map<int, Body>& bodies,

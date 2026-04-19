@@ -1,5 +1,8 @@
 #include "engine/physics/collisions.hpp"
 
+#include <algorithm>
+#include <cmath>
+
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>
 
@@ -261,7 +264,18 @@ std::vector<glm::vec3> ReduceManifold(const std::vector<glm::vec3>& points, cons
     }
   }
 
-  return {points[i0], points[i1], points[i2], points[i3]};
+  // Stabilize ordering
+  std::vector<glm::vec3> result = {points[i0], points[i1], points[i2], points[i3]};
+  glm::vec3 centroid = (result[0] + result[1] + result[2] + result[3]) * 0.25f;
+  glm::vec3 normal = sign * axis;
+  glm::vec3 u = glm::normalize(result[0] - centroid);
+  glm::vec3 v = glm::cross(normal, u);
+  std::sort(result.begin(), result.end(), [&](const glm::vec3& a, const glm::vec3& b) {
+    glm::vec3 da = a - centroid;
+    glm::vec3 db = b - centroid;
+    return std::atan2(glm::dot(da, v), glm::dot(da, u)) < std::atan2(glm::dot(db, v), glm::dot(db, u));
+  });
+  return result;
 }
 };  // namespace
 
