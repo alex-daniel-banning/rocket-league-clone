@@ -8,11 +8,14 @@ struct ContactConstraint {
   long body_a_id;
   long body_b_id;
   std::array<float, 12> jacobian;
-  float bias;
+  float bias;  // TODO, deprecating...
   float effective_mass;
   glm::mat3 i_world_inv_a;
   glm::mat3 i_world_inv_b;
-  float accumulated_impulse;
+  float accumulated_impulse = 0.0f;
+  float pseudo_accumulated_impulse = 0.0f;
+  float velocity_bias;  // restitution bounce only
+  float position_bias;  // Baumgarte penetration correction only
 
   friend std::ostream& operator<<(std::ostream& os, const ContactConstraint& cc) {
     os << "ContactConstraint{" << "bodies=[" << cc.body_a_id << "," << cc.body_b_id << "]" << " bias=" << cc.bias

@@ -20,6 +20,10 @@ struct Box {
   const glm::mat3 inertia_tensor_inv;
   const std::string name;
 
+  // Used for split impulse penetration correction
+  glm::vec3 pseudo_velocity{0.0f};
+  glm::vec3 pseudo_angular_velocity{0.0f};
+
  public:
   int GetId() const { return id_; }
   const glm::vec3& Size() const { return size_; }
