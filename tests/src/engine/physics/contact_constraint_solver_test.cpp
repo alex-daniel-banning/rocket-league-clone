@@ -122,7 +122,7 @@ TEST(BoxBoxResolution, OffCenterImpact_ProducesAngularVelocity) {
   Box b = BoxBuilder().Size(2.0f).Position(0, -0.99f, 0).Mass(10).Velocity(0, 0, 0).Id(2).Build();
 
   Contact contact;
-  ASSERT_TRUE(Collisions::ComputeContact(a, b, contact));
+  ASSERT_TRUE(collisions::ComputeContact(a, b, contact));
 
   RunSolver(a, b, contact);
 
@@ -135,7 +135,7 @@ TEST(BoxBoxResolution, RotationOnlyCollision) {
   Box stationary = BoxBuilder().Size(2.0f).Position(0, -0.99f, 0).Mass(10).Id(2).Build();
 
   Contact contact;
-  ASSERT_TRUE(Collisions::ComputeContact(spinner, stationary, contact));
+  ASSERT_TRUE(collisions::ComputeContact(spinner, stationary, contact));
 
   float spin_before = glm::length(spinner.angular_velocity);
   float vel_before = glm::length(stationary.velocity);
@@ -153,7 +153,7 @@ TEST(BoxBoxSymmetry, OrientationIndependence) {
   Box a1 = BoxBuilder().Size(2.0f).Position(0, 0.99f, 0).Mass(10).Velocity(0, -1, 0).Id(1).Build();
   Box b1 = BoxBuilder().Size(2.0f).Position(0, -0.99f, 0).Mass(10).Velocity(0, 1, 0).Id(2).Build();
   Contact c1;
-  ASSERT_TRUE(Collisions::ComputeContact(a1, b1, c1));
+  ASSERT_TRUE(collisions::ComputeContact(a1, b1, c1));
   RunSolver(a1, b1, c1);
 
   // Same collision rotated by arbitrary quaternion
@@ -165,7 +165,7 @@ TEST(BoxBoxSymmetry, OrientationIndependence) {
   Box a2 = BoxBuilder().Size(2.0f).Position(pos_a).Mass(10).Velocity(vel_a).Rotation(q).Id(1).Build();
   Box b2 = BoxBuilder().Size(2.0f).Position(pos_b).Mass(10).Velocity(vel_b).Rotation(q).Id(2).Build();
   Contact c2;
-  ASSERT_TRUE(Collisions::ComputeContact(a2, b2, c2));
+  ASSERT_TRUE(collisions::ComputeContact(a2, b2, c2));
   RunSolver(a2, b2, c2);
 
   float eps = 1e-3f;
@@ -182,7 +182,7 @@ TEST(BoxBoxSymmetry, ContactTypeEquivalence) {
   Box ff_a = BoxBuilder().Size(2.0f).Position(0, 0.99f, 0).Mass(10).Velocity(0, -1, 0).Id(1).Build();
   Box ff_b = BoxBuilder().Size(2.0f).Position(0, -0.99f, 0).Mass(10).Velocity(0, 1, 0).Id(2).Build();
   Contact ff_c;
-  ASSERT_TRUE(Collisions::ComputeContact(ff_a, ff_b, ff_c));
+  ASSERT_TRUE(collisions::ComputeContact(ff_a, ff_b, ff_c));
   RunSolver(ff_a, ff_b, ff_c);
 
   // Edge-face: rotate so edge midpoint direction (1,1,0) points down (-Y)
@@ -190,7 +190,7 @@ TEST(BoxBoxSymmetry, ContactTypeEquivalence) {
   Box ef_a = BoxBuilder().Size(2.0f).Position(0, 0.99f, 0).Mass(10).Velocity(0, -1, 0).Rotation(edge_rot).Id(1).Build();
   Box ef_b = BoxBuilder().Size(2.0f).Position(0, -0.99f, 0).Mass(10).Velocity(0, 1, 0).Id(2).Build();
   Contact ef_c;
-  ASSERT_TRUE(Collisions::ComputeContact(ef_a, ef_b, ef_c));
+  ASSERT_TRUE(collisions::ComputeContact(ef_a, ef_b, ef_c));
   RunSolver(ef_a, ef_b, ef_c);
 
   // Corner-face: rotate so corner direction (1,1,1) points down (-Y)
@@ -199,7 +199,7 @@ TEST(BoxBoxSymmetry, ContactTypeEquivalence) {
       BoxBuilder().Size(2.0f).Position(0, 0.99f, 0).Mass(10).Velocity(0, -1, 0).Rotation(corner_rot).Id(1).Build();
   Box cf_b = BoxBuilder().Size(2.0f).Position(0, -0.99f, 0).Mass(10).Velocity(0, 1, 0).Id(2).Build();
   Contact cf_c;
-  ASSERT_TRUE(Collisions::ComputeContact(cf_a, cf_b, cf_c));
+  ASSERT_TRUE(collisions::ComputeContact(cf_a, cf_b, cf_c));
   RunSolver(cf_a, cf_b, cf_c);
 
   float ff_speed_a = glm::length(ff_a.velocity);
@@ -214,14 +214,14 @@ TEST(BoxBoxSymmetry, SwappedArguments) {
   Box a1 = BoxBuilder().Size(2.0f).Position(0.3f, 0.99f, 0).Mass(5).Velocity(0, -2, 0).Id(1).Build();
   Box b1 = BoxBuilder().Size(2.0f).Position(0, -0.99f, 0).Mass(10).Velocity(0, 1, 0).Id(2).Build();
   Contact c1;
-  ASSERT_TRUE(Collisions::ComputeContact(a1, b1, c1));
+  ASSERT_TRUE(collisions::ComputeContact(a1, b1, c1));
   RunSolver(a1, b1, c1);
 
   // Run (b, a) with fresh copies
   Box a2 = BoxBuilder().Size(2.0f).Position(0.3f, 0.99f, 0).Mass(5).Velocity(0, -2, 0).Id(1).Build();
   Box b2 = BoxBuilder().Size(2.0f).Position(0, -0.99f, 0).Mass(10).Velocity(0, 1, 0).Id(2).Build();
   Contact c2;
-  ASSERT_TRUE(Collisions::ComputeContact(b2, a2, c2));
+  ASSERT_TRUE(collisions::ComputeContact(b2, a2, c2));
   RunSolver(a2, b2, c2);
 
   float eps = 1e-4f;
@@ -365,7 +365,7 @@ TEST(BoxBoxEdgeCase, MultipleContactPoints) {
   Box b = BoxBuilder().Size(2.0f).Position(0, -0.99f, 0).Mass(10).Velocity(0, 1, 0).Id(2).Build();
 
   Contact contact;
-  ASSERT_TRUE(Collisions::ComputeContact(a, b, contact));
+  ASSERT_TRUE(collisions::ComputeContact(a, b, contact));
   ASSERT_GT(contact.points.size(), 1u);
 
   glm::vec3 momentum_before = a.mass * a.velocity + b.mass * b.velocity;
@@ -427,14 +427,14 @@ TEST(BoxBoxImmovable, Symmetry_ArgumentOrder) {
   Box m1 = BoxBuilder().Size(2.0f).Position(0, 0.99f, 0).Mass(10).Velocity(0, -1, 0).Id(1).Build();
   Box i1 = BoxBuilder().Size(2.0f).Position(0, -0.99f, 0).Mass(0).Id(2).Build();
   Contact c1;
-  ASSERT_TRUE(Collisions::ComputeContact(m1, i1, c1));
+  ASSERT_TRUE(collisions::ComputeContact(m1, i1, c1));
   RunSolver(m1, i1, c1);
 
   // (immovable, movable)
   Box m2 = BoxBuilder().Size(2.0f).Position(0, 0.99f, 0).Mass(10).Velocity(0, -1, 0).Id(1).Build();
   Box i2 = BoxBuilder().Size(2.0f).Position(0, -0.99f, 0).Mass(0).Id(2).Build();
   Contact c2;
-  ASSERT_TRUE(Collisions::ComputeContact(i2, m2, c2));
+  ASSERT_TRUE(collisions::ComputeContact(i2, m2, c2));
   RunSolver(m2, i2, c2);
 
   float eps = 1e-4f;
@@ -461,7 +461,7 @@ TEST(BoxBoxNoContact, NothingHappens) {
   Box b = BoxBuilder().Size(2.0f).Position(0, -5, 0).Mass(10).Velocity(0, 1, 0).Id(2).Build();
 
   Contact contact;
-  ASSERT_FALSE(Collisions::ComputeContact(a, b, contact));
+  ASSERT_FALSE(collisions::ComputeContact(a, b, contact));
 
   // No contact means no constraints generated — velocities unchanged
   EXPECT_NEAR(a.velocity.y, -1.0f, 1e-6f);

@@ -25,7 +25,7 @@ TEST_P(SphereBoxDetection, _) {
   engine::physics::Box box(glm::vec3(1.0f), glm::vec3(0.0f), glm::vec3(0.0f), 1.0f, c.box_rotation);
 
   engine::physics::Contact contact;
-  bool collided = engine::physics::Collisions::ComputeContact(box, sphere, contact);
+  bool collided = engine::physics::collisions::ComputeContact(box, sphere, contact);
 
   std::string msg = "Failure for Sphere v. Box collision detection. TEST CASE -> " + c.label;
   EXPECT_EQ(c.expect_collision, collided) << msg;

@@ -36,7 +36,7 @@ TEST_P(BoxBoxDetection, _) {
   engine::physics::Box box_b(glm::vec3(1.0f), c.box_b_position, glm::vec3(0.0f), 1.0f, c.box_b_rotation);
 
   engine::physics::Contact contact;
-  bool collided = engine::physics::Collisions::ComputeContact(box_a, box_b, contact);
+  bool collided = engine::physics::collisions::ComputeContact(box_a, box_b, contact);
 
   std::string msg = "Failure for Box v. Box collision detection. TEST CASE -> " + c.label;
   EXPECT_EQ(c.expect_collision, collided) << msg;
@@ -117,13 +117,13 @@ TEST_F(BoxBoxDetection, BoxesCollideDueToScale) {
                                   glm::vec3(0.0f), 1.0f, GetDiagonalAlignedOrientation({1, 0, 0}));
 
   engine::physics::Contact first_contact;
-  bool smaller_box_collided = engine::physics::Collisions::ComputeContact(box_a, smaller_box, first_contact);
+  bool smaller_box_collided = engine::physics::collisions::ComputeContact(box_a, smaller_box, first_contact);
 
   EXPECT_FALSE(smaller_box_collided) << "Boxes not detecting scale-caused lack of collision. "
                                         "(Incorrectly detected shrunken box)";
 
   engine::physics::Contact second_contact;
-  bool larger_box_collided = engine::physics::Collisions::ComputeContact(box_a, larger_box, second_contact);
+  bool larger_box_collided = engine::physics::collisions::ComputeContact(box_a, larger_box, second_contact);
 
   EXPECT_TRUE(larger_box_collided) << "Boxes not detecting scale-caused collision. (Did not detect enlarged "
                                       "box)";

@@ -81,7 +81,7 @@ TEST_P(BoxBoxContactPoints, _) {
   engine::physics::Box box_b(glm::vec3(1.0f), c.box_b_position, glm::vec3(0.0f), 1.0f, c.box_b_rotation);
 
   engine::physics::Contact contact;
-  ASSERT_TRUE(engine::physics::Collisions::ComputeContact(box_a, box_b, contact));
+  ASSERT_TRUE(engine::physics::collisions::ComputeContact(box_a, box_b, contact));
 
   ASSERT_EQ(contact.points.size(), c.expected_point_count);
 
@@ -167,7 +167,7 @@ TEST(BoxBoxContact, EdgeFaceClippingShouldBeIndependentOfArgumentOrder) {
                      .Rotation(glm::angleAxis(glm::radians(45.0f), glm::vec3(0.0f, 1.0f, 0.0f)))
                      .Build();
   engine::physics::Contact contact_1;
-  ASSERT_TRUE(engine::physics::Collisions::ComputeContact(box_a_1, box_b_1, contact_1));
+  ASSERT_TRUE(engine::physics::collisions::ComputeContact(box_a_1, box_b_1, contact_1));
 
   auto box_a_2 = engine::physics::BoxBuilder().Build();
   auto box_b_2 = engine::physics::BoxBuilder()
@@ -175,7 +175,7 @@ TEST(BoxBoxContact, EdgeFaceClippingShouldBeIndependentOfArgumentOrder) {
                      .Rotation(glm::angleAxis(glm::radians(45.0f), glm::vec3(0.0f, 1.0f, 0.0f)))
                      .Build();
   engine::physics::Contact contact_2;
-  ASSERT_TRUE(engine::physics::Collisions::ComputeContact(box_b_2, box_a_2, contact_2));
+  ASSERT_TRUE(engine::physics::collisions::ComputeContact(box_b_2, box_a_2, contact_2));
 
   ExpectPointsEqual(contact_1.points, contact_2.points, 1e-5f);
 }
@@ -186,7 +186,7 @@ TEST(BoxBoxContact, PerPointDepthsArePositive) {
   auto box_a = engine::physics::BoxBuilder().Build();
   auto box_b = engine::physics::BoxBuilder().Position(0.9f, 0.0f, 0.0f).Build();
   engine::physics::Contact contact;
-  ASSERT_TRUE(engine::physics::Collisions::ComputeContact(box_a, box_b, contact));
+  ASSERT_TRUE(engine::physics::collisions::ComputeContact(box_a, box_b, contact));
   ASSERT_FALSE(contact.points.empty());
   for (const auto& cp : contact.points) EXPECT_GT(cp.penetration, 0.0f);
 }
@@ -195,7 +195,7 @@ TEST(BoxBoxContact, FlatFaceFacePerPointDepthsAreUniform) {
   auto box_a = engine::physics::BoxBuilder().Build();
   auto box_b = engine::physics::BoxBuilder().Position(0.9f, 0.0f, 0.0f).Build();
   engine::physics::Contact contact;
-  ASSERT_TRUE(engine::physics::Collisions::ComputeContact(box_a, box_b, contact));
+  ASSERT_TRUE(engine::physics::collisions::ComputeContact(box_a, box_b, contact));
   ASSERT_FALSE(contact.points.empty());
   float first_penetration_value = contact.points[0].penetration;
   for (const auto& cp : contact.points) EXPECT_NEAR(cp.penetration, first_penetration_value, 1e-5f);
@@ -209,7 +209,7 @@ TEST(BoxBoxContact, TiltedFaceFacePerPointDepthsVary) {
                    .Rotation(glm::angleAxis(glm::radians(5.0f), glm::vec3(0.0f, 0.0f, 1.0f)))
                    .Build();
   engine::physics::Contact contact;
-  ASSERT_TRUE(engine::physics::Collisions::ComputeContact(box_a, box_b, contact));
+  ASSERT_TRUE(engine::physics::collisions::ComputeContact(box_a, box_b, contact));
   ASSERT_GE(contact.points.size(), 2u);
   float min_d = contact.points[0].penetration;
   float max_d = contact.points[0].penetration;
@@ -232,7 +232,7 @@ TEST(BoxBoxContact, FaceFaceRotated45DegReducesToFourPoints) {
                    .Rotation(glm::angleAxis(glm::radians(45.0f), glm::vec3(1.0f, 0.0f, 0.0f)))
                    .Build();
   engine::physics::Contact contact;
-  ASSERT_TRUE(engine::physics::Collisions::ComputeContact(box_a, box_b, contact));
+  ASSERT_TRUE(engine::physics::collisions::ComputeContact(box_a, box_b, contact));
   EXPECT_LE(contact.points.size(), 4u);
 }
 
@@ -243,12 +243,12 @@ TEST(BoxBoxContact, CornerFaceClippingShouldBeIndependentOfArgumentOrder) {
   auto box_a_1 = engine::physics::BoxBuilder().Build();
   auto box_b_1 = engine::physics::BoxBuilder().Position(position).Rotation(rotation).Build();
   engine::physics::Contact contact_1;
-  ASSERT_TRUE(engine::physics::Collisions::ComputeContact(box_a_1, box_b_1, contact_1));
+  ASSERT_TRUE(engine::physics::collisions::ComputeContact(box_a_1, box_b_1, contact_1));
 
   auto box_a_2 = engine::physics::BoxBuilder().Build();
   auto box_b_2 = engine::physics::BoxBuilder().Position(position).Rotation(rotation).Build();
   engine::physics::Contact contact_2;
-  ASSERT_TRUE(engine::physics::Collisions::ComputeContact(box_b_2, box_a_2, contact_2));
+  ASSERT_TRUE(engine::physics::collisions::ComputeContact(box_b_2, box_a_2, contact_2));
 
   ExpectPointsEqual(contact_1.points, contact_2.points, 1e-5f);
 }

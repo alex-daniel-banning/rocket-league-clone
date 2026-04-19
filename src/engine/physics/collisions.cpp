@@ -1,12 +1,7 @@
 #include "engine/physics/collisions.hpp"
 
-#include <iostream>
-#include <stdexcept>
-
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>
-
-#include "engine/log.hpp"
 
 namespace {
 glm::vec3 CalculateCentroid(const std::vector<engine::physics::ContactPoint>& points) {
@@ -268,36 +263,11 @@ std::vector<glm::vec3> ReduceManifold(const std::vector<glm::vec3>& points, cons
 
   return {points[i0], points[i1], points[i2], points[i3]};
 }
-
-void CorrectPenetration(glm::vec3& position_a, float inv_mass_a, glm::vec3& position_b, float inv_mass_b,
-                        const glm::vec3& normal, float penetration) {
-  if (penetration <= 0.0f) return;
-  float total_correction = std::max(0.0f, penetration);
-  float total_inv_mass = inv_mass_a + inv_mass_b;
-  position_a -= normal * (total_correction / total_inv_mass) * inv_mass_a;
-  position_b += normal * (total_correction / total_inv_mass) * inv_mass_b;
-}
-
-glm::mat3 WorldInverseInertia(const glm::quat& rotation, const glm::mat3& inertia_tensor_inv) {
-  glm::mat3 rot = glm::toMat3(rotation);
-  return rot * inertia_tensor_inv * glm::transpose(rot);
-}
-
-float AngularMassContribution(const glm::mat3& i_world_inv, const glm::vec3& r, const glm::vec3& n) {
-  return glm::dot(n, glm::cross(i_world_inv * glm::cross(r, n), r));
-}
-
-void ApplyImpulse(glm::vec3& velocity, float mass_inv, glm::vec3& angular_velocity, const glm::mat3& i_world_inv,
-                  const glm::vec3& r, const glm::vec3& impulse) {
-  velocity += impulse * mass_inv;
-  angular_velocity += i_world_inv * glm::cross(r, impulse);
-}
-
 };  // namespace
 
 namespace engine::physics {
 
-bool Collisions::ComputeContact(const Box& box_a, const Sphere& sphere_b, Contact& out) {
+bool collisions::ComputeContact(const Box& box_a, const Sphere& sphere_b, Contact& out) {
   glm::vec3 sphere_to_box = sphere_b.position - box_a.position;
 
   glm::vec3 closest_point = box_a.position;
@@ -322,7 +292,7 @@ bool Collisions::ComputeContact(const Box& box_a, const Sphere& sphere_b, Contac
   return true;
 };
 
-bool Collisions::ComputeContact(const Box& box_a, const Box& box_b, Contact& out) {
+bool collisions::ComputeContact(const Box& box_a, const Box& box_b, Contact& out) {
   const float epsilon = 1e-6f;
   float penetration = std::numeric_limits<float>::max();
   glm::vec3 penetration_axis;
