@@ -60,7 +60,10 @@ void engine::physics::ContactConstraintSolver::GenerateFromContact(const Contact
     cc.jacobian = {-n.x, -n.y, -n.z, -r_a_cross_n.x, -r_a_cross_n.y, -r_a_cross_n.z,
                    n.x,  n.y,  n.z,  r_b_cross_n.x,  r_b_cross_n.y,  r_b_cross_n.z};
     assert(cp.penetration >= 0.0f && "contact point penetration should always be positive");
-    cc.bias = -(baumgarte / dt) * cp.penetration + restitution * v_n;
+    // float restitution_term = (std::abs(v_n) > 9.8f * dt) ? restitution * v_n : 0.0f;
+    float restitution_term = (std::abs(v_n) > 9.8f * dt) ? restitution * v_n : 0.0f;
+    float p_slop = 0.002f;
+    cc.bias = -(baumgarte / dt) * std::max(0.0f, cp.penetration - p_slop) + restitution_term;
     cc.effective_mass = (w > 0.0f) ? 1.0f / w : 0.0f;
     cc.i_world_inv_a = i_world_inv_a;
     cc.i_world_inv_b = i_world_inv_b;

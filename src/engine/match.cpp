@@ -25,7 +25,7 @@ void Match::Tick(float delta_time) {
     physics::ContactConstraintSolver::PreSolve(bodies_, contact_constraints, fixed_dt);
 
     // Iteratively solve constraints
-    constexpr int solver_iterations = 10;
+    constexpr int solver_iterations = 30;
     physics::ContactConstraintSolver::Solve(bodies_, contact_constraints, solver_iterations);
 
     // Iterate positions
@@ -77,27 +77,31 @@ void Match::ApplyGravity() {
 std::vector<ContactConstraint> Match::GenerateContactConstraints(float dt) {
   std::vector<ContactConstraint> constraints;
 
-  float baumgarte = 0.1f;
+  float baumgarte = 0.02f;
+  float restitution = 0.3f;
   if (ball_) {
     // Ball v Wall
     for (const physics::Box& wall : walls_) {
       physics::Contact contact;
       if (physics::Collisions::ComputeContact(wall, *ball_, contact)) {
-        physics::ContactConstraintSolver::GenerateFromContact(contact, bodies_, dt, constraints, 0.5f, baumgarte);
+        physics::ContactConstraintSolver::GenerateFromContact(contact, bodies_, dt, constraints, restitution,
+                                                              baumgarte);
       }
     }
     // Ball v Ground
     if (ground_) {
       physics::Contact contact;
       if (physics::Collisions::ComputeContact(*ground_, *ball_, contact)) {
-        physics::ContactConstraintSolver::GenerateFromContact(contact, bodies_, dt, constraints, 0.5f, baumgarte);
+        physics::ContactConstraintSolver::GenerateFromContact(contact, bodies_, dt, constraints, restitution,
+                                                              baumgarte);
       }
     }
     // Ball v Car
     for (const physics::Box& car : boxes_) {
       physics::Contact contact;
       if (physics::Collisions::ComputeContact(car, *ball_, contact)) {
-        physics::ContactConstraintSolver::GenerateFromContact(contact, bodies_, dt, constraints, 0.5f, baumgarte);
+        physics::ContactConstraintSolver::GenerateFromContact(contact, bodies_, dt, constraints, restitution,
+                                                              baumgarte);
       }
     }
   }
@@ -108,7 +112,8 @@ std::vector<ContactConstraint> Match::GenerateContactConstraints(float dt) {
       for (unsigned int j = i + 1; j < boxes_.size(); j++) {
         physics::Contact contact;
         if (physics::Collisions::ComputeContact(boxes_[i], boxes_[j], contact)) {
-          physics::ContactConstraintSolver::GenerateFromContact(contact, bodies_, dt, constraints, 0.5f, baumgarte);
+          physics::ContactConstraintSolver::GenerateFromContact(contact, bodies_, dt, constraints, restitution,
+                                                                baumgarte);
         }
       }
     }
@@ -118,7 +123,8 @@ std::vector<ContactConstraint> Match::GenerateContactConstraints(float dt) {
     for (const physics::Box& wall : walls_) {
       physics::Contact contact;
       if (physics::Collisions::ComputeContact(car, wall, contact)) {
-        physics::ContactConstraintSolver::GenerateFromContact(contact, bodies_, dt, constraints, 0.5f, baumgarte);
+        physics::ContactConstraintSolver::GenerateFromContact(contact, bodies_, dt, constraints, restitution,
+                                                              baumgarte);
       }
     }
   }
@@ -127,7 +133,8 @@ std::vector<ContactConstraint> Match::GenerateContactConstraints(float dt) {
     for (const physics::Box& car : boxes_) {
       physics::Contact contact;
       if (physics::Collisions::ComputeContact(car, *ground_, contact)) {
-        physics::ContactConstraintSolver::GenerateFromContact(contact, bodies_, dt, constraints, 0.5f, baumgarte);
+        physics::ContactConstraintSolver::GenerateFromContact(contact, bodies_, dt, constraints, restitution,
+                                                              baumgarte);
       }
     }
   }
