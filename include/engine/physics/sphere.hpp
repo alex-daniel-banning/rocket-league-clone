@@ -20,6 +20,13 @@ struct Sphere {
   const glm::mat3 inertia_tensor;
   const glm::mat3 inertia_tensor_inv;
 
+  // Used for split impulse penetration correction
+  glm::vec3 pseudo_velocity{0.0f};
+  glm::vec3 pseudo_angular_velocity{0.0f};
+
+  glm::vec3 EffectiveVelocity() const { return velocity + pseudo_velocity; }
+  glm::vec3 EffectiveAngularVelocity() const { return angular_velocity + pseudo_angular_velocity; }
+
   Sphere() = delete;
   Sphere(float r, float m, glm::vec3 pos, glm::vec3 vel = glm::vec3(0.0f), glm::quat rot = glm::quat(),
          glm::vec3 ang_vel = glm::vec3())

@@ -78,7 +78,8 @@ void engine::physics::ContactConstraintSolver::GenerateFromContact(const Contact
     assert(cp.penetration >= 0.0f && "contact point penetration should always be positive");
     float restitution_term = (std::abs(v_n) > 9.8f * dt) ? restitution * v_n : 0.0f;
     float p_slop = 0.002f;
-    cc.bias = -(baumgarte / dt) * std::max(0.0f, cp.penetration - p_slop) + restitution_term;
+    cc.velocity_bias = restitution_term;
+    cc.position_bias = -(baumgarte / dt) * std::max(cp.penetration - p_slop, 0.0f);
     cc.effective_mass = (w > 0.0f) ? 1.0f / w : 0.0f;
     cc.i_world_inv_a = i_world_inv_a;
     cc.i_world_inv_b = i_world_inv_b;
@@ -96,14 +97,38 @@ void engine::physics::ContactConstraintSolver::PreSolve(std::unordered_map<int, 
 void engine::physics::ContactConstraintSolver::Solve(std::unordered_map<int, Body>& bodies,
                                                      std::vector<ContactConstraint>& contact_constraints,
                                                      int iterations) {
+  // Reset pseudo velocities
+  for (auto& cc : contact_constraints) {
+    std::visit(
+        [&](auto* body) {
+          body->pseudo_velocity = glm::vec3();
+          body->pseudo_angular_velocity = glm::vec3();
+        },
+        bodies[cc.body_a_id]);
+    std::visit(
+        [&](auto* body) {
+          body->pseudo_velocity = glm::vec3();
+          body->pseudo_angular_velocity = glm::vec3();
+        },
+        bodies[cc.body_b_id]);
+  }
+
   for (unsigned int i = 0; i < iterations; i++) {
     for (auto& cc : contact_constraints) {
       float jv = ComputeJV(bodies, cc);
-      float lambda = -(jv + cc.bias) * cc.effective_mass;
+      float lambda = -(jv + cc.velocity_bias) * cc.effective_mass;
       float old_accum = cc.accumulated_impulse;
       cc.accumulated_impulse = std::max(0.0f, old_accum + lambda);
       float delta = cc.accumulated_impulse - old_accum;  // clamped delta
       ApplyImpulse(bodies, cc, delta);
+
+      // Position correction
+      float p_jv = ComputePseudoJV(bodies, cc);
+      float p_lambda = -(p_jv + cc.position_bias) * cc.effective_mass;
+      float old_p_accum = cc.pseudo_accumulated_impulse;
+      cc.pseudo_accumulated_impulse = std::max(0.0f, old_p_accum + p_lambda);
+      float p_delta = cc.pseudo_accumulated_impulse - old_p_accum;  // clamped delta
+      ApplyPseudoImpulse(bodies, cc, p_delta);
     }
   }
 }
@@ -117,6 +142,21 @@ float engine::physics::ContactConstraintSolver::ComputeJV(std::unordered_map<int
   const glm::vec3 w_a = std::visit([](auto* body) { return body->angular_velocity; }, bodies[a]);
   const glm::vec3 v_b = std::visit([](auto* body) { return body->velocity; }, bodies[b]);
   const glm::vec3 w_b = std::visit([](auto* body) { return body->angular_velocity; }, bodies[b]);
+
+  const auto [j_v_a, j_w_a, j_v_b, j_w_b] = UnpackJacobian(cc);
+
+  return glm::dot(j_v_a, v_a) + glm::dot(j_w_a, w_a) + glm::dot(j_v_b, v_b) + glm::dot(j_w_b, w_b);
+};
+
+float engine::physics::ContactConstraintSolver::ComputePseudoJV(std::unordered_map<int, Body>& bodies,
+                                                                const ContactConstraint& cc) {
+  // contact normal should point from A to B. Velocity of body A should be negative.
+  const int a = cc.body_a_id;
+  const int b = cc.body_b_id;
+  const glm::vec3 v_a = std::visit([](auto* body) { return body->pseudo_velocity; }, bodies[a]);
+  const glm::vec3 w_a = std::visit([](auto* body) { return body->pseudo_angular_velocity; }, bodies[a]);
+  const glm::vec3 v_b = std::visit([](auto* body) { return body->pseudo_velocity; }, bodies[b]);
+  const glm::vec3 w_b = std::visit([](auto* body) { return body->pseudo_angular_velocity; }, bodies[b]);
 
   const auto [j_v_a, j_w_a, j_v_b, j_w_b] = UnpackJacobian(cc);
 
@@ -140,6 +180,27 @@ void engine::physics::ContactConstraintSolver::ApplyImpulse(std::unordered_map<i
       [&](auto* body) {
         body->velocity += body->mass_inv * j.j_v_b * lambda;
         body->angular_velocity += cc.i_world_inv_b * j.j_w_b * lambda;
+      },
+      bodies[b]);
+}
+
+void engine::physics::ContactConstraintSolver::ApplyPseudoImpulse(std::unordered_map<int, Body>& bodies,
+                                                                  const ContactConstraint& cc, float lambda) {
+  const int a = cc.body_a_id;
+  const int b = cc.body_b_id;
+
+  const auto j = UnpackJacobian(cc);
+
+  std::visit(
+      [&](auto* body) {
+        body->pseudo_velocity += body->mass_inv * j.j_v_a * lambda;
+        body->pseudo_angular_velocity += cc.i_world_inv_a * j.j_w_a * lambda;
+      },
+      bodies[a]);
+  std::visit(
+      [&](auto* body) {
+        body->pseudo_velocity += body->mass_inv * j.j_v_b * lambda;
+        body->pseudo_angular_velocity += cc.i_world_inv_b * j.j_w_b * lambda;
       },
       bodies[b]);
 }

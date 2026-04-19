@@ -27,14 +27,13 @@ void Match::Tick(float delta_time) {
     constexpr int solver_iterations = 10;
     physics::ContactConstraintSolver::Solve(bodies_, contact_constraints, solver_iterations);
 
-    // Iterate positions
     if (ball_) {
-      ball_->position += fixed_dt * ball_->velocity;
+      ball_->position += fixed_dt * ball_->EffectiveVelocity();
     }
     for (physics::Box& car : boxes_) {
-      car.position += fixed_dt * car.velocity;
+      car.position += fixed_dt * car.EffectiveVelocity();
       glm::quat q = car.rotation;
-      glm::vec3 w = car.angular_velocity;
+      glm::vec3 w = car.EffectiveAngularVelocity();
       car.rotation = glm::normalize(q + (0.5f * fixed_dt * glm::quat(0, w.x, w.y, w.z) * q));
     }
 

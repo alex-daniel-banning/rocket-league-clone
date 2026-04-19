@@ -20,6 +20,9 @@ class ContactConstraintSolver {
 
  private:
   static void ApplyImpulse(std::unordered_map<int, Body>& bodies, const ContactConstraint& constraint, float lambda);
+  static void ApplyPseudoImpulse(std::unordered_map<int, Body>& bodies, const ContactConstraint& constraint,
+                                 float lambda);
   static float ComputeJV(std::unordered_map<int, Body>& bodies, const ContactConstraint& cc);
+  static float ComputePseudoJV(std::unordered_map<int, Body>& bodies, const ContactConstraint& cc);
 };
 }  // namespace engine::physics

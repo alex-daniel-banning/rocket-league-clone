@@ -282,7 +282,7 @@ TEST(BoxBoxRestitution, Partial_MomentumConservedAndEnergyDecreases) {
 }
 
 TEST(BoxBoxPenetrationCorrection, ProducesSeparatingVelocity) {
-  // Zero relative velocity, but penetrating — baumgarte should add separating velocity
+  // Zero relative velocity, but penetrating — split impulse should add separating pseudo-velocity
   Box a = BoxBuilder().Size(2.0f).Position(0, 0.95f, 0).Mass(10).Id(1).Build();
   Box b = BoxBuilder().Size(2.0f).Position(0, -0.95f, 0).Mass(10).Id(2).Build();
   glm::vec3 midpoint(0, 0, 0);
@@ -291,10 +291,13 @@ TEST(BoxBoxPenetrationCorrection, ProducesSeparatingVelocity) {
 
   RunSolver(a, b, contact, 0.0f, 0.2f);
 
-  // Normal points from a to b (-Y). Baumgarte should push them apart:
-  // a gains +Y velocity, b gains -Y velocity
-  EXPECT_GT(a.velocity.y, 1e-4f);
-  EXPECT_LT(b.velocity.y, -1e-4f);
+  // Normal points from a to b (-Y). Position correction goes into pseudo-velocity:
+  // a gains +Y pseudo-velocity, b gains -Y pseudo-velocity
+  EXPECT_GT(a.pseudo_velocity.y, 1e-4f);
+  EXPECT_LT(b.pseudo_velocity.y, -1e-4f);
+  // Real velocity should remain unchanged
+  EXPECT_NEAR(a.velocity.y, 0.0f, 1e-6f);
+  EXPECT_NEAR(b.velocity.y, 0.0f, 1e-6f);
 }
 
 TEST(BoxBoxPenetrationCorrection, ProportionalToInverseMass) {
@@ -306,10 +309,10 @@ TEST(BoxBoxPenetrationCorrection, ProportionalToInverseMass) {
 
   RunSolver(light, heavy, contact, 0.0f, 0.2f);
 
-  // Lighter body should receive more corrective velocity
-  EXPECT_GT(std::abs(light.velocity.y), std::abs(heavy.velocity.y));
+  // Lighter body should receive more corrective pseudo-velocity
+  EXPECT_GT(std::abs(light.pseudo_velocity.y), std::abs(heavy.pseudo_velocity.y));
   // Ratio should be proportional to inverse mass ratio (3:1)
-  float ratio = std::abs(light.velocity.y) / std::abs(heavy.velocity.y);
+  float ratio = std::abs(light.pseudo_velocity.y) / std::abs(heavy.pseudo_velocity.y);
   EXPECT_NEAR(ratio, 3.0f, 0.1f);
 }
 
@@ -326,8 +329,8 @@ TEST(BoxBoxPenetrationCorrection, DeeperPenetrationProducesLargerCorrection) {
   Contact c2 = MakeContact(1, 2, glm::vec3(0, -1, 0), {{glm::vec3(0), 0.2f}});
   RunSolver(a2, b2, c2, 0.0f, 0.2f);
 
-  EXPECT_GT(std::abs(a2.velocity.y), std::abs(a1.velocity.y));
-  EXPECT_GT(std::abs(b2.velocity.y), std::abs(b1.velocity.y));
+  EXPECT_GT(std::abs(a2.pseudo_velocity.y), std::abs(a1.pseudo_velocity.y));
+  EXPECT_GT(std::abs(b2.pseudo_velocity.y), std::abs(b1.pseudo_velocity.y));
 }
 
 TEST(BoxBoxEdgeCase, LargeMassRatio) {
@@ -402,9 +405,12 @@ TEST(BoxBoxImmovable, PenetrationCorrection_OnlyMovableDisplaced) {
 
   RunSolver(movable, immovable, contact, 0.0f, 0.2f);
 
-  // Only movable gets corrective velocity
-  EXPECT_GT(movable.velocity.y, 1e-4f);
+  // Only movable gets corrective pseudo-velocity
+  EXPECT_GT(movable.pseudo_velocity.y, 1e-4f);
   // Immovable stays put
+  EXPECT_NEAR(immovable.pseudo_velocity.y, 0.0f, 1e-6f);
+  // Real velocities unchanged
+  EXPECT_NEAR(movable.velocity.y, 0.0f, 1e-6f);
   EXPECT_NEAR(immovable.velocity.y, 0.0f, 1e-6f);
 }
 
@@ -527,8 +533,10 @@ TEST(SphereBoxResolution, PenetrationCorrection) {
 
   RunSolver(sphere, 1, ground, contact, 0.0f, 0.2f);
 
-  EXPECT_GT(sphere.velocity.y, 1e-4f);
-  EXPECT_NEAR(ground.velocity.y, 0.0f, 1e-6f);
+  EXPECT_GT(sphere.pseudo_velocity.y, 1e-4f);
+  EXPECT_NEAR(ground.pseudo_velocity.y, 0.0f, 1e-6f);
+  // Real velocity unchanged
+  EXPECT_NEAR(sphere.velocity.y, 0.0f, 1e-6f);
 }
 
 TEST(SphereBoxResolution, ContactNormalOrderSymmetry) {
