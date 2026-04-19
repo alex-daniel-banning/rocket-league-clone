@@ -28,6 +28,8 @@ struct Box {
   int GetId() const { return id_; }
   const glm::vec3& Size() const { return size_; }
   const glm::vec3& HalfExtents() const { return half_extents_; }
+  glm::vec3 EffectiveVelocity() const { return velocity + pseudo_velocity; }
+  glm::vec3 EffectiveAngularVelocity() const { return angular_velocity + pseudo_angular_velocity; }
 
   Box() = delete;
   explicit Box(glm::vec3 si, glm::vec3 pos = glm::vec3(0.0f), glm::vec3 vel = glm::vec3(0.0f), float m = 1.0f,

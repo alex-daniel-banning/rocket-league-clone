@@ -78,7 +78,7 @@ void engine::physics::ContactConstraintSolver::GenerateFromContact(const Contact
     assert(cp.penetration >= 0.0f && "contact point penetration should always be positive");
     float restitution_term = (std::abs(v_n) > 9.8f * dt) ? restitution * v_n : 0.0f;
     float p_slop = 0.002f;
-    cc.velocity_bias = restitution_term;  // only if separating?
+    cc.velocity_bias = restitution_term;
     cc.position_bias = -(baumgarte / dt) * std::max(cp.penetration - p_slop, 0.0f);
     cc.effective_mass = (w > 0.0f) ? 1.0f / w : 0.0f;
     cc.i_world_inv_a = i_world_inv_a;
