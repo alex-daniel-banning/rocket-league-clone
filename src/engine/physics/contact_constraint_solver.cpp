@@ -80,7 +80,7 @@ void engine::physics::ContactConstraintSolver::GenerateFromContact(const Contact
     float p_slop = 0.002f;
     cc.bias = -(baumgarte / dt) * std::max(0.0f, cp.penetration - p_slop) + restitution_term;
     cc.velocity_bias = restitution_term;  // only if separating?
-    cc.position_bias = (baumgarte / dt) * std::max(cp.penetration - p_slop, 0.0f);
+    cc.position_bias = -(baumgarte / dt) * std::max(cp.penetration - p_slop, 0.0f);
     cc.effective_mass = (w > 0.0f) ? 1.0f / w : 0.0f;
     cc.i_world_inv_a = i_world_inv_a;
     cc.i_world_inv_b = i_world_inv_b;
