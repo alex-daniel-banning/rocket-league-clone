@@ -1,9 +1,8 @@
 #pragma once
 
 #include <array>
-#include <ostream>
-
 #include <glm/matrix.hpp>
+#include <ostream>
 
 struct ContactConstraint {
   long body_a_id;
@@ -16,12 +15,8 @@ struct ContactConstraint {
   float accumulated_impulse;
 
   friend std::ostream& operator<<(std::ostream& os, const ContactConstraint& cc) {
-    os << "ContactConstraint{"
-       << "bodies=[" << cc.body_a_id << "," << cc.body_b_id << "]"
-       << " bias=" << cc.bias
-       << " eff_mass=" << cc.effective_mass
-       << " accum=" << cc.accumulated_impulse
-       << " J=[";
+    os << "ContactConstraint{" << "bodies=[" << cc.body_a_id << "," << cc.body_b_id << "]" << " bias=" << cc.bias
+       << " eff_mass=" << cc.effective_mass << " accum=" << cc.accumulated_impulse << " J=[";
     for (int i = 0; i < 12; i++) {
       if (i > 0) os << ",";
       os << cc.jacobian[i];
