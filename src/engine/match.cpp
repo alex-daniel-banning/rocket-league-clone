@@ -20,12 +20,10 @@ void Match::Tick(float delta_time) {
     ApplyGravity();
 
     std::vector<ContactConstraint> contact_constraints = GenerateContactConstraints(fixed_dt);
-    // Presolve (warm starting TODO)
-    physics::ContactConstraintSolver::PreSolve(bodies_, contact_constraints, fixed_dt);
-
+    contact_constraint_solver_.PreSolve(bodies_, contact_constraints, fixed_dt);
     // Iteratively solve constraints
     constexpr int solver_iterations = 10;
-    physics::ContactConstraintSolver::Solve(bodies_, contact_constraints, solver_iterations);
+    contact_constraint_solver_.Solve(bodies_, contact_constraints, solver_iterations);
 
     if (ball_) {
       ball_->position += fixed_dt * ball_->EffectiveVelocity();

@@ -13,8 +13,7 @@ class ContactConstraintSolver {
   static void GenerateFromContact(const Contact& contact, const std::unordered_map<int, Body>& bodies, float dt,
                                   std::vector<ContactConstraint>& out, float restitution = 1.0f,
                                   float baumgarte = 0.2f);
-  static void PreSolve(std::unordered_map<int, Body>& bodies, const std::vector<ContactConstraint>& constraints,
-                       float dt);
+  void PreSolve(std::unordered_map<int, Body>& bodies, std::vector<ContactConstraint>& constraints, float dt);
   void Solve(std::unordered_map<int, Body>& bodies, std::vector<ContactConstraint>& contact_constraints,
              int iterations);
 
