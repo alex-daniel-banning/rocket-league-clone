@@ -2,17 +2,17 @@
 
 #include <GLFW/glfw3.h>
 
-#include <engine/match.hpp>
-#include <engine/path_manager.hpp>
-#include <engine/physics/box_builder.hpp>
-#include <engine/physics/sphere.hpp>
-#include <engine/render/renderer.hpp>
-#include <engine/render/shader.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 
 #include "../demo_common.hpp"
+#include "engine/match.hpp"
+#include "engine/path_manager.hpp"
 #include "engine/physics/box.hpp"
+#include "engine/physics/box_builder.hpp"
+#include "engine/physics/sphere.hpp"
+#include "engine/render/renderer.hpp"
+#include "engine/render/shader.hpp"
 
 #define GL_CHECK()                                                                                              \
   do {                                                                                                          \
