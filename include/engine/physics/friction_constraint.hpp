@@ -14,4 +14,5 @@ struct FrictionConstraint {
   float mu;
   glm::vec3 position;
   int normal_constraint_index;
+  int tangent_index;
 };

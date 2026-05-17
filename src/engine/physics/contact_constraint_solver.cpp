@@ -67,11 +67,13 @@ int FindClosestConstraint(const glm::vec3& position, const std::vector<int>& can
   return best;
 }
 
-int FindClosestFrictionConstraint(const glm::vec3& position, const std::vector<int>& candidates,
+int FindClosestFrictionConstraint(const glm::vec3& position, int tangent_index,
+                                  const std::vector<int>& candidates,
                                   const std::vector<FrictionConstraint>& constraints, float max_dist_sq) {
   int best = -1;
   float best_dist = max_dist_sq;
   for (int idx : candidates) {
+    if (constraints[idx].tangent_index != tangent_index) continue;
     float dist = glm::distance2(position, constraints[idx].position);
     if (dist < best_dist) {
       best = idx;
@@ -228,7 +230,8 @@ void engine::physics::ContactConstraintSolver::GenerateFromContact(const Contact
     glm::vec3 t2 = glm::cross(n, t1);
 
     glm::vec3 tangents[2] = {t1, t2};
-    for (const glm::vec3& t : tangents) {
+    for (int ti = 0; ti < 2; ti++) {
+      const glm::vec3& t = tangents[ti];
       glm::vec3 r_a_cross_t = glm::cross(r_a, t);
       glm::vec3 r_b_cross_t = glm::cross(r_b, t);
 
@@ -247,6 +250,7 @@ void engine::physics::ContactConstraintSolver::GenerateFromContact(const Contact
       fc.mu = mu;
       fc.position = cp.position;
       fc.normal_constraint_index = normal_index;
+      fc.tangent_index = ti;
       friction_out.push_back(fc);
     }
   }
@@ -295,8 +299,8 @@ void engine::physics::ContactConstraintSolver::PreSolve(std::unordered_map<int, 
     if (it == fc_lookup_map.end()) continue;
 
     float epsilon = 0.01f;
-    int match =
-        FindClosestFrictionConstraint(fc.position, it->second, previous_friction_constraints_, epsilon * epsilon);
+    int match = FindClosestFrictionConstraint(fc.position, fc.tangent_index, it->second,
+                                              previous_friction_constraints_, epsilon * epsilon);
     if (match >= 0) {
       fc.accumulated_impulse = previous_friction_constraints_[match].accumulated_impulse;
       ApplyImpulse(bodies, fc, fc.accumulated_impulse);

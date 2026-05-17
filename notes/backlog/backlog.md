@@ -1,7 +1,6 @@
 # Project Backlog
 
 ## Doing (WIP limit: 3)
-- [ ] Friction
 
 ## On Deck
 - [ ] Implement raycasted suspension
