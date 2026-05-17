@@ -53,7 +53,7 @@ void Match::Tick(float delta_time) {
   if (substeps > 10) {
     LOG_WARN("tick death spiral: %d substeps (dt=%.4f)", substeps, delta_time);
   }
-  LOG_TRACE("tick: dt=%.4f substeps=%d", delta_time, substeps);
+  // LOG_TRACE("tick: dt=%.4f substeps=%d", delta_time, substeps);
 }
 
 void Match::Reset() {

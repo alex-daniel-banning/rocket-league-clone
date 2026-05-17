@@ -13,6 +13,7 @@
 - [ ] See if car is rendering properly still
 
 ## Awaiting classification
+- [ ] Catalog all tunable physics constants/epsilons across the codebase (use AI to find them all), then determine best approach for managing them (e.g., centralized config struct, debug UI, etc.)
 
 ## Core Features
 - [ ] Physics threading / physics server (see physics-threading.md)

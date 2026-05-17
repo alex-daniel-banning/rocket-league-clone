@@ -24,25 +24,25 @@ inline LogLevel g_log_level = DEFAULT_LOG_LEVEL;
 // correctly in if/else chains (avoids the dangling-else bug).
 #define LOG_TRACE(fmt, ...)                                                                  \
   do {                                                                                       \
-    if (LogLevel::TRACE >= g_log_level) fprintf(stderr, "[TRACE] " fmt "\n", ##__VA_ARGS__); \
+    if (LogLevel::TRACE <= g_log_level) fprintf(stderr, "[TRACE] " fmt "\n", ##__VA_ARGS__); \
   } while (0)
 
 #define LOG_DEBUG(fmt, ...)                                                                  \
   do {                                                                                       \
-    if (LogLevel::DEBUG >= g_log_level) fprintf(stderr, "[DEBUG] " fmt "\n", ##__VA_ARGS__); \
+    if (LogLevel::DEBUG <= g_log_level) fprintf(stderr, "[DEBUG] " fmt "\n", ##__VA_ARGS__); \
   } while (0)
 
 #define LOG_INFO(fmt, ...)                                                                 \
   do {                                                                                     \
-    if (LogLevel::INFO >= g_log_level) fprintf(stderr, "[INFO] " fmt "\n", ##__VA_ARGS__); \
+    if (LogLevel::INFO <= g_log_level) fprintf(stderr, "[INFO] " fmt "\n", ##__VA_ARGS__); \
   } while (0)
 
 #define LOG_WARN(fmt, ...)                                                                 \
   do {                                                                                     \
-    if (LogLevel::WARN >= g_log_level) fprintf(stderr, "[WARN] " fmt "\n", ##__VA_ARGS__); \
+    if (LogLevel::WARN <= g_log_level) fprintf(stderr, "[WARN] " fmt "\n", ##__VA_ARGS__); \
   } while (0)
 
 #define LOG_ERROR(fmt, ...)                                                                  \
   do {                                                                                       \
-    if (LogLevel::ERROR >= g_log_level) fprintf(stderr, "[ERROR] " fmt "\n", ##__VA_ARGS__); \
+    if (LogLevel::ERROR <= g_log_level) fprintf(stderr, "[ERROR] " fmt "\n", ##__VA_ARGS__); \
   } while (0)
