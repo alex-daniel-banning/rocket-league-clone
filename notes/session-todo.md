@@ -1,10 +1,5 @@
 # Session TODO
 
-## Warm Starting Validation
-- [ ] Add convergence logging to the solver: track total impulse delta across all constraints per iteration
-- [ ] Compare convergence curve with warm starting on vs. off (disable by setting accumulated_impulse = 0)
-- [ ] If deltas are similar, iteration count is already sufficient — warm starting will matter more with many simultaneous contacts
-
 ## Uneven Cube Sinking (corners crooked, one side sunk more than others)
 Root cause: position correction not fully resolving penetration across all contact points simultaneously. Sequential impulse problem — correcting contact A rotates the body, deepening contact B.
 
