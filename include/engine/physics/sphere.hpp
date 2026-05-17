@@ -13,6 +13,7 @@ struct Sphere {
   const float radius = 1.0f;
   const float mass = 1.0f;
   const float mass_inv = 1.0f;
+  const float friction = 0.5f;
   glm::vec3 position;
   glm::vec3 velocity;
   glm::quat rotation;
@@ -29,10 +30,11 @@ struct Sphere {
 
   Sphere() = delete;
   Sphere(float r, float m, glm::vec3 pos, glm::vec3 vel = glm::vec3(0.0f), glm::quat rot = glm::quat(),
-         glm::vec3 ang_vel = glm::vec3())
+         glm::vec3 ang_vel = glm::vec3(), float f = 0.5f)
       : radius(r),
         mass(m),
         mass_inv(1.0f / m),
+        friction(f),
         position(pos),
         velocity(vel),
         inertia_tensor(GenerateInertiaTensor(m, r)),

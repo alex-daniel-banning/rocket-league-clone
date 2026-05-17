@@ -45,6 +45,7 @@ add_executable(tests
     ${TEST_SRC}/collision_tests/box_vs_box/contact_test.cpp
     ${TEST_SRC}/collision_tests/sphere_vs_box_test.cpp
     ${TEST_SRC}/engine/physics/contact_constraint_solver_test.cpp
+    ${TEST_SRC}/engine/physics/friction_test.cpp
 )
 
 target_link_libraries(tests PRIVATE engine gtest gtest_main)

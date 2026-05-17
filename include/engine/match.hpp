@@ -8,6 +8,7 @@
 #include "engine/physics/box.hpp"
 #include "engine/physics/contact_constraint.hpp"
 #include "engine/physics/contact_constraint_solver.hpp"
+#include "engine/physics/friction_constraint.hpp"
 #include "engine/physics/sphere.hpp"
 
 namespace engine {
@@ -103,6 +104,10 @@ class Match {
   }
 
   void ApplyGravity();
-  std::vector<ContactConstraint> GenerateContactConstraints(float dt);
+  struct ContactConstraints {
+    std::vector<ContactConstraint> normal;
+    std::vector<FrictionConstraint> friction;
+  };
+  ContactConstraints GenerateContactConstraints(float dt);
 };
 }  // namespace engine
