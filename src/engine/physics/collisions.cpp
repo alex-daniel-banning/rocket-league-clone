@@ -361,7 +361,12 @@ bool collisions::ComputeContact(const Box& box_a, const Box& box_b, Contact& out
       if (d < 0.001f) has_perpendicular = true;
     }
     if (has_parallel) {
-      contact_points = ClipFaceFace(box_a, box_b, penetration_axis, axes_a, axes_b);
+      if (axis_source == AxisSource::FACE_A) {
+        contact_points = ClipFaceFace(box_a, box_b, penetration_axis, axes_a, axes_b);
+      } else {
+        contact_points = ClipFaceFace(box_b, box_a, -penetration_axis, axes_b, axes_a);
+        a_clips_b = false;
+      }
     } else if (has_perpendicular) {
       if (axis_source == AxisSource::FACE_A) {
         contact_points = ClipFaceFace(box_a, box_b, penetration_axis, axes_a, axes_b);
