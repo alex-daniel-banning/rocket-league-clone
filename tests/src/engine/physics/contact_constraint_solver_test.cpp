@@ -39,7 +39,8 @@ SolverResult RunSolver(Box& a, Box& b, const Contact& contact, float restitution
   std::vector<ContactConstraint> constraints;
   float dt = 1.0f / 120.0f;
   ContactConstraintSolver::GenerateFromContact(contact, bodies, dt, constraints, restitution, baumgarte);
-  ContactConstraintSolver::Solve(bodies, constraints, iterations);
+  ContactConstraintSolver solver;
+  solver.Solve(bodies, constraints, iterations);
   return {bodies};
 }
 
@@ -51,7 +52,8 @@ SolverResult RunSolver(Sphere& a, int id_a, Box& b, const Contact& contact, floa
   std::vector<ContactConstraint> constraints;
   float dt = 1.0f / 120.0f;
   ContactConstraintSolver::GenerateFromContact(contact, bodies, dt, constraints, restitution, baumgarte);
-  ContactConstraintSolver::Solve(bodies, constraints, iterations);
+  ContactConstraintSolver solver;
+  solver.Solve(bodies, constraints, iterations);
   return {bodies};
 }
 

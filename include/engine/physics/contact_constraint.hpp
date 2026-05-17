@@ -15,6 +15,7 @@ struct ContactConstraint {
   float pseudo_accumulated_impulse = 0.0f;
   float velocity_bias;  // restitution bounce only
   float position_bias;  // Baumgarte penetration correction only
+  glm::vec3 position;
 
   friend std::ostream& operator<<(std::ostream& os, const ContactConstraint& cc) {
     os << "ContactConstraint{\n"

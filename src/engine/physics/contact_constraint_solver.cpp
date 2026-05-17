@@ -35,11 +35,41 @@ JacobianComponents UnpackJacobian(const ContactConstraint& cc) {
   };
 }
 
+struct ContactConstraintKey {
+  long body_a_id;
+  long body_b_id;
+  bool operator==(const ContactConstraintKey& other) const {
+    return body_a_id == other.body_a_id && body_b_id == other.body_b_id;
+  }
+};
+
+struct ConstraintKeyHash {
+  size_t operator()(const ContactConstraintKey& k) const {
+    size_t h = std::hash<long>{}(k.body_a_id);
+    h ^= std::hash<long>{}(k.body_b_id) << 1;
+    return h;
+  }
+};
+
+int FindClosestConstraint(const glm::vec3& position, const std::vector<int>& candidates,
+                          const std::vector<ContactConstraint>& constraints, float max_dist_sq) {
+  int best = -1;
+  float best_dist = max_dist_sq;
+  for (int idx : candidates) {
+    float dist = glm::distance2(position, constraints[idx].position);
+    if (dist < best_dist) {
+      best = idx;
+      best_dist = dist;
+    }
+  }
+  return best;
+}
+
 }  // namespace
 
 void engine::physics::ContactConstraintSolver::GenerateFromContact(const Contact& contact,
-                                                                   std::unordered_map<int, Body> bodies, float dt,
-                                                                   std::vector<ContactConstraint>& out,
+                                                                   const std::unordered_map<int, Body>& bodies,
+                                                                   float dt, std::vector<ContactConstraint>& out,
                                                                    float restitution, float baumgarte) {
   glm::vec3 n = contact.normal;
   auto [pos_a, rot_a, inv_i_a, inv_m_a, vel_a, w_a] = std::visit(
@@ -47,14 +77,14 @@ void engine::physics::ContactConstraintSolver::GenerateFromContact(const Contact
         return std::tuple(body->position, body->rotation, body->inertia_tensor_inv, body->mass_inv, body->velocity,
                           body->angular_velocity);
       },
-      bodies[contact.body_a_id]);
+      bodies.at(contact.body_a_id));
   const glm::mat3 i_world_inv_a = WorldInverseInertia(rot_a, inv_i_a);
   auto [pos_b, rot_b, inv_i_b, inv_m_b, vel_b, w_b] = std::visit(
       [](auto* body) {
         return std::tuple(body->position, body->rotation, body->inertia_tensor_inv, body->mass_inv, body->velocity,
                           body->angular_velocity);
       },
-      bodies[contact.body_b_id]);
+      bodies.at(contact.body_b_id));
   const glm::mat3 i_world_inv_b = WorldInverseInertia(rot_b, inv_i_b);
 
   for (const auto& cp : contact.points) {
@@ -84,14 +114,36 @@ void engine::physics::ContactConstraintSolver::GenerateFromContact(const Contact
     cc.i_world_inv_a = i_world_inv_a;
     cc.i_world_inv_b = i_world_inv_b;
     cc.accumulated_impulse = 0.0f;
+    cc.position = cp.position;
     out.push_back(cc);
   }
 }
 
 void engine::physics::ContactConstraintSolver::PreSolve(std::unordered_map<int, Body>& bodies,
-                                                        const std::vector<ContactConstraint>& constraints, float dt) {
-  // TODO Warm Start
-  // apply last frame's impulse
+                                                        std::vector<ContactConstraint>& constraints, float dt) {
+  /*** WARM STARTING ***/
+  // Create lookup map for constraints
+  std::unordered_map<ContactConstraintKey, std::vector<int>, ConstraintKeyHash> cc_lookup_map;
+  for (int idx = 0; idx < previous_constraints_.size(); idx++) {
+    const ContactConstraint& cc = previous_constraints_[idx];
+    ContactConstraintKey key = {std::min(cc.body_a_id, cc.body_b_id), std::max(cc.body_a_id, cc.body_b_id)};
+    cc_lookup_map[key].push_back(idx);
+  }
+
+  for (auto& cc : constraints) {
+    cc.accumulated_impulse = 0.0f;
+    ContactConstraintKey key = {std::min(cc.body_a_id, cc.body_b_id), std::max(cc.body_a_id, cc.body_b_id)};
+
+    auto it = cc_lookup_map.find(key);
+    if (it == cc_lookup_map.end()) continue;
+
+    float epsilon = 0.01f;  // Don't know what to put here yet.
+    int match = FindClosestConstraint(cc.position, it->second, previous_constraints_, epsilon * epsilon);
+    if (match >= 0) {
+      cc.accumulated_impulse = previous_constraints_[match].accumulated_impulse;
+      ApplyImpulse(bodies, cc, cc.accumulated_impulse);
+    }
+  }
 }
 
 void engine::physics::ContactConstraintSolver::Solve(std::unordered_map<int, Body>& bodies,
@@ -131,6 +183,8 @@ void engine::physics::ContactConstraintSolver::Solve(std::unordered_map<int, Bod
       ApplyPseudoImpulse(bodies, cc, p_delta);
     }
   }
+
+  previous_constraints_ = contact_constraints;
 }
 
 float engine::physics::ContactConstraintSolver::ComputeJV(std::unordered_map<int, Body>& bodies,
