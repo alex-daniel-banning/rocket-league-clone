@@ -10,7 +10,7 @@ add_library(engine STATIC
     src/engine/match.cpp
     src/engine/debug_stepper.cpp
     src/engine/physics/collisions.cpp
-    src/engine/physics/contact_constraint_solver.cpp
+    src/engine/physics/constraint_solver.cpp
     src/engine/render/camera.cpp
     src/engine/render/shader.cpp
     src/engine/render/mesh.cpp
@@ -44,7 +44,7 @@ add_executable(tests
     ${TEST_SRC}/collision_tests/box_vs_box/detection_test.cpp
     ${TEST_SRC}/collision_tests/box_vs_box/contact_test.cpp
     ${TEST_SRC}/collision_tests/sphere_vs_box_test.cpp
-    ${TEST_SRC}/engine/physics/contact_constraint_solver_test.cpp
+    ${TEST_SRC}/engine/physics/constraint_solver_test.cpp
     ${TEST_SRC}/engine/physics/friction_test.cpp
 )
 

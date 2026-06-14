@@ -2,8 +2,8 @@
 
 #include "engine/physics/box.hpp"
 #include "engine/physics/box_builder.hpp"
+#include "engine/physics/constraint_solver.hpp"
 #include "engine/physics/contact.hpp"
-#include "engine/physics/contact_constraint_solver.hpp"
 #include "engine/physics/friction_constraint.hpp"
 #include "engine/physics/sphere.hpp"
 #define GLM_ENABLE_EXPERIMENTAL
@@ -24,7 +24,7 @@ Contact MakeContact(int id_a, int id_b, glm::vec3 normal, std::vector<ContactPoi
 
 struct SolverResult {
   std::unordered_map<int, Body> bodies;
-  std::vector<ContactConstraint> normal_constraints;
+  std::vector<NormalConstraint> normal_constraints;
   std::vector<FrictionConstraint> friction_constraints;
 };
 
@@ -33,14 +33,14 @@ SolverResult RunSolver(Box& a, Box& b, const Contact& contact, float restitution
   std::unordered_map<int, Body> bodies;
   bodies[a.GetId()] = &a;
   bodies[b.GetId()] = &b;
-  std::vector<ContactConstraint> constraints;
+  std::vector<NormalConstraint> normal_constraints;
   std::vector<FrictionConstraint> friction_constraints;
   float dt = 1.0f / 120.0f;
-  ContactConstraintSolver::GenerateFromContact(contact, bodies, dt, constraints, friction_constraints, restitution,
-                                               baumgarte);
-  ContactConstraintSolver solver;
-  solver.Solve(bodies, constraints, friction_constraints, iterations);
-  return {bodies, constraints, friction_constraints};
+  ConstraintSolver::GenerateFromContact(contact, bodies, dt, normal_constraints, friction_constraints, restitution,
+                                        baumgarte);
+  ConstraintSolver solver;
+  solver.Solve(bodies, normal_constraints, friction_constraints, iterations);
+  return {bodies, normal_constraints, friction_constraints};
 }
 
 SolverResult RunSolver(Sphere& a, int id_a, Box& b, const Contact& contact, float restitution = 1.0f,
@@ -48,14 +48,14 @@ SolverResult RunSolver(Sphere& a, int id_a, Box& b, const Contact& contact, floa
   std::unordered_map<int, Body> bodies;
   bodies[id_a] = &a;
   bodies[b.GetId()] = &b;
-  std::vector<ContactConstraint> constraints;
+  std::vector<NormalConstraint> normal_constraints;
   std::vector<FrictionConstraint> friction_constraints;
   float dt = 1.0f / 120.0f;
-  ContactConstraintSolver::GenerateFromContact(contact, bodies, dt, constraints, friction_constraints, restitution,
-                                               baumgarte);
-  ContactConstraintSolver solver;
-  solver.Solve(bodies, constraints, friction_constraints, iterations);
-  return {bodies, constraints, friction_constraints};
+  ConstraintSolver::GenerateFromContact(contact, bodies, dt, normal_constraints, friction_constraints, restitution,
+                                        baumgarte);
+  ConstraintSolver solver;
+  solver.Solve(bodies, normal_constraints, friction_constraints, iterations);
+  return {bodies, normal_constraints, friction_constraints};
 }
 
 }  // namespace

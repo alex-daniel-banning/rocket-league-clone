@@ -1,4 +1,4 @@
-#include "engine/physics/contact_constraint_solver.hpp"
+#include "engine/physics/constraint_solver.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -6,8 +6,8 @@
 #include <tuple>
 #include <unordered_map>
 
-#include "engine/physics/contact_constraint.hpp"
 #include "engine/physics/friction_constraint.hpp"
+#include "engine/physics/normal_constraint.hpp"
 #include "glm/ext/vector_float3.hpp"
 #include "glm/geometric.hpp"
 #define GLM_ENABLE_EXPERIMENTAL
@@ -37,50 +37,21 @@ JacobianComponents UnpackJacobian(const Constraint& c) {
   };
 }
 
-struct ContactConstraintKey {
+struct BodyPairKey {
   long body_a_id;
   long body_b_id;
-  bool operator==(const ContactConstraintKey& other) const {
+  bool operator==(const BodyPairKey& other) const {
     return body_a_id == other.body_a_id && body_b_id == other.body_b_id;
   }
 };
 
-struct ConstraintKeyHash {
-  size_t operator()(const ContactConstraintKey& k) const {
+struct BodyPairKeyHash {
+  size_t operator()(const BodyPairKey& k) const {
     size_t h = std::hash<long>{}(k.body_a_id);
     h ^= std::hash<long>{}(k.body_b_id) << 1;
     return h;
   }
 };
-
-int FindClosestConstraint(const glm::vec3& position, const std::vector<int>& candidates,
-                          const std::vector<ContactConstraint>& constraints, float max_dist_sq) {
-  int best = -1;
-  float best_dist = max_dist_sq;
-  for (int idx : candidates) {
-    float dist = glm::distance2(position, constraints[idx].position);
-    if (dist < best_dist) {
-      best = idx;
-      best_dist = dist;
-    }
-  }
-  return best;
-}
-
-int FindClosestFrictionConstraint(const glm::vec3& position, int tangent_index, const std::vector<int>& candidates,
-                                  const std::vector<FrictionConstraint>& constraints, float max_dist_sq) {
-  int best = -1;
-  float best_dist = max_dist_sq;
-  for (int idx : candidates) {
-    if (constraints[idx].tangent_index != tangent_index) continue;
-    float dist = glm::distance2(position, constraints[idx].position);
-    if (dist < best_dist) {
-      best = idx;
-      best_dist = dist;
-    }
-  }
-  return best;
-}
 
 template <typename Constraint>
 float ComputeJV(std::unordered_map<int, engine::physics::Body>& bodies, const Constraint& cc) {
@@ -96,7 +67,7 @@ float ComputeJV(std::unordered_map<int, engine::physics::Body>& bodies, const Co
   return glm::dot(j_v_a, v_a) + glm::dot(j_w_a, w_a) + glm::dot(j_v_b, v_b) + glm::dot(j_w_b, w_b);
 }
 
-float ComputePseudoJV(std::unordered_map<int, engine::physics::Body>& bodies, const ContactConstraint& cc) {
+float ComputePseudoJV(std::unordered_map<int, engine::physics::Body>& bodies, const NormalConstraint& cc) {
   const int a = cc.body_a_id;
   const int b = cc.body_b_id;
   const glm::vec3 v_a = std::visit([](auto* body) { return body->pseudo_velocity; }, bodies[a]);
@@ -130,7 +101,7 @@ void ApplyImpulse(std::unordered_map<int, engine::physics::Body>& bodies, const 
       bodies[b]);
 }
 
-void ApplyPseudoImpulse(std::unordered_map<int, engine::physics::Body>& bodies, const ContactConstraint& cc,
+void ApplyPseudoImpulse(std::unordered_map<int, engine::physics::Body>& bodies, const NormalConstraint& cc,
                         float lambda) {
   const int a = cc.body_a_id;
   const int b = cc.body_b_id;
@@ -158,13 +129,48 @@ glm::vec3 ArbitraryPerpendicular(const glm::vec3& n) {
   return glm::normalize(glm::cross(n, glm::vec3(0, 1, 0)));
 }
 
+// Carries each constraint's accumulated impulse over from the previous frame by matching it to the
+// closest previous constraint on the same body pair, then seeds the solver by applying that impulse.
+// `matches` is an extra predicate for constraint-type-specific matching (e.g. friction tangent index).
+template <typename Constraint, typename MatchPred>
+void WarmStart(std::unordered_map<int, engine::physics::Body>& bodies, std::vector<Constraint>& constraints,
+               const std::vector<Constraint>& previous, MatchPred matches) {
+  std::unordered_map<BodyPairKey, std::vector<int>, BodyPairKeyHash> lookup;
+  for (int idx = 0; idx < static_cast<int>(previous.size()); idx++) {
+    const Constraint& c = previous[idx];
+    lookup[{std::min(c.body_a_id, c.body_b_id), std::max(c.body_a_id, c.body_b_id)}].push_back(idx);
+  }
+
+  const float epsilon = 0.01f;
+  for (auto& c : constraints) {
+    c.accumulated_impulse = 0.0f;
+    auto it = lookup.find({std::min(c.body_a_id, c.body_b_id), std::max(c.body_a_id, c.body_b_id)});
+    if (it == lookup.end()) continue;
+
+    int best = -1;
+    float best_dist = epsilon * epsilon;
+    for (int idx : it->second) {
+      if (!matches(c, previous[idx])) continue;
+      float dist = glm::distance2(c.position, previous[idx].position);
+      if (dist < best_dist) {
+        best = idx;
+        best_dist = dist;
+      }
+    }
+    if (best >= 0) {
+      c.accumulated_impulse = previous[best].accumulated_impulse;
+      ApplyImpulse(bodies, c, c.accumulated_impulse);
+    }
+  }
+}
+
 }  // namespace
 
-void engine::physics::ContactConstraintSolver::GenerateFromContact(const Contact& contact,
-                                                                   const std::unordered_map<int, Body>& bodies,
-                                                                   float dt, std::vector<ContactConstraint>& out,
-                                                                   std::vector<FrictionConstraint>& friction_out,
-                                                                   float restitution, float baumgarte) {
+void engine::physics::ConstraintSolver::GenerateFromContact(const Contact& contact,
+                                                            const std::unordered_map<int, Body>& bodies, float dt,
+                                                            std::vector<NormalConstraint>& normal_out,
+                                                            std::vector<FrictionConstraint>& friction_out,
+                                                            float restitution, float baumgarte) {
   glm::vec3 n = contact.normal;
   auto [pos_a, rot_a, inv_i_a, inv_m_a, vel_a, w_a] = std::visit(
       [](auto* body) {
@@ -198,7 +204,7 @@ void engine::physics::ContactConstraintSolver::GenerateFromContact(const Contact
     glm::vec3 v_contact_b = vel_b + glm::cross(w_b, r_b);
     float v_n = glm::dot(v_contact_b - v_contact_a, n);
 
-    ContactConstraint cc;
+    NormalConstraint cc;
     cc.body_a_id = contact.body_a_id;
     cc.body_b_id = contact.body_b_id;
     cc.jacobian = {-n.x, -n.y, -n.z, -r_a_cross_n.x, -r_a_cross_n.y, -r_a_cross_n.z,
@@ -213,8 +219,8 @@ void engine::physics::ContactConstraintSolver::GenerateFromContact(const Contact
     cc.i_world_inv_b = i_world_inv_b;
     cc.accumulated_impulse = 0.0f;
     cc.position = cp.position;
-    int normal_index = static_cast<int>(out.size());
-    out.push_back(cc);
+    int normal_index = static_cast<int>(normal_out.size());
+    normal_out.push_back(cc);
 
     if (mu <= 0.0f) continue;
 
@@ -255,64 +261,25 @@ void engine::physics::ContactConstraintSolver::GenerateFromContact(const Contact
   }
 }
 
-void engine::physics::ContactConstraintSolver::PreSolve(std::unordered_map<int, Body>& bodies,
-                                                        std::vector<ContactConstraint>& constraints,
-                                                        std::vector<FrictionConstraint>& friction_constraints,
-                                                        float dt) {
-  /*** WARM STARTING — Normal constraints ***/
-  std::unordered_map<ContactConstraintKey, std::vector<int>, ConstraintKeyHash> cc_lookup_map;
-  for (int idx = 0; idx < previous_constraints_.size(); idx++) {
-    const ContactConstraint& cc = previous_constraints_[idx];
-    ContactConstraintKey key = {std::min(cc.body_a_id, cc.body_b_id), std::max(cc.body_a_id, cc.body_b_id)};
-    cc_lookup_map[key].push_back(idx);
-  }
+void engine::physics::ConstraintSolver::PreSolve(std::unordered_map<int, Body>& bodies,
+                                                 std::vector<NormalConstraint>& normal_constraints,
+                                                 std::vector<FrictionConstraint>& friction_constraints, float dt) {
+  // Normal constraints: any constraint on the same body pair is a candidate match.
+  WarmStart(bodies, normal_constraints, previous_normal_constraints_,
+            [](const NormalConstraint&, const NormalConstraint&) { return true; });
 
-  for (auto& cc : constraints) {
-    cc.accumulated_impulse = 0.0f;
-    ContactConstraintKey key = {std::min(cc.body_a_id, cc.body_b_id), std::max(cc.body_a_id, cc.body_b_id)};
-
-    auto it = cc_lookup_map.find(key);
-    if (it == cc_lookup_map.end()) continue;
-
-    float epsilon = 0.01f;
-    int match = FindClosestConstraint(cc.position, it->second, previous_constraints_, epsilon * epsilon);
-    if (match >= 0) {
-      cc.accumulated_impulse = previous_constraints_[match].accumulated_impulse;
-      ApplyImpulse(bodies, cc, cc.accumulated_impulse);
-    }
-  }
-
-  /*** WARM STARTING — Friction constraints ***/
-  std::unordered_map<ContactConstraintKey, std::vector<int>, ConstraintKeyHash> fc_lookup_map;
-  for (int idx = 0; idx < previous_friction_constraints_.size(); idx++) {
-    const FrictionConstraint& fc = previous_friction_constraints_[idx];
-    ContactConstraintKey key = {std::min(fc.body_a_id, fc.body_b_id), std::max(fc.body_a_id, fc.body_b_id)};
-    fc_lookup_map[key].push_back(idx);
-  }
-
-  for (auto& fc : friction_constraints) {
-    fc.accumulated_impulse = 0.0f;
-    ContactConstraintKey key = {std::min(fc.body_a_id, fc.body_b_id), std::max(fc.body_a_id, fc.body_b_id)};
-
-    auto it = fc_lookup_map.find(key);
-    if (it == fc_lookup_map.end()) continue;
-
-    float epsilon = 0.01f;
-    int match = FindClosestFrictionConstraint(fc.position, fc.tangent_index, it->second, previous_friction_constraints_,
-                                              epsilon * epsilon);
-    if (match >= 0) {
-      fc.accumulated_impulse = previous_friction_constraints_[match].accumulated_impulse;
-      ApplyImpulse(bodies, fc, fc.accumulated_impulse);
-    }
-  }
+  // Friction constraints: additionally require the same tangent direction.
+  WarmStart(bodies, friction_constraints, previous_friction_constraints_,
+            [](const FrictionConstraint& a, const FrictionConstraint& b) {
+              return a.tangent_index == b.tangent_index;
+            });
 }
 
-void engine::physics::ContactConstraintSolver::Solve(std::unordered_map<int, Body>& bodies,
-                                                     std::vector<ContactConstraint>& contact_constraints,
-                                                     std::vector<FrictionConstraint>& friction_constraints,
-                                                     int iterations) {
+void engine::physics::ConstraintSolver::Solve(std::unordered_map<int, Body>& bodies,
+                                              std::vector<NormalConstraint>& normal_constraints,
+                                              std::vector<FrictionConstraint>& friction_constraints, int iterations) {
   // Reset pseudo velocities
-  for (auto& cc : contact_constraints) {
+  for (auto& cc : normal_constraints) {
     std::visit(
         [&](auto* body) {
           body->pseudo_velocity = glm::vec3();
@@ -329,7 +296,7 @@ void engine::physics::ContactConstraintSolver::Solve(std::unordered_map<int, Bod
 
   for (unsigned int i = 0; i < iterations; i++) {
     // Solve normal constraints
-    for (auto& cc : contact_constraints) {
+    for (auto& cc : normal_constraints) {
       float jv = ComputeJV(bodies, cc);
       float lambda = -(jv + cc.velocity_bias) * cc.effective_mass;
       float old_accum = cc.accumulated_impulse;
@@ -350,7 +317,7 @@ void engine::physics::ContactConstraintSolver::Solve(std::unordered_map<int, Bod
     for (auto& fc : friction_constraints) {
       float jv = ComputeJV(bodies, fc);
       float lambda = -jv * fc.effective_mass;
-      const auto& nc = contact_constraints[fc.normal_constraint_index];
+      const auto& nc = normal_constraints[fc.normal_constraint_index];
       float max_friction = fc.mu * (nc.accumulated_impulse + nc.pseudo_accumulated_impulse);
       float old_accum = fc.accumulated_impulse;
       fc.accumulated_impulse = std::clamp(old_accum + lambda, -max_friction, max_friction);
@@ -359,6 +326,6 @@ void engine::physics::ContactConstraintSolver::Solve(std::unordered_map<int, Bod
     }
   }
 
-  previous_constraints_ = contact_constraints;
+  previous_normal_constraints_ = normal_constraints;
   previous_friction_constraints_ = friction_constraints;
 }

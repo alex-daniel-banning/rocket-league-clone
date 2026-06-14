@@ -5,8 +5,8 @@
 #include "engine/log.hpp"
 #include "engine/physics/box.hpp"
 #include "engine/physics/collisions.hpp"
-#include "engine/physics/contact_constraint.hpp"
-#include "engine/physics/contact_constraint_solver.hpp"
+#include "engine/physics/constraint_solver.hpp"
+#include "engine/physics/normal_constraint.hpp"
 
 static constexpr glm::vec3 gravity = glm::vec3(0.0f, -9.8f, 0.0f);
 
@@ -20,9 +20,9 @@ void Match::Tick(float delta_time) {
     ApplyGravity();
 
     auto constraints = GenerateContactConstraints(fixed_dt);
-    contact_constraint_solver_.PreSolve(bodies_, constraints.normal, constraints.friction, fixed_dt);
+    constraint_solver_.PreSolve(bodies_, constraints.normal, constraints.friction, fixed_dt);
     constexpr int solver_iterations = 10;
-    contact_constraint_solver_.Solve(bodies_, constraints.normal, constraints.friction, solver_iterations);
+    constraint_solver_.Solve(bodies_, constraints.normal, constraints.friction, solver_iterations);
 
     if (ball_) {
       ball_->position += fixed_dt * ball_->EffectiveVelocity();
@@ -80,24 +80,24 @@ Match::ContactConstraints Match::GenerateContactConstraints(float dt) {
     for (const physics::Box& wall : walls_) {
       physics::Contact contact;
       if (physics::collisions::ComputeContact(wall, *ball_, contact)) {
-        physics::ContactConstraintSolver::GenerateFromContact(contact, bodies_, dt, constraints.normal,
-                                                              constraints.friction, restitution, baumgarte);
+        physics::ConstraintSolver::GenerateFromContact(contact, bodies_, dt, constraints.normal, constraints.friction,
+                                                       restitution, baumgarte);
       }
     }
     // Ball v Ground
     if (ground_) {
       physics::Contact contact;
       if (physics::collisions::ComputeContact(*ground_, *ball_, contact)) {
-        physics::ContactConstraintSolver::GenerateFromContact(contact, bodies_, dt, constraints.normal,
-                                                              constraints.friction, restitution, baumgarte);
+        physics::ConstraintSolver::GenerateFromContact(contact, bodies_, dt, constraints.normal, constraints.friction,
+                                                       restitution, baumgarte);
       }
     }
     // Ball v Car
     for (const physics::Box& car : boxes_) {
       physics::Contact contact;
       if (physics::collisions::ComputeContact(car, *ball_, contact)) {
-        physics::ContactConstraintSolver::GenerateFromContact(contact, bodies_, dt, constraints.normal,
-                                                              constraints.friction, restitution, baumgarte);
+        physics::ConstraintSolver::GenerateFromContact(contact, bodies_, dt, constraints.normal, constraints.friction,
+                                                       restitution, baumgarte);
       }
     }
   }
@@ -108,8 +108,8 @@ Match::ContactConstraints Match::GenerateContactConstraints(float dt) {
       for (unsigned int j = i + 1; j < boxes_.size(); j++) {
         physics::Contact contact;
         if (physics::collisions::ComputeContact(boxes_[i], boxes_[j], contact)) {
-          physics::ContactConstraintSolver::GenerateFromContact(contact, bodies_, dt, constraints.normal,
-                                                                constraints.friction, restitution, baumgarte);
+          physics::ConstraintSolver::GenerateFromContact(contact, bodies_, dt, constraints.normal, constraints.friction,
+                                                         restitution, baumgarte);
         }
       }
     }
@@ -119,8 +119,8 @@ Match::ContactConstraints Match::GenerateContactConstraints(float dt) {
     for (const physics::Box& wall : walls_) {
       physics::Contact contact;
       if (physics::collisions::ComputeContact(car, wall, contact)) {
-        physics::ContactConstraintSolver::GenerateFromContact(contact, bodies_, dt, constraints.normal,
-                                                              constraints.friction, restitution, baumgarte);
+        physics::ConstraintSolver::GenerateFromContact(contact, bodies_, dt, constraints.normal, constraints.friction,
+                                                       restitution, baumgarte);
       }
     }
   }
@@ -129,8 +129,8 @@ Match::ContactConstraints Match::GenerateContactConstraints(float dt) {
     for (const physics::Box& car : boxes_) {
       physics::Contact contact;
       if (physics::collisions::ComputeContact(car, *ground_, contact)) {
-        physics::ContactConstraintSolver::GenerateFromContact(contact, bodies_, dt, constraints.normal,
-                                                              constraints.friction, restitution, baumgarte);
+        physics::ConstraintSolver::GenerateFromContact(contact, bodies_, dt, constraints.normal, constraints.friction,
+                                                       restitution, baumgarte);
       }
     }
   }
