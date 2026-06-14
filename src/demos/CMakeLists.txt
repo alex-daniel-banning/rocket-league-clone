@@ -7,6 +7,7 @@ set(DEMO_SOURCES
     collisions/sphere-box-obb/sphere_v_box_obb_demo.cpp
     collisions/box-box/box-box-collision-demo.cpp
     perf/perf_demo.cpp
+    car_control/car_control_demo.cpp
 )
 
 foreach(DEMO_SRC ${DEMO_SOURCES})

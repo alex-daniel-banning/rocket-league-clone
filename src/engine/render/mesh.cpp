@@ -1,7 +1,8 @@
+#include "engine/render/mesh.hpp"
+
 #include <glad/glad.h>
 
 #include <cstddef>
-#include <engine/render/mesh.hpp>
 
 namespace engine::render {
 
