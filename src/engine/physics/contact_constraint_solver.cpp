@@ -67,8 +67,7 @@ int FindClosestConstraint(const glm::vec3& position, const std::vector<int>& can
   return best;
 }
 
-int FindClosestFrictionConstraint(const glm::vec3& position, int tangent_index,
-                                  const std::vector<int>& candidates,
+int FindClosestFrictionConstraint(const glm::vec3& position, int tangent_index, const std::vector<int>& candidates,
                                   const std::vector<FrictionConstraint>& constraints, float max_dist_sq) {
   int best = -1;
   float best_dist = max_dist_sq;
@@ -299,8 +298,8 @@ void engine::physics::ContactConstraintSolver::PreSolve(std::unordered_map<int, 
     if (it == fc_lookup_map.end()) continue;
 
     float epsilon = 0.01f;
-    int match = FindClosestFrictionConstraint(fc.position, fc.tangent_index, it->second,
-                                              previous_friction_constraints_, epsilon * epsilon);
+    int match = FindClosestFrictionConstraint(fc.position, fc.tangent_index, it->second, previous_friction_constraints_,
+                                              epsilon * epsilon);
     if (match >= 0) {
       fc.accumulated_impulse = previous_friction_constraints_[match].accumulated_impulse;
       ApplyImpulse(bodies, fc, fc.accumulated_impulse);

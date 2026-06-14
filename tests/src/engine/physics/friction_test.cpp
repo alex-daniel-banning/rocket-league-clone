@@ -1,11 +1,9 @@
-#include "engine/physics/contact_constraint_solver.hpp"
-
 #include <gtest/gtest.h>
 
 #include "engine/physics/box.hpp"
 #include "engine/physics/box_builder.hpp"
-#include "engine/physics/collisions.hpp"
 #include "engine/physics/contact.hpp"
+#include "engine/physics/contact_constraint_solver.hpp"
 #include "engine/physics/friction_constraint.hpp"
 #include "engine/physics/sphere.hpp"
 #define GLM_ENABLE_EXPERIMENTAL
@@ -86,15 +84,13 @@ TEST(Friction, FrictionlessSlides) {
 
 TEST(Friction, HigherFrictionDeceleratesMore) {
   // Low friction
-  Box slider_lo =
-      BoxBuilder().Size(2.0f).Position(0, 0.99f, 0).Mass(10).Velocity(5, 0, 0).Friction(0.2f).Id(1).Build();
+  Box slider_lo = BoxBuilder().Size(2.0f).Position(0, 0.99f, 0).Mass(10).Velocity(5, 0, 0).Friction(0.2f).Id(1).Build();
   Box ground_lo = BoxBuilder().Size(glm::vec3(20, 2, 20)).Position(0, -1, 0).Mass(0).Friction(0.2f).Id(2).Build();
   Contact contact_lo = MakeContact(1, 2, glm::vec3(0, -1, 0), {{glm::vec3(0, 0, 0), 0.01f}});
   RunSolver(slider_lo, ground_lo, contact_lo, 0.0f, 0.2f);
 
   // High friction
-  Box slider_hi =
-      BoxBuilder().Size(2.0f).Position(0, 0.99f, 0).Mass(10).Velocity(5, 0, 0).Friction(0.8f).Id(1).Build();
+  Box slider_hi = BoxBuilder().Size(2.0f).Position(0, 0.99f, 0).Mass(10).Velocity(5, 0, 0).Friction(0.8f).Id(1).Build();
   Box ground_hi = BoxBuilder().Size(glm::vec3(20, 2, 20)).Position(0, -1, 0).Mass(0).Friction(0.8f).Id(2).Build();
   Contact contact_hi = MakeContact(1, 2, glm::vec3(0, -1, 0), {{glm::vec3(0, 0, 0), 0.01f}});
   RunSolver(slider_hi, ground_hi, contact_hi, 0.0f, 0.2f);
