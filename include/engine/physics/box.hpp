@@ -18,6 +18,7 @@ struct Box {
   glm::vec3 angular_velocity;
   const glm::mat3 inertia_tensor;
   const glm::mat3 inertia_tensor_inv;
+  const float friction = 0.5f;
   const std::string name;
 
   // Used for split impulse penetration correction
@@ -33,7 +34,8 @@ struct Box {
 
   Box() = delete;
   explicit Box(glm::vec3 si, glm::vec3 pos = glm::vec3(0.0f), glm::vec3 vel = glm::vec3(0.0f), float m = 1.0f,
-               glm::quat r = glm::quat(glm::vec3(0.0f)), glm::vec3 w = glm::vec3(), std::string name = "", int id = -1)
+               glm::quat r = glm::quat(glm::vec3(0.0f)), glm::vec3 w = glm::vec3(), std::string name = "", int id = -1,
+               float f = 0.5f)
       : size_(si),
         half_extents_(si * 0.5f),
         position(pos),
@@ -44,6 +46,7 @@ struct Box {
         inertia_tensor_inv(ComputeInertiaInverse(ComputeInertia(si, m))),
         rotation(r),
         angular_velocity(w),
+        friction(f),
         name(name),
         id_(id) {}
 

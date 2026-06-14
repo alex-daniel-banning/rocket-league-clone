@@ -1,4 +1,4 @@
-#include "engine/physics/contact_constraint_solver.hpp"
+#include "engine/physics/constraint_solver.hpp"
 
 #include <gtest/gtest.h>
 
@@ -6,6 +6,7 @@
 #include "engine/physics/box_builder.hpp"
 #include "engine/physics/collisions.hpp"
 #include "engine/physics/contact.hpp"
+#include "engine/physics/friction_constraint.hpp"
 #include "engine/physics/sphere.hpp"
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>
@@ -36,11 +37,13 @@ SolverResult RunSolver(Box& a, Box& b, const Contact& contact, float restitution
   std::unordered_map<int, Body> bodies;
   bodies[a.GetId()] = &a;
   bodies[b.GetId()] = &b;
-  std::vector<ContactConstraint> constraints;
+  std::vector<NormalConstraint> normal_constraints;
+  std::vector<FrictionConstraint> friction_constraints;
   float dt = 1.0f / 120.0f;
-  ContactConstraintSolver::GenerateFromContact(contact, bodies, dt, constraints, restitution, baumgarte);
-  ContactConstraintSolver solver;
-  solver.Solve(bodies, constraints, iterations);
+  ConstraintSolver::GenerateFromContact(contact, bodies, dt, normal_constraints, friction_constraints, restitution,
+                                        baumgarte);
+  ConstraintSolver solver;
+  solver.Solve(bodies, normal_constraints, friction_constraints, iterations);
   return {bodies};
 }
 
@@ -49,11 +52,13 @@ SolverResult RunSolver(Sphere& a, int id_a, Box& b, const Contact& contact, floa
   std::unordered_map<int, Body> bodies;
   bodies[id_a] = &a;
   bodies[b.GetId()] = &b;
-  std::vector<ContactConstraint> constraints;
+  std::vector<NormalConstraint> normal_constraints;
+  std::vector<FrictionConstraint> friction_constraints;
   float dt = 1.0f / 120.0f;
-  ContactConstraintSolver::GenerateFromContact(contact, bodies, dt, constraints, restitution, baumgarte);
-  ContactConstraintSolver solver;
-  solver.Solve(bodies, constraints, iterations);
+  ConstraintSolver::GenerateFromContact(contact, bodies, dt, normal_constraints, friction_constraints, restitution,
+                                        baumgarte);
+  ConstraintSolver solver;
+  solver.Solve(bodies, normal_constraints, friction_constraints, iterations);
   return {bodies};
 }
 
@@ -351,8 +356,8 @@ TEST(BoxBoxEdgeCase, LargeMassRatio) {
 
 TEST(BoxBoxEdgeCase, GlancingCollision) {
   // Mostly tangential velocity with small normal component
-  Box a = BoxBuilder().Size(2.0f).Position(0, 0.99f, 0).Mass(10).Velocity(5, -0.1f, 0).Id(1).Build();
-  Box b = BoxBuilder().Size(2.0f).Position(0, -0.99f, 0).Mass(10).Id(2).Build();
+  Box a = BoxBuilder().Size(2.0f).Position(0, 0.99f, 0).Mass(10).Velocity(5, -0.1f, 0).Friction(0).Id(1).Build();
+  Box b = BoxBuilder().Size(2.0f).Position(0, -0.99f, 0).Mass(10).Friction(0).Id(2).Build();
   glm::vec3 midpoint(0, 0, 0);
   Contact contact = MakeContact(1, 2, glm::vec3(0, -1, 0), {{midpoint, 0.02f}});
 

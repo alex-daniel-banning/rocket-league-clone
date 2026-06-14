@@ -4,7 +4,7 @@
 #include <glm/matrix.hpp>
 #include <ostream>
 
-struct ContactConstraint {
+struct NormalConstraint {
   long body_a_id;
   long body_b_id;
   std::array<float, 12> jacobian;
@@ -17,8 +17,8 @@ struct ContactConstraint {
   float position_bias;  // Baumgarte penetration correction only
   glm::vec3 position;
 
-  friend std::ostream& operator<<(std::ostream& os, const ContactConstraint& cc) {
-    os << "ContactConstraint{\n"
+  friend std::ostream& operator<<(std::ostream& os, const NormalConstraint& cc) {
+    os << "NormalConstraint{\n"
        << "  bodies=[" << cc.body_a_id << "," << cc.body_b_id << "]\n"
        << "  effective_mass=" << cc.effective_mass << "\n"
        << "  accumulated_impulse=" << cc.accumulated_impulse << "\n"

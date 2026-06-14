@@ -52,9 +52,14 @@ class BoxBuilder {
     name_ = name;
     return *this;
   }
+  BoxBuilder& Friction(float f) {
+    friction_ = f;
+    return *this;
+  }
 
   engine::physics::Box Build() const {
-    return engine::physics::Box(size_, position_, velocity_, mass_, rotation_, angular_velocity_, name_, id_);
+    return engine::physics::Box(size_, position_, velocity_, mass_, rotation_, angular_velocity_, name_, id_,
+                                friction_);
   }
 
  private:
@@ -66,5 +71,6 @@ class BoxBuilder {
   glm::quat rotation_ = glm::quat(glm::vec3(0.0f));
   glm::vec3 angular_velocity_ = glm::vec3(0.0f);
   std::string name_;
+  float friction_ = 0.5f;
 };
 }  // namespace engine::physics

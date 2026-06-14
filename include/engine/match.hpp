@@ -6,8 +6,9 @@
 
 #include "engine/physics/body.hpp"
 #include "engine/physics/box.hpp"
-#include "engine/physics/contact_constraint.hpp"
-#include "engine/physics/contact_constraint_solver.hpp"
+#include "engine/physics/constraint_solver.hpp"
+#include "engine/physics/friction_constraint.hpp"
+#include "engine/physics/normal_constraint.hpp"
 #include "engine/physics/sphere.hpp"
 
 namespace engine {
@@ -65,7 +66,7 @@ class Match {
   std::optional<physics::Box> ground_;
   std::vector<physics::Box> walls_;
   std::unordered_map<int, physics::Body> bodies_;
-  physics::ContactConstraintSolver contact_constraint_solver_;
+  physics::ConstraintSolver constraint_solver_;
 
   Match(std::optional<physics::Sphere> ball, std::optional<physics::Box> ground, std::vector<physics::Box> walls,
         std::vector<physics::Box> boxes)
@@ -103,6 +104,10 @@ class Match {
   }
 
   void ApplyGravity();
-  std::vector<ContactConstraint> GenerateContactConstraints(float dt);
+  struct ContactConstraints {
+    std::vector<NormalConstraint> normal;
+    std::vector<FrictionConstraint> friction;
+  };
+  ContactConstraints GenerateContactConstraints(float dt);
 };
 }  // namespace engine
