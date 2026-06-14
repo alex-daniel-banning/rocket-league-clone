@@ -19,11 +19,17 @@ void Match::Tick(float delta_time) {
     substeps++;
     ApplyGravity();
 
+    // --- Driving forces ---
+    ApplyDrivingForces(car_input_);  // fills force_/torque_accumulator via ApplyForceAtPoint
+    IntegrateForces();               // v += F * mass_inv * dt
+                                     // w += I-1_world dot torque dot dt
+                                     // then zero the accumulators
+
+    // --- Velocity constraint solving and integration ---
     auto constraints = GenerateContactConstraints(fixed_dt);
     constraint_solver_.PreSolve(bodies_, constraints.normal, constraints.friction, fixed_dt);
     constexpr int solver_iterations = 10;
     constraint_solver_.Solve(bodies_, constraints.normal, constraints.friction, solver_iterations);
-
     if (ball_) {
       ball_->position += fixed_dt * ball_->EffectiveVelocity();
       glm::quat q = ball_->rotation;
@@ -68,6 +74,21 @@ void Match::ApplyGravity() {
     car.velocity += fixed_dt * gravity;
   }
   if (ball_) ball_->velocity += fixed_dt * gravity;
+}
+
+void Match::ApplyDrivingForces(CarInput car_input) {
+  if (boxes_.size() <= 0) return;
+
+  glm::vec3 direction = glm::normalize(boxes_[0].rotation * glm::vec3(0.0f, 0.0f, 1.0f));
+  glm::vec3 throttle = car_input.throttle * direction;
+  boxes_[0].force_accumulator = throttle;
+  boxes_[0].torque_accumulator = glm::vec3();
+}
+
+void Match::IntegrateForces() {
+  if (boxes_.size() <= 0) return;
+  float acceleration = 1.0f * boxes_[0].mass_inv;
+  boxes_[0].velocity += acceleration * fixed_dt;
 }
 
 Match::ContactConstraints Match::GenerateContactConstraints(float dt) {
