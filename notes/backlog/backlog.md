@@ -16,6 +16,7 @@
         - [ ] Broad phase (spatial partitioning, AABB)
         - [ ] Sleeping (objects that have settled down into a slow velocity/acceleration get flagged as "sleeping" and skip collisions entirely until something disturbs them)
     - [ ] Rolling friction (Coulomb friction can't stop a rolling ball — need a small torque opposing angular velocity, proportional to normal force)
+        - [ ] While here: the ball gets linear damping but no angular damping in `Match::Tick` (boxes get both) — add `ball_->angular_velocity *= angular_damp;`
     - [ ] Tunneling resolution
     - [ ] Standard/Shared/Relative epsilon values
     - [ ] Stress testing
