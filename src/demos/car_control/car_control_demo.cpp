@@ -181,6 +181,9 @@ int main() {
       renderer.DrawModel(car, model_loading_shader, camera, box.position, glm::vec3(1.0f), box.rotation);
     }
 
+    // Orientation gizmo (top-right): +X red, +Y green, +Z blue.
+    renderer.DrawOrientationGizmo(camera, model_loading_shader);
+
     glfwSwapBuffers(window);
     float render_ms = static_cast<float>((glfwGetTime() - render_start) * 1000.0);
     smoothed_render_ms = k_fps_alpha * render_ms + (1.0f - k_fps_alpha) * smoothed_render_ms;

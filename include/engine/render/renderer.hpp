@@ -20,6 +20,10 @@ class Renderer {
   void DrawSphere(const engine::physics::Sphere& sphere, Shader& shader);
   void DrawSphereWireframe(const engine::physics::Sphere& sphere, Shader& shader, const Camera& camera);
 
+  // Draws a screen-space orientation gizmo (world axes: +X red, +Y green, +Z
+  // blue) in the top-right corner, reflecting the camera's current rotation.
+  void DrawOrientationGizmo(const Camera& camera, Shader& shader);
+
   void DrawModel(const Model& model, Shader& shader, const Camera& camera, const glm::vec3& position,
                  const glm::vec3& scale, const glm::quat& rotation);
   void DrawPhysicsPlane(const physics::Plane& plane, Shader& shader);
