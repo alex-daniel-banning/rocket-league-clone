@@ -36,8 +36,8 @@ behavior.
 
 ## Why This Approach
 
-- **No angular jitter**: stability comes from spring forces, not collision
-  geometry. Four corner contact points passively resist tipping.
+- **Stable resting & natural feel**: support comes from spring forces, and four
+  corner contact points passively resist tipping.
 - **No constraint system needed**: tires are not separate physics bodies, so
   there's no need to bind them to the car with rigid body constraints.
 - **Natural car feel**: each wheel responds independently to terrain, so the
@@ -47,15 +47,19 @@ behavior.
 
 ## Relationship to Current Collision System
 
-The suspension replaces ground contact for the car. The car body's box collider
-is still used for:
-- Ball collisions (car hitting the ball)
-- Car-car collisions
-- Wall collisions
+Suspension and the box collider coexist — suspension does **not** replace
+car-ground collision. In normal driving the springs do all the work: tune the
+ride height (`rest_length` vs `k`) so the hitbox floats just above the ground at
+equilibrium, leaving no penetration, so the contact solver generates no
+car-ground contacts on its own.
 
-It is NOT used for car-ground contact — the suspension handles that instead.
-This means the box jitter problem on the ground goes away entirely: the car
-never "collides" with the ground in the impulse sense.
+Ground collision stays enabled as a backstop for the cases the springs can't
+cover:
+- **Bottoming out** on a hard landing, when compression maxes out.
+- **Flipped / on-side** — the downward wheel rays miss the ground, so without
+  collision the car would fall through the floor.
+
+The box collider remains in use for ball, car-car, and wall collisions as before.
 
 ## Parameters to Tune
 

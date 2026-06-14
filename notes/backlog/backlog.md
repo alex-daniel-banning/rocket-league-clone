@@ -22,7 +22,7 @@
     - [ ] Stress testing
 - [ ] Car system
     - [ ] Suspension (see `notes/raycasted-suspension.md`)
-        - [ ] Raycasted spring+damper per wheel — replaces car-ground collision, fixes box jitter
+        - [ ] Raycasted spring+damper per wheel
         - [ ] Tune k, c, rest_length parameters
     - [ ] Steering/wheel system
     - [ ] (Potentially) Speed-dependent friction curves for car handling feel
