@@ -72,7 +72,7 @@ class Match {
   std::vector<physics::Box> walls_;
   std::unordered_map<int, physics::Body> bodies_;
   physics::ConstraintSolver constraint_solver_;
-  CarInput car_input_;
+  CarInput car_input_ = {1.0f, 1.0f};  // TODO belongs here?
 
   Match(std::optional<physics::Sphere> ball, std::optional<physics::Box> ground, std::vector<physics::Box> walls,
         std::vector<physics::Box> boxes)
@@ -110,7 +110,7 @@ class Match {
   }
 
   void ApplyGravity();
-  void ApplyDrivingForces(CarInput car_input);
+  void AccumulateDrivingForces(CarInput car_input);
   void IntegrateForces();
   struct ContactConstraints {
     std::vector<NormalConstraint> normal;

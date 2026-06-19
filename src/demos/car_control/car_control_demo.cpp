@@ -26,7 +26,7 @@
 const std::unordered_map<std::string, glm::vec3> name_to_color = {{"Red Box", glm::vec3(1.0f, 0.0f, 0.0f)}};
 
 int main() {
-  const float room_size = 20.0f;
+  const float room_size = 200.0f;
   const float half = room_size / 2.0f;
 
   engine::Match match =
@@ -165,7 +165,7 @@ int main() {
     model_loading_shader.SetVec3("lightPos", light_pos);
     model_loading_shader.SetVec3("viewPos", camera.position);
     if (match.GetGround()) {
-      model_loading_shader.SetVec3("diffuseColor", glm::vec3(0.15f));
+      model_loading_shader.SetVec3("diffuseColor", glm::vec3(0.55f));
       renderer.DrawBox(*match.GetGround(), model_loading_shader, camera);
     }
     // model_loading_shader.SetVec3("diffuseColor", glm::vec3(0.2f));
