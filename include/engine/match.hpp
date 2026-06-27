@@ -60,6 +60,7 @@ class Match {
   const std::vector<physics::Box>& GetWalls() const { return walls_; }
   void Tick(float delta_time);
   void Reset();
+  void SetCarInput(CarInput car_input);
 
  private:
   static constexpr float fixed_dt = 1.0f / 120.0f;
@@ -72,7 +73,7 @@ class Match {
   std::vector<physics::Box> walls_;
   std::unordered_map<int, physics::Body> bodies_;
   physics::ConstraintSolver constraint_solver_;
-  CarInput car_input_ = {1.0f, 1.0f};  // TODO belongs here?
+  CarInput car_input_ = {0.0f, 0.0f};  // TODO belongs here?
 
   Match(std::optional<physics::Sphere> ball, std::optional<physics::Box> ground, std::vector<physics::Box> walls,
         std::vector<physics::Box> boxes)
@@ -112,6 +113,7 @@ class Match {
   void ApplyGravity();
   void AccumulateDrivingForces(CarInput car_input);
   void IntegrateForces();
+  void ApplyForceAtPoint(glm::vec3 force, glm::vec3 point, physics::Box& car);
   struct ContactConstraints {
     std::vector<NormalConstraint> normal;
     std::vector<FrictionConstraint> friction;

@@ -25,6 +25,21 @@
 
 const std::unordered_map<std::string, glm::vec3> name_to_color = {{"Red Box", glm::vec3(1.0f, 0.0f, 0.0f)}};
 
+// --- Car Input ---
+float throttle = 0.0f;
+float steering = 0.0f;
+
+// ---- Input ------------------------------------------------------------------
+
+inline void ProcessCarInput(GLFWwindow* window) {
+  throttle = 0.0f;
+  steering = 0.0f;
+  if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) throttle = 1.0f;
+  if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) throttle = -1.0f;
+  if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) steering = 1.0f;
+  if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) steering = -1.0f;
+}
+
 int main() {
   const float room_size = 200.0f;
   const float half = room_size / 2.0f;
@@ -124,6 +139,8 @@ int main() {
     }
 
     ProcessInput(window, camera);
+    ProcessCarInput(window);
+    match.SetCarInput({throttle, steering});
 
     double physics_start = glfwGetTime();
     match.Tick(delta_time);

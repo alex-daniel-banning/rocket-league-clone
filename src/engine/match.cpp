@@ -1,15 +1,23 @@
 #include "engine/match.hpp"
 
-#include <glm/gtc/quaternion.hpp>
-#include <iostream>
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/quaternion.hpp>
 
 #include "engine/log.hpp"
 #include "engine/physics/box.hpp"
 #include "engine/physics/collisions.hpp"
 #include "engine/physics/constraint_solver.hpp"
-#include "engine/physics/normal_constraint.hpp"
 
 static constexpr glm::vec3 gravity = glm::vec3(0.0f, -9.8f, 0.0f);
+
+namespace {
+
+// TODO, duplicated from constraint_solver
+glm::mat3 WorldInverseInertia(const glm::quat& rotation, const glm::mat3& inertia_tensor_inv) {
+  glm::mat3 rot = glm::toMat3(rotation);
+  return rot * inertia_tensor_inv * glm::transpose(rot);
+}
+}  // namespace
 
 namespace engine {
 
@@ -58,6 +66,7 @@ void Match::Tick(float delta_time) {
     }
 
     accumulator_ -= fixed_dt;
+    physics::Box& car = boxes_[0];
   }
   if (substeps > 10) {
     LOG_WARN("tick death spiral: %d substeps (dt=%.4f)", substeps, delta_time);
@@ -78,57 +87,45 @@ void Match::ApplyGravity() {
   if (ball_) ball_->velocity += fixed_dt * gravity;
 }
 
+// TODO figure out reference units?
 void Match::AccumulateDrivingForces(CarInput car_input) {
   if (boxes_.size() <= 0) return;
-  physics::Box car = boxes_[0];
+  physics::Box& car = boxes_[0];
   car.force_accumulator = glm::vec3();
   car.torque_accumulator = glm::vec3();
 
-  glm::vec3 direction = glm::normalize(car.rotation * glm::vec3(0.0f, 0.0f, 1.0f));
-  glm::vec3 test = car.rotation * glm::vec3(0.0f, 0.0f, 1.0f);
-  std::cout << "\nCar direction before normalization: {" << test.x << ", " << test.y << ", " << test.z << "}\n"
-            << std::endl;
-  std::cout << "\nCar direction after normalization: {" << direction.x << ", " << direction.y << ", " << direction.z
-            << "}\n"
-            << std::endl;
-  glm::vec3 throttle = car_input.throttle * direction;
-  // TODO figure out reference units?
-  float car_engine_power_temp = 100.0f;
-  car.force_accumulator = car_engine_power_temp * throttle;
-  // Calculate the point of steering force
-  // 1. Start at location of car
-  // 2. Calculate what direction the car is facing in world space
   glm::vec3 car_forward = car.rotation * glm::vec3(0.0f, 0.0f, 1.0f);
+  glm::vec3 right = car.rotation * glm::vec3(1.0f, 0.0f, 0.0f);
 
-  // 3. Go along that direction for the length specified by the car (length from center of mass to front wheels)
-  float steering_lever_distance = car.HalfExtents().z;
-  glm::vec3 steering_point = car.position + (steering_lever_distance * car_forward);
+  // --- Drive force: forward, at the center of mass (no torque) ---
+  glm::vec3 direction = glm::normalize(car.rotation * glm::vec3(0.0f, 0.0f, 1.0f));
+  glm::vec3 throttle = car_input.throttle * direction;
+  float car_engine_power_temp = 500.0f;
+  glm::vec3 drive_force = car_engine_power_temp * throttle;
+  ApplyForceAtPoint(drive_force, car.position, car);
 
-  glm::vec3 up = car.rotation * glm::vec3(0.0f, 0.1f, 0.0f);  // yaw axis
+  // --- Steering force: lateral, at the front wheels (produces yaw torque) ---
   float forward_speed = glm::dot(car_forward, car.velocity);
-  float k = 1.0f;
-  float yaw = car_input_.steering * k * forward_speed;
-  car.torque_accumulator += yaw * up;
+  float k = 1.0f;  // cornering stiffness, tune
+  glm::vec3 lateral_force = -car_input.steering * forward_speed * k * right;
+  glm::vec3 steering_point = car.position + (car.HalfExtents().z * car_forward);
+  ApplyForceAtPoint(lateral_force, steering_point, car);
+}
+
+void Match::ApplyForceAtPoint(glm::vec3 force, glm::vec3 point, physics::Box& car) {
+  car.force_accumulator += force;
+  car.torque_accumulator += glm::cross(point - car.position, force);
 }
 
 void Match::IntegrateForces() {
   if (boxes_.size() <= 0) return;
-  glm::vec3 acceleration = boxes_[0].force_accumulator * boxes_[0].mass_inv;
-  std::cout << "\nforce_accumulator: {" << boxes_[0].force_accumulator.x << ", " << boxes_[0].force_accumulator.y
-            << ", " << boxes_[0].force_accumulator.z << "}\n"
-            << std::endl;
-  std::cout << "\nMass inverse: " << boxes_[0].mass_inv << "\n\n";
+  physics::Box& car = boxes_[0];
+  glm::vec3 acceleration = car.force_accumulator * car.mass_inv;
+  car.velocity += acceleration * fixed_dt;
 
   glm::vec3 vel = acceleration * fixed_dt;
-  std::cout << "\nAdding velocity: {" << vel.x << ", " << vel.y << ", " << vel.z
-            << "} to car which already has velocity: {" << boxes_[0].velocity.x << ", " << boxes_[0].velocity.y << ", "
-            << boxes_[0].velocity.z << "}" << std::endl;
-  boxes_[0].velocity += acceleration * fixed_dt;
 
-  std::cout << "\nResulting velo is: {" << boxes_[0].velocity.x << ", " << boxes_[0].velocity.y << ", "
-            << boxes_[0].velocity.z << "}" << std::endl;
-  // glm::vec3 torque = boxes_[0].torque_accumulator *
-  // boxes_[0].angular_velocity +=
+  car.angular_velocity += WorldInverseInertia(car.rotation, car.inertia_tensor_inv) * car.torque_accumulator * fixed_dt;
 }
 
 Match::ContactConstraints Match::GenerateContactConstraints(float dt) {
@@ -198,5 +195,7 @@ Match::ContactConstraints Match::GenerateContactConstraints(float dt) {
 
   return constraints;
 }
+
+void Match::SetCarInput(CarInput car_input) { car_input_ = car_input; }
 
 }  // namespace engine
