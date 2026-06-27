@@ -87,7 +87,7 @@ int main() {
                         .Name("Wall (-Z)")
                         .Build())
           //.WithBall(engine::physics::Sphere(1.0f, 5.0f, glm::vec3(0.0f, 10.0f, 0.0f), glm::vec3(3.0f, -2.0f, 4.0f)))
-          .WithBox(engine::physics::BoxBuilder()
+          .WithCar(engine::physics::BoxBuilder()
                        .Size(glm::vec3(2.0f, 1.5f, 5.0f))
                        .Position(glm::vec3(-6.0f, 5.0f, 4.0f))
                        .Mass(15.0f)

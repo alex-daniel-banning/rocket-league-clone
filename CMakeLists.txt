@@ -8,6 +8,7 @@ add_library(engine STATIC
     src/engine/glad.c
     src/engine/stb_image.cpp
     src/engine/match.cpp
+    src/engine/car.cpp
     src/engine/debug_stepper.cpp
     src/engine/physics/collisions.cpp
     src/engine/physics/constraint_solver.cpp

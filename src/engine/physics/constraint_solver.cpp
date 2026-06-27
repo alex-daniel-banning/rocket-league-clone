@@ -9,17 +9,10 @@
 #include <unordered_map>
 
 #include "engine/physics/friction_constraint.hpp"
+#include "engine/physics/inertia.hpp"
 #include "engine/physics/normal_constraint.hpp"
-#define GLM_ENABLE_EXPERIMENTAL
-#include <glm/gtx/quaternion.hpp>
 
 namespace {
-
-// TODO - move to Box?
-glm::mat3 WorldInverseInertia(const glm::quat& rotation, const glm::mat3& inertia_tensor_inv) {
-  glm::mat3 rot = glm::toMat3(rotation);
-  return rot * inertia_tensor_inv * glm::transpose(rot);
-}
 
 struct JacobianComponents {
   glm::vec3 j_v_a;
