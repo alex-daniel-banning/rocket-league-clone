@@ -50,6 +50,7 @@ int main() {
                           .Size(glm::vec3(room_size, 1.0f, room_size))
                           .Position(glm::vec3(0.0f, 0.5f, 0.0f))
                           .Mass(0.0f)
+                          .Friction(2.0f)
                           .Name("Ground")
                           .Build())
           .WithWall(engine::physics::BoxBuilder()
@@ -93,6 +94,10 @@ int main() {
                        .Mass(15.0f)
                        .Velocity(glm::vec3())
                        .AngularVelocity(glm::vec3())
+                       // Phase 0 (tire model): zero the chassis-vs-ground contact friction so the
+                       // isotropic Coulomb solver no longer provides grip. The tire model (Phase 1)
+                       // becomes the sole owner of tangential grip; until then the car slides freely.
+                       .Friction(0.0f)
                        .Name("Red Box")
                        .Build())
           .Build();

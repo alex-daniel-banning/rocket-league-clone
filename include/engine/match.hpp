@@ -130,7 +130,7 @@ class Match {
   }
 
   // Resolves a car's chassis id back to the Box owned by boxes_ (via bodies_).
-  physics::Box& ResolveChassis(const Car& car) { return *std::get<physics::Box*>(bodies_.at(car.chassis_id())); }
+  physics::Box& ResolveChassis(const Car& car) { return *std::get<physics::Box*>(bodies_.at(car.ChassisId())); }
 
   void ApplyGravity();
   void IntegrateForces();
