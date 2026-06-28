@@ -31,6 +31,7 @@ inline unsigned int depth_map = 0;
 inline void ProcessInput(GLFWwindow* window, engine::render::Camera& camera) {
   if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) glfwSetWindowShouldClose(window, true);
 
+  // --- Camera ---
   const float camera_speed = camera.movement_speed * delta_time;
   glm::vec3 forward = glm::normalize(glm::vec3(camera.front.x, 0.0f, camera.front.z));
 

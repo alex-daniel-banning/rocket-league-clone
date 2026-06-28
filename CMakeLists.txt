@@ -8,6 +8,7 @@ add_library(engine STATIC
     src/engine/glad.c
     src/engine/stb_image.cpp
     src/engine/match.cpp
+    src/engine/car.cpp
     src/engine/debug_stepper.cpp
     src/engine/physics/collisions.cpp
     src/engine/physics/constraint_solver.cpp
@@ -46,6 +47,7 @@ add_executable(tests
     ${TEST_SRC}/collision_tests/sphere_vs_box_test.cpp
     ${TEST_SRC}/engine/physics/constraint_solver_test.cpp
     ${TEST_SRC}/engine/physics/friction_test.cpp
+    ${TEST_SRC}/engine/car_test.cpp
 )
 
 target_link_libraries(tests PRIVATE engine gtest gtest_main)

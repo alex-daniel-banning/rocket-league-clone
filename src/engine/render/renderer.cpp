@@ -173,6 +173,53 @@ void Renderer::DrawSphereWireframe(const engine::physics::Sphere& sphere, engine
   DrawSphere(sphere, shader, camera);
 }
 
+void Renderer::DrawOrientationGizmo(const Camera& camera, Shader& shader) {
+  constexpr int gizmo_size = 120;  // px
+
+  // Carve out a square in the top-left of the current viewport, restoring it
+  // afterwards so the next draw is unaffected (robust to hi-dpi framebuffers).
+  GLint prev_viewport[4];
+  glGetIntegerv(GL_VIEWPORT, prev_viewport);
+  glViewport(prev_viewport[0], prev_viewport[1] + prev_viewport[3] - gizmo_size, gizmo_size, gizmo_size);
+
+  // Draw on top of the scene, ignoring depth.
+  glDisable(GL_DEPTH_TEST);
+
+  // Keep only the camera's rotation, then push the axes in front of the ortho
+  // frustum so they're fully visible.
+  glm::mat4 view = glm::mat4(glm::mat3(camera.GetViewMatrix()));
+  view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -3.0f)) * view;
+  glm::mat4 projection = glm::ortho(-1.5f, 1.5f, -1.5f, 1.5f, 0.1f, 10.0f);
+
+  shader.Use();
+  shader.SetMat4("view", view);
+  shader.SetMat4("projection", projection);
+  shader.SetVec3("lightColor", glm::vec3(2.0f));  // wash out shading -> flat, vivid colors
+
+  // The line VAO points +Y, so rotate it onto each axis.
+  struct Axis {
+    glm::quat rotation;
+    glm::vec3 color;
+  };
+  const Axis axes[] = {
+      {glm::angleAxis(glm::radians(-90.0f), glm::vec3(0.0f, 0.0f, 1.0f)), glm::vec3(1.0f, 0.0f, 0.0f)},  // +X red
+      {glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f)},                                  // +Y green
+      {glm::angleAxis(glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f)), glm::vec3(0.0f, 0.0f, 1.0f)},   // +Z blue
+  };
+
+  glLineWidth(2.0f);
+  glBindVertexArray(line_vao_);
+  for (const Axis& axis : axes) {
+    shader.SetMat4("model", glm::toMat4(axis.rotation));
+    shader.SetVec3("diffuseColor", axis.color);
+    glDrawArrays(GL_LINES, 0, 2);
+  }
+  glBindVertexArray(0);
+
+  glEnable(GL_DEPTH_TEST);
+  glViewport(prev_viewport[0], prev_viewport[1], prev_viewport[2], prev_viewport[3]);
+}
+
 // todo, remove this, too coupled perhaps
 void Renderer::DrawModel(const engine::render::Model& model, engine::render::Shader& shader, const Camera& camera,
                          const glm::vec3& position, const glm::vec3& scale, const glm::quat& rotation) {
