@@ -24,8 +24,9 @@ class Car {
   void SetInput(CarInput input) { input_ = input; }
   int chassis_id() const { return chassis_id_; }
 
-  // Reads chassis state and writes the drive/steering force + torque into the
-  // chassis force/torque accumulators (zeroing them first).
+  // Reads chassis state and adds the drive/steering force + torque into the
+  // chassis force/torque accumulators. Accumulators are cleared centrally in
+  // Match::IntegrateForces after integration, so this only adds.
   void AccumulateDrivingForces(physics::Box& chassis) const;
 
  private:

@@ -19,8 +19,8 @@ void Match::Tick(float delta_time) {
 
     // --- Driving forces ---
     for (Car& car : cars_) car.AccumulateDrivingForces(ResolveChassis(car));  // fills force_/torque_accumulator
-    IntegrateForces();                                                 // v += F * mass_inv * dt
-                                                                       // w += I-1_world dot torque dot dt
+    IntegrateForces();                                                        // v += F * mass_inv * dt
+                                                                              // w += I-1_world dot torque dot dt
 
     // --- Velocity constraint solving and integration ---
     auto constraints = GenerateContactConstraints(fixed_dt);
@@ -66,86 +66,61 @@ void Match::Reset() {
   boxes_ = {initial_boxes_.begin(), initial_boxes_.end()};
 }
 
-// TODO convert to force accumulator paradigm
 void Match::ApplyGravity() {
-  for (physics::Box& car : boxes_) {
-    car.velocity += fixed_dt * gravity;
-  }
-  if (ball_) ball_->velocity += fixed_dt * gravity;
+  // Gravity as a force (F = m*g) so IntegrateForces is the single integration
+  // point; a = F * mass_inv = g recovers the same acceleration.
+  for (physics::Box& box : boxes_) box.force_accumulator += box.mass * gravity;
+  if (ball_) ball_->force_accumulator += ball_->mass * gravity;
 }
 
 void Match::IntegrateForces() {
-  for (physics::Box& box : boxes_) {
-    glm::vec3 acceleration = box.force_accumulator * box.mass_inv;
-    box.velocity += acceleration * fixed_dt;
-    box.angular_velocity +=
-        physics::WorldInverseInertia(box.rotation, box.inertia_tensor_inv) * box.torque_accumulator * fixed_dt;
-  }
+  // Apply accumulated force/torque to velocity, then clear the accumulators so
+  // the next tick starts clean. Box and Sphere expose the same fields.
+  auto integrate = [](auto& b) {
+    b.velocity += (b.force_accumulator * b.mass_inv) * fixed_dt;
+    b.angular_velocity +=
+        physics::WorldInverseInertia(b.rotation, b.inertia_tensor_inv) * b.torque_accumulator * fixed_dt;
+    b.force_accumulator = glm::vec3(0.0f);
+    b.torque_accumulator = glm::vec3(0.0f);
+  };
+  for (physics::Box& box : boxes_) integrate(box);
+  if (ball_) integrate(*ball_);
 }
 
 Match::ContactConstraints Match::GenerateContactConstraints(float dt) {
   ContactConstraints constraints;
 
-  float baumgarte = 0.02f;
-  float restitution = 0.3f;
+  const float baumgarte = 0.02f;
+  const float restitution = 0.3f;
+
+  // Detect a contact between a and b and, if present, generate its constraints.
+  // ComputeContact's overloads expect (Box, Sphere) or (Box, Box), so a must be
+  // a Box; the ball is always passed as b.
+  auto try_pair = [&](const auto& a, const auto& b) {
+    physics::Contact contact;
+    if (physics::collisions::ComputeContact(a, b, contact)) {
+      physics::ConstraintSolver::GenerateFromContact(contact, bodies_, dt, constraints.normal, constraints.friction,
+                                                     restitution, baumgarte);
+    }
+  };
+
   if (ball_) {
-    // Ball v Wall
-    for (const physics::Box& wall : walls_) {
-      physics::Contact contact;
-      if (physics::collisions::ComputeContact(wall, *ball_, contact)) {
-        physics::ConstraintSolver::GenerateFromContact(contact, bodies_, dt, constraints.normal, constraints.friction,
-                                                       restitution, baumgarte);
-      }
-    }
-    // Ball v Ground
-    if (ground_) {
-      physics::Contact contact;
-      if (physics::collisions::ComputeContact(*ground_, *ball_, contact)) {
-        physics::ConstraintSolver::GenerateFromContact(contact, bodies_, dt, constraints.normal, constraints.friction,
-                                                       restitution, baumgarte);
-      }
-    }
-    // Ball v Car
-    for (const physics::Box& car : boxes_) {
-      physics::Contact contact;
-      if (physics::collisions::ComputeContact(car, *ball_, contact)) {
-        physics::ConstraintSolver::GenerateFromContact(contact, bodies_, dt, constraints.normal, constraints.friction,
-                                                       restitution, baumgarte);
-      }
-    }
+    for (const physics::Box& wall : walls_) try_pair(wall, *ball_);  // Ball v Wall
+    if (ground_) try_pair(*ground_, *ball_);                         // Ball v Ground
+    for (const physics::Box& car : boxes_) try_pair(car, *ball_);    // Ball v Car
   }
 
   // Car v Car
-  if (boxes_.size() > 1) {
-    for (unsigned int i = 0; i < boxes_.size() - 1; i++) {
-      for (unsigned int j = i + 1; j < boxes_.size(); j++) {
-        physics::Contact contact;
-        if (physics::collisions::ComputeContact(boxes_[i], boxes_[j], contact)) {
-          physics::ConstraintSolver::GenerateFromContact(contact, bodies_, dt, constraints.normal, constraints.friction,
-                                                         restitution, baumgarte);
-        }
-      }
-    }
+  for (std::size_t i = 0; i + 1 < boxes_.size(); i++) {
+    for (std::size_t j = i + 1; j < boxes_.size(); j++) try_pair(boxes_[i], boxes_[j]);
   }
   // Car v Wall
   for (const physics::Box& car : boxes_) {
-    for (const physics::Box& wall : walls_) {
-      physics::Contact contact;
-      if (physics::collisions::ComputeContact(car, wall, contact)) {
-        physics::ConstraintSolver::GenerateFromContact(contact, bodies_, dt, constraints.normal, constraints.friction,
-                                                       restitution, baumgarte);
-      }
-    }
+    for (const physics::Box& wall : walls_) try_pair(car, wall);
   }
   // Car v Ground
   if (ground_) {
-    for (const physics::Box& car : boxes_) {
-      physics::Contact contact;
-      if (physics::collisions::ComputeContact(car, *ground_, contact)) {
-        physics::ConstraintSolver::GenerateFromContact(contact, bodies_, dt, constraints.normal, constraints.friction,
-                                                       restitution, baumgarte);
-      }
-    }
+    for (const physics::Box& car : boxes_) try_pair(car, *ground_);
   }
 
   return constraints;

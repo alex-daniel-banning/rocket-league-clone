@@ -15,9 +15,6 @@ void ApplyForceAtPoint(physics::Box& body, glm::vec3 force, glm::vec3 point) {
 
 // TODO figure out reference units?
 void Car::AccumulateDrivingForces(physics::Box& chassis) const {
-  chassis.force_accumulator = glm::vec3();
-  chassis.torque_accumulator = glm::vec3();
-
   glm::vec3 car_forward = chassis.rotation * glm::vec3(0.0f, 0.0f, 1.0f);
   glm::vec3 right = chassis.rotation * glm::vec3(1.0f, 0.0f, 0.0f);
 

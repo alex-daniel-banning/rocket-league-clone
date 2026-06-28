@@ -20,8 +20,8 @@ struct Box {
   const glm::mat3 inertia_tensor_inv;
   const float friction = 0.5f;
   const std::string name;
-  glm::vec3 force_accumulator;
-  glm::vec3 torque_accumulator;
+  glm::vec3 force_accumulator{0.0f};
+  glm::vec3 torque_accumulator{0.0f};
 
   // Used for split impulse penetration correction
   glm::vec3 pseudo_velocity{0.0f};

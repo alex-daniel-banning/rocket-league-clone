@@ -1,4 +1,4 @@
-## Where I'm at (2026-06-27)
+# Where I'm at (2026-06-27)
 Branch `car-control`, up to date with origin. Last commit:
 `b6916ff car/box separation refactor`. Working tree clean.
 
